@@ -1,0 +1,7 @@
+# Runtime dependencies (pinned). Later phases add market data, RAG, LangGraph, UI, and MCP packages.
+pydantic==2.13.5
+pydantic-settings==2.15.0
+PyYAML==6.0.3
+langchain-core==1.6.6
+langchain-openai==1.6.7
+langchain-anthropic==1.7.5

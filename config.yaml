@@ -1,0 +1,60 @@
+# Finnie application settings.
+# Secrets (API keys) and the provider choice live in .env; see .env.example.
+# Relative paths are resolved against the project root.
+
+app:
+  name: Finnie
+  log_level: INFO          # DEBUG | INFO | WARNING | ERROR
+  log_format: json         # json | text
+  disclaimer: >-
+    Finnie provides educational information only, not financial, investment, tax,
+    or legal advice. Consult a qualified professional before making financial decisions.
+
+llm:
+  temperature: 0.2
+  max_tokens: 2048
+  timeout_s: 60
+  max_retries: 3           # SDK-level retries with exponential backoff (429, 5xx, timeouts)
+  providers:
+    openai:
+      main: { model: gpt-4o }
+      fast: { model: gpt-4o-mini }
+    anthropic:
+      main: { model: claude-sonnet-5-5 }
+      fast: { model: claude-haiku-4-5-20251001 }
+
+rag:
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  knowledge_base_dir: data/knowledge_base
+  index_dir: data/vectorstore
+  chunk_size: 800
+  chunk_overlap: 120
+  top_k: 4
+  fetch_k: 40
+  score_threshold: 0.35
+  mmr_lambda: 0.7
+  max_chunks_per_article: 2
+
+market_data:
+  cache_path: data/cache/market.sqlite
+  quote_ttl_minutes: 30
+  news_ttl_minutes: 30
+  history_ttl_hours: 12
+  request_timeout_s: 10
+  alpha_vantage:
+    requests_per_minute: 5
+    daily_budget: 25
+  backoff:
+    max_attempts: 3
+    initial_s: 1.0
+    multiplier: 2.0
+    max_s: 10.0
+
+workflow:
+  max_stages: 3
+  max_agents_per_turn: 3
+  agent_max_iterations: 4
+  history_window: 20
+  summarize_after: 30
+  turn_timeout_s: 120
+  router_min_confidence: 0.5

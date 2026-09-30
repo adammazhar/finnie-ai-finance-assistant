@@ -1,10 +1,28 @@
+# Environments and secrets
 .venv/
 .env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
+
+# Tooling
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+
+# Generated data
 data/cache/
 data/vectorstore/
+
+# Course reference materials (not ours to publish)
 docs/ik/
