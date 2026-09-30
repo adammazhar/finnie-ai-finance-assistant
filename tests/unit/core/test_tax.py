@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 import yaml
 from pydantic import ValidationError
@@ -8,29 +10,59 @@ from src.core.tax import (
     compare_accounts,
     get_tax_reference,
     illustrate_capital_gains,
+    is_long_term,
     load_tax_reference,
     marginal_rate,
+    one_year_anniversary,
     tax_on_income,
 )
 
 REF = get_tax_reference(2026)
 SINGLE = REF.ordinary_income.for_status("single")
+RETIREMENT_URL = "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500"
+INFLATION_URL = (
+    "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-"
+    "including-amendments-from-the-one-big-beautiful-bill"
+)
+OWNER_VERIFIED = {
+    "employee_401k_deferral_limit": (24_500, RETIREMENT_URL),
+    "employee_401k_catch_up_50_plus": (8_000, RETIREMENT_URL),
+    "employee_401k_catch_up_60_to_63": (11_250, RETIREMENT_URL),
+    "ira_contribution_limit": (7_500, RETIREMENT_URL),
+    "ira_catch_up_50_plus": (1_100, RETIREMENT_URL),
+    "roth_ira_phase_out_single": ([153_000, 168_000], RETIREMENT_URL),
+    "roth_ira_phase_out_married_joint": ([242_000, 252_000], RETIREMENT_URL),
+    "hsa_limit_self_only": (4_400, "https://www.irs.gov/publications/p969"),
+    "hsa_limit_family": (8_750, "https://www.irs.gov/publications/p969"),
+    "hsa_catch_up_55_plus": (1_000, "https://www.irs.gov/publications/p969"),
+    "standard_deduction_single": (16_100, INFLATION_URL),
+    "standard_deduction_married_joint": (32_200, INFLATION_URL),
+    "capital_loss_deduction_limit": (3_000, "https://www.irs.gov/taxtopics/tc409"),
+}
 
 
-def test_reference_loads_with_all_figures_pending_verification():
+def test_owner_verified_figures():
+    for key, (value, url) in OWNER_VERIFIED.items():
+        figure = REF.figure(key)
+        assert figure.value == value, key
+        assert figure.verified and figure.verified_on == date(2026, 9, 30), key
+        assert figure.source_url == url, key
+    for table in (REF.ordinary_income, REF.long_term_capital_gains):
+        assert table.verified and table.verified_on == date(2026, 9, 30)
+        assert table.source_url == INFLATION_URL
+
+
+def test_remaining_unverified_items():
     assert REF.tax_year == 2026 and REF.jurisdiction == "US federal"
     assert get_tax_reference(2026) is REF
-    assert len(REF.figures) == 17
-    assert all(
-        f.status == "VERIFY" and f.source_url.startswith("https://www.irs.gov/")
-        for f in REF.figures.values()
-    )
-    pending = REF.unverified()
-    assert len(pending) == 19  # 17 figures + 2 bracket tables
-    assert (
-        "ira_contribution_limit: Traditional and Roth IRA contribution limit (combined)" in pending
-    )
-    assert REF.figure("ira_contribution_limit").value == 7500
+    pending = [item.split(":")[0] for item in REF.unverified()]
+    assert pending == [
+        "gift_tax_annual_exclusion",
+        "long_term_holding_period_years",
+        "wash_sale_window_days",
+        "net_investment_income_tax_rate",
+    ]
+    assert all(f.source_url.startswith("https://www.irs.gov/") for f in REF.figures.values())
     with pytest.raises(KeyError, match="Unknown tax figure"):
         REF.figure("nope")
 
@@ -48,9 +80,11 @@ def test_every_account_type_is_described():
 
 
 def test_compare_accounts():
-    rows = compare_accounts(REF, ["roth_ira", "traditional_ira"])
-    assert [r.name for r in rows] == ["Roth IRA", "Traditional IRA"]
-    assert rows[0].growth == "Tax-free" and rows[0].has_unverified_figures
+    rows = compare_accounts(REF, ["roth_ira", "traditional_ira", "plan_529"])
+    assert [r.name for r in rows] == ["Roth IRA", "Traditional IRA", "529 Education Savings Plan"]
+    assert rows[0].growth == "Tax-free"
+    assert not rows[0].has_unverified_figures  # IRA limits and Roth phase-outs are verified
+    assert rows[2].has_unverified_figures  # gift tax exclusion is still VERIFY
     assert [f.key for f in rows[1].limits] == ["ira_contribution_limit", "ira_catch_up_50_plus"]
     assert len(compare_accounts(REF)) == 7
     with pytest.raises(KeyError, match="Unknown account type"):
@@ -66,23 +100,80 @@ def test_progressive_tax_hand_computed():
     assert marginal_rate(SINGLE, 10_000_000) == 0.37
 
 
+# ---- holding period: more than one year, by calendar date -------------------------------
+
+
+@pytest.mark.parametrize(
+    ("purchase", "sale", "long_term"),
+    [
+        (date(2025, 6, 15), date(2026, 6, 15), False),  # on the anniversary: still short-term
+        (date(2025, 6, 15), date(2026, 6, 16), True),  # the day after: long-term
+        (date(2025, 6, 15), date(2025, 6, 15), False),  # same-day sale
+        # 366 days, because the year includes Feb 29, 2024, but sold ON the anniversary
+        (date(2023, 3, 1), date(2024, 3, 1), False),
+        (date(2023, 3, 1), date(2024, 3, 2), True),
+        # bought Feb 29 (leap day): the anniversary is Feb 28 of the next year
+        (date(2024, 2, 29), date(2025, 2, 28), False),
+        (date(2024, 2, 29), date(2025, 3, 1), True),
+        # bought Feb 28 in a year before a leap year: Feb 29 is after the anniversary
+        (date(2023, 2, 28), date(2024, 2, 28), False),
+        (date(2023, 2, 28), date(2024, 2, 29), True),
+        # year-end purchase
+        (date(2025, 12, 31), date(2026, 12, 31), False),
+        (date(2025, 12, 31), date(2027, 1, 1), True),
+    ],
+)
+def test_long_term_uses_calendar_anniversary(purchase, sale, long_term):
+    assert is_long_term(purchase, sale) is long_term
+
+
+def test_one_year_anniversary():
+    assert one_year_anniversary(date(2025, 6, 15)) == date(2026, 6, 15)
+    assert one_year_anniversary(date(2024, 2, 29)) == date(2025, 2, 28)
+    assert one_year_anniversary(date(2023, 2, 28)) == date(2024, 2, 28)
+
+
+def test_sale_before_purchase_rejected():
+    with pytest.raises(ValueError, match="before the purchase"):
+        is_long_term(date(2026, 1, 2), date(2026, 1, 1))
+
+
 def test_capital_gains_illustration_long_vs_short():
     # $10,000 gain on $40,000 taxable income (single):
     #   long-term: 49,450 - 40,000 = 9,450 at 0%, remaining 550 at 15% = 82.50
     #   short-term: all within the 12% bracket = 1,200
-    long_term = illustrate_capital_gains(REF, gain=10_000, holding_days=400, taxable_income=40_000)
+    long_term = illustrate_capital_gains(
+        REF,
+        gain=10_000,
+        purchase_date=date(2025, 3, 1),
+        sale_date=date(2026, 3, 2),
+        taxable_income=40_000,
+    )
     assert long_term.long_term and long_term.tax_if_long_term == 82.5
+    assert long_term.first_long_term_sale_date == date(2026, 3, 2)
     assert long_term.tax_if_short_term == 1_200 and long_term.applied_tax == 82.5
     assert long_term.difference == 1_117.5 and long_term.effective_rate_on_gain == 0.0083
+    # the holding-period rule itself is still VERIFY, so the caveat stays
     assert long_term.uses_unverified_figures and UNVERIFIED_NOTE in long_term.caveats
 
-    short_term = illustrate_capital_gains(REF, gain=10_000, holding_days=365, taxable_income=40_000)
-    assert not short_term.long_term and short_term.applied_tax == 1_200
+    on_anniversary = illustrate_capital_gains(
+        REF,
+        gain=10_000,
+        purchase_date=date(2025, 3, 1),
+        sale_date=date(2026, 3, 1),
+        taxable_income=40_000,
+    )
+    assert not on_anniversary.long_term and on_anniversary.applied_tax == 1_200
 
 
 def test_capital_gains_married_joint():
     result = illustrate_capital_gains(
-        REF, gain=20_000, holding_days=800, taxable_income=60_000, filing_status="married_joint"
+        REF,
+        gain=20_000,
+        purchase_date=date(2020, 1, 1),
+        sale_date=date(2026, 1, 1),
+        taxable_income=60_000,
+        filing_status="married_joint",
     )
     assert result.tax_if_long_term == 0  # 80,000 stays under the 98,900 0% threshold
 
@@ -90,27 +181,33 @@ def test_capital_gains_married_joint():
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"gain": 0, "holding_days": 1, "taxable_income": 1},
-        {"gain": 10, "holding_days": -1, "taxable_income": 1},
-        {"gain": 10, "holding_days": 1, "taxable_income": -5},
+        {"gain": 0, "taxable_income": 1},
+        {"gain": 10, "taxable_income": -5},
+        {"gain": 10, "taxable_income": 1, "sale_date": date(2019, 1, 1)},
     ],
 )
 def test_capital_gains_input_validation(kwargs):
+    args = {"purchase_date": date(2020, 1, 1), "sale_date": date(2026, 1, 1)} | kwargs
     with pytest.raises(ValueError):
-        illustrate_capital_gains(REF, **kwargs)
+        illustrate_capital_gains(REF, **args)
 
 
 def test_verified_figures_drop_the_caveat(tmp_path):
-    data = yaml.safe_load((REFERENCE_DIR / "tax_2026.yaml").read_text(encoding="utf-8"))
-    data["figures"]["long_term_holding_period_days"]["status"] = "verified"
-    for table in data["brackets"].values():
-        table["status"] = "verified"
-    path = tmp_path / "tax.yaml"
-    path.write_text(yaml.safe_dump(data), encoding="utf-8")
-    ref = load_tax_reference(path)
-    result = illustrate_capital_gains(ref, gain=100, holding_days=400, taxable_income=0)
+    def verify_holding_rule(data):
+        rule = data["figures"]["long_term_holding_period_years"]
+        rule["status"] = "verified"
+        rule["verified_on"] = date(2026, 10, 1)
+
+    ref = load_modified(tmp_path, verify_holding_rule)
+    result = illustrate_capital_gains(
+        ref,
+        gain=100,
+        purchase_date=date(2024, 1, 1),
+        sale_date=date(2026, 1, 1),
+        taxable_income=0,
+    )
     assert not result.uses_unverified_figures and UNVERIFIED_NOTE not in result.caveats
-    assert len(ref.unverified()) == 16
+    assert len(ref.unverified()) == 3
 
 
 def load_modified(tmp_path, mutate):
@@ -147,3 +244,33 @@ def test_bad_status_rejected(tmp_path):
 
     with pytest.raises(ValidationError):
         load_modified(tmp_path, bad)
+
+
+def test_verified_items_need_a_date(tmp_path):
+    def undated(data):
+        del data["figures"]["ira_contribution_limit"]["verified_on"]
+
+    with pytest.raises(ValidationError, match="verified_on"):
+        load_modified(tmp_path, undated)
+
+
+def test_sources_must_be_irs_pages(tmp_path):
+    def elsewhere(data):
+        data["figures"]["ira_contribution_limit"]["source_url"] = "https://example.com/ira"
+
+    with pytest.raises(ValidationError, match=r"IRS\.gov"):
+        load_modified(tmp_path, elsewhere)
+
+
+def test_unverified_bracket_tables_are_listed(tmp_path):
+    def unverify(data):
+        table = data["brackets"]["long_term_capital_gains"]
+        table["status"] = "VERIFY"
+        del table["verified_on"]
+
+    ref = load_modified(tmp_path, unverify)
+    assert ref.unverified()[-1].startswith("brackets: Long-term capital gains")
+    result = illustrate_capital_gains(
+        ref, gain=100, purchase_date=date(2024, 1, 1), sale_date=date(2026, 1, 1), taxable_income=0
+    )
+    assert result.uses_unverified_figures

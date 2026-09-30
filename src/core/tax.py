@@ -8,6 +8,7 @@ state tax, or NIIT) and never a tax estimate for a real person.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from functools import cache
 from pathlib import Path
 from typing import Literal
@@ -28,17 +29,30 @@ class _Model(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class TaxFigure(_Model):
-    key: str
-    label: str
-    value: float | list[float]
+class _Sourced(_Model):
+    """Anything backed by an IRS.gov page. Verified items must say when they were checked."""
+
     source_url: str
     status: Status
-    verified_on: str | None = None
+    verified_on: date | None = None
+
+    @model_validator(mode="after")
+    def _verified_has_date(self) -> _Sourced:
+        if self.status == "verified" and self.verified_on is None:
+            raise ValueError("verified items need a verified_on date")
+        if not self.source_url.startswith("https://www.irs.gov/"):
+            raise ValueError("source_url must be an IRS.gov page")
+        return self
 
     @property
     def verified(self) -> bool:
         return self.status == "verified"
+
+
+class TaxFigure(_Sourced):
+    key: str
+    label: str
+    value: float | list[float]
 
 
 class Bracket(_Model):
@@ -46,10 +60,8 @@ class Bracket(_Model):
     up_to: float | None = Field(default=None, gt=0)
 
 
-class BracketTable(_Model):
+class BracketTable(_Sourced):
     label: str
-    source_url: str
-    status: Status
     single: list[Bracket]
     married_joint: list[Bracket]
 
@@ -98,7 +110,7 @@ class TaxReference(_Model):
         """Every item still marked VERIFY, for the owner's review list."""
         items = [f"{f.key}: {f.label}" for f in self.figures.values() if not f.verified]
         for table in (self.ordinary_income, self.long_term_capital_gains):
-            if table.status != "verified":
+            if not table.verified:
                 items.append(f"brackets: {table.label}")
         return items
 
@@ -203,10 +215,31 @@ def stacked_gains_tax(brackets: list[Bracket], ordinary_income: float, gain: flo
     )
 
 
+def one_year_anniversary(purchase: date) -> date:
+    """The same calendar date one year later. A Feb 29 purchase's anniversary is Feb 28."""
+    try:
+        return purchase.replace(year=purchase.year + 1)
+    except ValueError:  # Feb 29 in a leap year
+        return date(purchase.year + 1, 2, 28)
+
+
+def is_long_term(purchase: date, sale: date) -> bool:
+    """Long-term means held more than one year: sold after the one-year anniversary.
+
+    Selling on the anniversary itself is still short-term. This is a calendar rule, not a
+    day count: buying Mar 1, 2023 and selling Mar 1, 2024 is 366 days but short-term.
+    """
+    if sale < purchase:
+        raise ValueError("The sale date can't be before the purchase date.")
+    return sale > one_year_anniversary(purchase)
+
+
 class CapitalGainsIllustration(BaseModel):
     gain: float
-    holding_days: int
+    purchase_date: date
+    sale_date: date
     long_term: bool
+    first_long_term_sale_date: date
     filing_status: FilingStatus
     taxable_income_before_gain: float
     tax_if_short_term: float
@@ -223,18 +256,19 @@ def illustrate_capital_gains(
     reference: TaxReference,
     *,
     gain: float,
-    holding_days: int,
+    purchase_date: date,
+    sale_date: date,
     taxable_income: float,
     filing_status: FilingStatus = "single",
 ) -> CapitalGainsIllustration:
     """Compare federal tax on a gain held short-term vs long-term (simplified)."""
     if gain <= 0:
         raise ValueError("Enter a positive gain; losses are handled differently.")
-    if holding_days < 0 or taxable_income < 0:
-        raise ValueError("Holding days and taxable income can't be negative.")
+    if taxable_income < 0:
+        raise ValueError("Taxable income can't be negative.")
+    long_term = is_long_term(purchase_date, sale_date)
 
-    threshold = reference.figure("long_term_holding_period_days")
-    long_term = holding_days > float(threshold.value)  # type: ignore[arg-type]
+    holding_rule = reference.figure("long_term_holding_period_years")
     ordinary = reference.ordinary_income.for_status(filing_status)
     ltcg = reference.long_term_capital_gains.for_status(filing_status)
 
@@ -244,9 +278,9 @@ def illustrate_capital_gains(
     long_tax = stacked_gains_tax(ltcg, taxable_income, gain)
     applied = long_tax if long_term else short_tax
     unverified = not (
-        threshold.verified
-        and reference.ordinary_income.status == "verified"
-        and reference.long_term_capital_gains.status == "verified"
+        holding_rule.verified
+        and reference.ordinary_income.verified
+        and reference.long_term_capital_gains.verified
     )
     caveats = [
         "Simplified federal illustration only: it ignores state taxes, the net investment "
@@ -257,8 +291,10 @@ def illustrate_capital_gains(
         caveats.append(UNVERIFIED_NOTE)
     return CapitalGainsIllustration(
         gain=gain,
-        holding_days=holding_days,
+        purchase_date=purchase_date,
+        sale_date=sale_date,
         long_term=long_term,
+        first_long_term_sale_date=one_year_anniversary(purchase_date) + timedelta(days=1),
         filing_status=filing_status,
         taxable_income_before_gain=taxable_income,
         tax_if_short_term=round(short_tax, 2),

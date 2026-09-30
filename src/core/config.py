@@ -141,7 +141,7 @@ class MonteCarloConfig(_Section):
 
 
 class AnalyticsConfig(_Section):
-    risk_free_rate: float = Field(default=0.04, ge=-0.05, le=0.5)
+    risk_free_rate: float = Field(default=0.042, ge=-0.05, le=0.5)  # fallback only
     trading_days_per_year: int = Field(default=252, gt=0)
     concentration_threshold: float = Field(default=0.20, gt=0, le=1)
     sector_concentration_threshold: float = Field(default=0.40, gt=0, le=1)

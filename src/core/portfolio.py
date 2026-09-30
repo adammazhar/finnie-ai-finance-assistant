@@ -23,9 +23,10 @@ from pydantic import BaseModel, Field, ValidationError
 
 from src.core.config import AnalyticsConfig, get_settings
 from src.core.models import Freshness, Holding
+from src.core.rates import RiskFreeRate, fallback_risk_free_rate, fetch_risk_free_rate
 from src.core.reference import RiskProfile, SecurityCatalog, SecurityInfo, get_catalog
 from src.data.errors import MarketDataError
-from src.data.models import BatchQuotes, CompanyOverview, PriceHistory
+from src.data.models import BatchQuotes, CompanyOverview, PriceHistory, Quote
 
 SECTOR_COUNT = 11  # GICS sectors
 BROAD_SECTORS = frozenset({"Broad Market", "International"})
@@ -54,6 +55,9 @@ class HoldingValuation(BaseModel):
     sector: str
     diversified: bool
     expense_ratio: float | None
+    expense_ratio_verified: bool | None = None  # None when there is no fund fee
+    expense_ratio_as_of: date | None = None
+    expense_ratio_source: str | None = None
     classification_known: bool
     cost_basis: float | None = None
     unrealized_gain: float | None = None
@@ -66,6 +70,7 @@ class RiskMetrics(BaseModel):
     sharpe_ratio: float | None
     max_drawdown: float
     beta: float | None
+    risk_free: RiskFreeRate = Field(description="Rate used for the Sharpe ratio, with its source")
     observations: int
     start: date
     end: date
@@ -193,7 +198,10 @@ def value_holdings(
                 asset_class=info.asset_class,
                 sector=info.sector,
                 diversified=info.diversified,
-                expense_ratio=_expense_ratio(info),
+                expense_ratio=info.expense_ratio,
+                expense_ratio_verified=info.fees.verified if info.fees else None,
+                expense_ratio_as_of=info.fees.as_of if info.fees else None,
+                expense_ratio_source=info.fees.source_url if info.fees else None,
                 classification_known=info.known,
                 cost_basis=h.cost_basis,
                 unrealized_gain=gain,
@@ -204,13 +212,6 @@ def value_holdings(
         )
     rows.sort(key=lambda r: r.value, reverse=True)
     return rows, missing
-
-
-def _expense_ratio(info: SecurityInfo) -> float | None:
-    """Stocks and cash have no fund fee; unknown funds have an unknown one."""
-    if info.type in ("stock", "cash"):
-        return 0.0
-    return info.expense_ratio
 
 
 def asset_allocation(
@@ -334,7 +335,7 @@ def risk_metrics(
     returns: pd.Series,
     *,
     benchmark: pd.Series | None,
-    risk_free_rate: float,
+    risk_free: RiskFreeRate,
     periods_per_year: int,
     min_observations: int,
     coverage: float = 1.0,
@@ -350,7 +351,7 @@ def risk_metrics(
     # A constant series can leave ~1e-18 of floating-point noise instead of exactly 0.
     if annual_vol < 1e-12:
         annual_vol = 0.0
-    sharpe = (annual_return - risk_free_rate) / annual_vol if annual_vol > 0 else None
+    sharpe = (annual_return - risk_free.rate) / annual_vol if annual_vol > 0 else None
 
     wealth = pd.concat([pd.Series([1.0]), (1 + returns).cumprod().reset_index(drop=True)])
     max_drawdown = float((wealth / wealth.cummax() - 1).min())
@@ -369,6 +370,7 @@ def risk_metrics(
         sharpe_ratio=sharpe,
         max_drawdown=max_drawdown,
         beta=beta,
+        risk_free=risk_free,
         observations=count,
         start=returns.index[0].date(),
         end=returns.index[-1].date(),
@@ -410,9 +412,14 @@ def analyze_portfolio(
     benchmark_closes: pd.Series | None = None,
     profile: RiskProfile | None = None,
     config: AnalyticsConfig | None = None,
+    risk_free: RiskFreeRate | None = None,
 ) -> PortfolioAnalysis:
-    """Analyze a portfolio from already-fetched inputs. See module docstring."""
+    """Analyze a portfolio from already-fetched inputs. See module docstring.
+
+    ``risk_free`` defaults to the configured fallback rate when not supplied.
+    """
     config = config or AnalyticsConfig()
+    risk_free = risk_free or fallback_risk_free_rate(config.risk_free_rate)
     if not holdings:
         raise PortfolioError("The portfolio has no holdings.")
     rows, missing = value_holdings(holdings, prices, securities)
@@ -441,7 +448,7 @@ def analyze_portfolio(
             metrics = risk_metrics(
                 portfolio,
                 benchmark=bench,
-                risk_free_rate=config.risk_free_rate,
+                risk_free=risk_free,
                 periods_per_year=config.trading_days_per_year,
                 min_observations=config.min_history_days,
                 coverage=round(covered, 4),
@@ -553,6 +560,12 @@ def build_observations(
                     "long-run growth potential and bigger short-term swings."
                 )
 
+    unconfirmed = [r.ticker for r in analysis.holdings if r.expense_ratio_verified is False]
+    if unconfirmed:
+        notes.append(
+            f"The expense ratio for {', '.join(unconfirmed)} couldn't be confirmed on the fund "
+            "provider's website, so treat it as approximate."
+        )
     unknown = [r.ticker for r in analysis.holdings if not r.classification_known]
     if unknown:
         notes.append(
@@ -583,6 +596,7 @@ class MarketData(Protocol):
     def get_quotes(self, tickers: Iterable[str]) -> BatchQuotes: ...
     def get_daily_history(self, ticker: str, days: int = ...) -> PriceHistory: ...
     def get_company_overview(self, ticker: str) -> CompanyOverview: ...
+    def get_treasury_bill_yield(self) -> Quote: ...
 
 
 def fetch_and_analyze(
@@ -623,7 +637,9 @@ def fetch_and_analyze(
 
     closes: dict[str, pd.Series] = {}
     benchmark = None
+    risk_free = None
     if include_history:
+        risk_free = fetch_risk_free_rate(market, config.risk_free_rate)
         for ticker in prices:
             if ticker in cash:
                 continue
@@ -652,6 +668,7 @@ def fetch_and_analyze(
         benchmark_closes=benchmark,
         profile=profile,
         config=config,
+        risk_free=risk_free,
     )
     analysis.freshness = freshness
     if any(f.is_mock for f in freshness):

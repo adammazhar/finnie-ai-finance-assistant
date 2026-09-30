@@ -5,6 +5,7 @@ Both come from YAML files in ``data/reference/`` and are validated on load.
 
 from __future__ import annotations
 
+from datetime import date
 from functools import cache
 from pathlib import Path
 from typing import Literal
@@ -28,6 +29,31 @@ _OVERVIEW_TYPES: dict[str, SecurityType] = {
 }
 
 
+FUND_TYPES = frozenset({"etf", "mutual_fund", "money_market"})
+
+
+class ExpenseRatio(BaseModel):
+    """A fund's expense ratio and where it was read."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    ratio: float = Field(ge=0, le=0.05)
+    status: Literal["verified", "VERIFY"]
+    as_of: date | None = Field(default=None, description="Date the provider states, if any")
+    verified_on: date | None = None
+    source_url: str = Field(pattern=r"^https://")
+
+    @model_validator(mode="after")
+    def _verified_has_date(self) -> ExpenseRatio:
+        if self.status == "verified" and self.verified_on is None:
+            raise ValueError("verified expense ratios need a verified_on date")
+        return self
+
+    @property
+    def verified(self) -> bool:
+        return self.status == "verified"
+
+
 class SecurityInfo(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -38,7 +64,7 @@ class SecurityInfo(BaseModel):
     allocation: dict[AssetClass, float] = Field(default_factory=dict)
     sector: str
     diversified: bool
-    expense_ratio: float | None = Field(default=None, ge=0, le=0.05)
+    fees: ExpenseRatio | None = None
     risk: int = Field(ge=1, le=10)
     known: bool = True
 
@@ -47,6 +73,13 @@ class SecurityInfo(BaseModel):
         if self.allocation and abs(sum(self.allocation.values()) - 1) > 1e-6:
             raise ValueError(f"{self.ticker}: allocation must sum to 1")
         return self
+
+    @property
+    def expense_ratio(self) -> float | None:
+        """Annual fund fee as a fraction. Stocks and cash have none; unknown funds are None."""
+        if self.type in ("stock", "cash"):
+            return 0.0
+        return self.fees.ratio if self.fees else None
 
     @property
     def look_through(self) -> dict[AssetClass, float]:
@@ -73,6 +106,10 @@ class SecurityCatalog:
     def get(self, ticker: str) -> SecurityInfo | None:
         return self._securities.get(ticker)
 
+    def unverified_expense_ratios(self) -> list[str]:
+        """Funds whose expense ratio couldn't be confirmed on the provider's site."""
+        return sorted(t for t, s in self._securities.items() if s.fees and not s.fees.verified)
+
     def classify(
         self,
         ticker: str,
@@ -97,7 +134,6 @@ class SecurityCatalog:
             asset_class="equity",
             sector=sector or ("Broad Market" if is_fund else "Unknown"),
             diversified=is_fund,
-            expense_ratio=None,
             risk=6 if is_fund else 8,
             known=False,
         )
@@ -128,10 +164,22 @@ def _load_yaml(path: Path) -> dict:
 
 
 def load_catalog(path: Path = REFERENCE_DIR / "securities.yaml") -> SecurityCatalog:
+    """Load securities and attach each fund's sourced expense ratio.
+
+    Every fund must have an ``expense_ratios`` entry and every entry must match a fund,
+    so a ratio can't silently go missing or refer to a ticker that isn't classified.
+    """
     data = _load_yaml(path)
+    raw = data.get("securities") or {}
+    fees = {t: ExpenseRatio(**f) for t, f in (data.get("expense_ratios") or {}).items()}
+    funds = {t for t, f in raw.items() if f.get("type") in FUND_TYPES}
+    if funds - set(fees):
+        raise ValueError(f"{path}: funds missing expense ratios: {sorted(funds - set(fees))}")
+    if set(fees) - funds:
+        raise ValueError(f"{path}: expense ratios for non-funds: {sorted(set(fees) - funds)}")
     securities = {
-        ticker: SecurityInfo(ticker=ticker, **fields)
-        for ticker, fields in (data.get("securities") or {}).items()
+        ticker: SecurityInfo(ticker=ticker, fees=fees.get(ticker), **fields)
+        for ticker, fields in raw.items()
     }
     return SecurityCatalog(securities, last_reviewed=str(data.get("last_reviewed", "unknown")))
 

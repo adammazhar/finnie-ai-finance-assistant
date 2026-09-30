@@ -61,7 +61,7 @@ workflow:
   router_min_confidence: 0.5
 
 analytics:
-  risk_free_rate: 0.04           # annual, for Sharpe ratio (illustrative assumption)
+  risk_free_rate: 0.042          # fallback for Sharpe ratio when the live ^IRX T-bill yield is unavailable
   trading_days_per_year: 252
   concentration_threshold: 0.20  # single-company weight that triggers a concentration note
   sector_concentration_threshold: 0.40

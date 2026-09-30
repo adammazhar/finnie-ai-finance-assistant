@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 M = TypeVar("M", bound=BaseModel)
 MAX_HISTORY_DAYS = 5000
+TBILL_13_WEEK = "^IRX"  # yfinance quotes its yield in percent
 MAX_NEWS = 20
 
 
@@ -112,6 +113,25 @@ class MarketDataService:
             self._quote_ttl,
             [(p.name, _bind(p.get_quote, symbol)) for p in self._price],
             mock=lambda m: m.get_quote(symbol),
+        )
+
+    def get_treasury_bill_yield(self) -> Quote:
+        """13-week T-bill yield (``price`` is percent), cached for the daily-data TTL.
+
+        Only yfinance carries ``^IRX``, so other providers aren't asked (that would spend
+        Alpha Vantage budget for nothing). There is no demo value: callers fall back to
+        the configured rate instead.
+        """
+        return self._fetch(
+            Quote,
+            f"rate:{TBILL_13_WEEK}",
+            self._history_ttl,
+            [
+                (p.name, _bind(p.get_quote, TBILL_13_WEEK))
+                for p in self._price
+                if p.name == "yfinance"
+            ],
+            mock=None,
         )
 
     def get_quotes(self, tickers: Iterable[str]) -> BatchQuotes:

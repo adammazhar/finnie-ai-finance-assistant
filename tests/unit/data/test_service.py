@@ -367,3 +367,29 @@ def test_unreadable_stale_entry_falls_through_to_demo(svc, cache, av, yfp):
     av.scripts["get_quote"] = [ProviderError("down")]
     yfp.scripts["get_quote"] = [ProviderError("down")]
     assert svc.get_quote("KO").freshness.is_mock
+
+
+# ---- 13-week T-bill yield --------------------------------------------------------------
+
+
+def test_treasury_yield_uses_yfinance_only_with_daily_ttl(svc, av, yfp, clock):
+    yfp.scripts["get_quote"] = [lambda t: yfp.quote(t, 4.21), lambda t: yfp.quote(t, 4.3)]
+    first = svc.get_treasury_bill_yield()
+    assert (first.ticker, first.price) == ("^IRX", 4.21)
+    clock.advance(hours=11)
+    assert svc.get_treasury_bill_yield().freshness.status == "cached"
+    clock.advance(hours=2)  # past the 12-hour daily-data TTL
+    assert svc.get_treasury_bill_yield().price == 4.3
+    assert av.calls == []  # Alpha Vantage doesn't carry ^IRX; never spend budget on it
+
+
+def test_treasury_yield_has_no_demo_value(svc, yfp):
+    yfp.scripts["get_quote"] = [ProviderError("down")]
+    with pytest.raises(DataUnavailableError):
+        svc.get_treasury_bill_yield()
+
+
+def test_treasury_yield_without_yfinance(cache, md_config, clock, sleeps, av):
+    solo = make_service(cache, md_config, clock, sleeps, price=[av])
+    with pytest.raises(DataUnavailableError, match="no providers configured"):
+        solo.get_treasury_bill_yield()

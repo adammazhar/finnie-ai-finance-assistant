@@ -23,7 +23,8 @@ from src.core.portfolio import (
     merge_holdings,
     risk_metrics,
 )
-from src.core.reference import SecurityInfo, get_catalog, get_risk_profiles
+from src.core.rates import fallback_risk_free_rate as rf
+from src.core.reference import ExpenseRatio, SecurityInfo, get_catalog, get_risk_profiles
 from src.data.errors import DataUnavailableError, SymbolNotFoundError
 from src.data.models import BatchQuotes, CompanyOverview, PriceBar, PriceHistory, Quote
 from tests.fakes.market import START
@@ -184,7 +185,7 @@ def test_risk_metrics_drawdown_and_constant_growth():
     metrics = risk_metrics(
         prices.pct_change().dropna(),
         benchmark=None,
-        risk_free_rate=0.0,
+        risk_free=rf(0.0),
         periods_per_year=252,
         min_observations=3,
     )
@@ -194,7 +195,7 @@ def test_risk_metrics_drawdown_and_constant_growth():
 
     steady = series([0.001] * 100)
     m = risk_metrics(
-        steady, benchmark=None, risk_free_rate=0.02, periods_per_year=252, min_observations=10
+        steady, benchmark=None, risk_free=rf(0.02), periods_per_year=252, min_observations=10
     )
     assert m.annual_return == pytest.approx(1.001**252 - 1)
     assert m.annual_volatility == pytest.approx(0, abs=1e-12) and m.sharpe_ratio is None
@@ -205,14 +206,14 @@ def test_beta_and_sharpe():
     bench = series([0.01, -0.01] * 50)
     port = bench * 2
     m = risk_metrics(
-        port, benchmark=bench, risk_free_rate=0.0, periods_per_year=252, min_observations=10
+        port, benchmark=bench, risk_free=rf(0.0), periods_per_year=252, min_observations=10
     )
     assert m.beta == pytest.approx(2.0)
     assert m.sharpe_ratio == pytest.approx(m.annual_return / m.annual_volatility)
     flat_bench = series([0.0] * 100)
     assert (
         risk_metrics(
-            port, benchmark=flat_bench, risk_free_rate=0, periods_per_year=252, min_observations=10
+            port, benchmark=flat_bench, risk_free=rf(0), periods_per_year=252, min_observations=10
         ).beta
         is None
     )
@@ -223,7 +224,7 @@ def test_risk_metrics_needs_enough_data():
         risk_metrics(
             series([0.01] * 5),
             benchmark=None,
-            risk_free_rate=0,
+            risk_free=rf(0),
             periods_per_year=252,
             min_observations=10,
         )
@@ -236,7 +237,7 @@ def test_beta_skipped_when_overlap_too_short():
     bench = series([0.01, -0.02, 0.03], start="2026-05-01")
     assert (
         risk_metrics(
-            port, benchmark=bench, risk_free_rate=0, periods_per_year=252, min_observations=10
+            port, benchmark=bench, risk_free=rf(0), periods_per_year=252, min_observations=10
         ).beta
         is None
     )
@@ -341,7 +342,7 @@ def test_high_fee_unknown_and_missing_price_notes():
         asset_class="equity",
         sector="Broad Market",
         diversified=True,
-        expense_ratio=0.012,
+        fees=ExpenseRatio(ratio=0.012, status="VERIFY", source_url="https://example.com/prcy"),
         risk=6,
     )
     newco = CATALOG.classify("NEWCO", asset_type="Common Stock")
@@ -358,6 +359,7 @@ def test_high_fee_unknown_and_missing_price_notes():
     )
     text = " ".join(result.observations)
     assert "weighted expense ratio is about 1.08%" in text
+    assert "expense ratio for PRCY couldn't be confirmed" in text
     assert "NEWCO isn't in Finnie's reference list" in text
     assert "No price was available for GONE, so it is left out" in text
     assert result.missing_prices == ["GONE"]
@@ -453,12 +455,13 @@ def history(ticker, closes):
 
 
 class FakeMarket:
-    def __init__(self, prices, histories=None, overviews=None, mock=()):
+    def __init__(self, prices, histories=None, overviews=None, mock=(), tbill=None):
         self.prices = prices
         self.histories = histories or {}
         self.overviews = overviews or {}
         self.mock = set(mock)
         self.quote_requests = []
+        self.tbill = tbill
 
     def get_quotes(self, tickers):
         tickers = list(tickers)
@@ -476,6 +479,11 @@ class FakeMarket:
         if ticker not in self.histories:
             raise DataUnavailableError(ticker)
         return self.histories[ticker]
+
+    def get_treasury_bill_yield(self):
+        if self.tbill is None:
+            raise DataUnavailableError("^IRX")
+        return Quote(ticker="^IRX", price=self.tbill, freshness=fresh())
 
     def get_company_overview(self, ticker):
         if ticker not in self.overviews:
@@ -501,6 +509,7 @@ def test_fetch_and_analyze_end_to_end():
                 freshness=fresh(),
             )
         },
+        tbill=4.21,
     )
     holdings = [
         Holding(ticker="VTI", shares=5),
@@ -518,9 +527,43 @@ def test_fetch_and_analyze_end_to_end():
     newco = next(h for h in result.holdings if h.ticker == "NEWCO")
     assert (newco.name, newco.sector, newco.classification_known) == ("New Co", "Energy", False)
     assert result.asset_allocation["cash"] == pytest.approx(250 / 850, abs=1e-4)
-    assert result.risk_metrics is not None and result.risk_metrics.beta is not None
+    metrics = result.risk_metrics
+    assert metrics is not None and metrics.beta is not None
+    # the Sharpe ratio uses the live T-bill yield and says where it came from
+    assert metrics.risk_free.rate == pytest.approx(0.0421) and not metrics.risk_free.is_fallback
+    assert metrics.risk_free.as_of == START.date()
+    assert metrics.sharpe_ratio == pytest.approx(
+        (metrics.annual_return - 0.0421) / metrics.annual_volatility
+    )
     assert "CASH" not in (result.correlation or {})
     assert len(result.freshness) == 2
+
+
+def test_sharpe_falls_back_to_configured_rate():
+    closes = [100 + (i % 5) for i in range(80)]
+    market = FakeMarket(prices={"VTI": 100}, histories={"VTI": history("VTI", closes)})
+    config = AnalyticsConfig(min_history_days=20, risk_free_rate=0.05)
+    metrics = fetch_and_analyze(
+        [Holding(ticker="VTI", shares=1)], market, config=config
+    ).risk_metrics
+    assert metrics.risk_free.is_fallback and metrics.risk_free.rate == 0.05
+    assert "live T-bill yield unavailable" in metrics.risk_free.label()
+    assert metrics.sharpe_ratio == pytest.approx(
+        (metrics.annual_return - 0.05) / metrics.annual_volatility
+    )
+
+
+def test_analyze_without_supplied_rate_uses_config_fallback():
+    closes = {"VTI": series([100, 101, 99, 102, 103, 101])}
+    result = analyze_portfolio(
+        [Holding(ticker="VTI", shares=1)],
+        {"VTI": 100},
+        securities=securities("VTI"),
+        closes=closes,
+        config=CONFIG,
+    )
+    assert result.risk_metrics.risk_free.is_fallback
+    assert result.risk_metrics.risk_free.rate == 0.042
 
 
 def test_fetch_and_analyze_degrades_gracefully():

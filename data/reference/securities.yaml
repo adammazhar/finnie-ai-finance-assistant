@@ -1,90 +1,93 @@
 # Security classification used by portfolio analysis.
 #
-# expense_ratio is a fraction (0.0003 = 0.03%). Ratios are approximate as of last_reviewed
-# and change over time: always confirm on the fund provider's website. The UI labels
-# them "approx." Tickers not listed here are classified from live company-overview data.
-#
 # type:        stock | etf | mutual_fund | money_market | cash
 # asset_class: equity | bond | cash | real_estate | commodity | crypto
 # allocation:  optional look-through mix for multi-asset funds (must sum to 1)
 # diversified: true when the fund holds many issuers, so its weight is not single-company risk
 # risk:        1 (lowest) .. 10 (highest), a simple educational risk rating
+#
+# Expense ratios live in the expense_ratios section below, one entry per fund:
+#   ratio:       annual fee as a fraction (0.0003 = 0.03%)
+#   status:      verified (read from the provider's official page on verified_on) | VERIFY
+#   as_of:       date the provider states for the figure, or null if the page states none
+#   source_url:  the official provider page or document where the figure was read
+# Stocks have no fund fee. Tickers not listed here are classified from live overview data.
 
 last_reviewed: 2026-09-30
 
 securities:
-  CASH:   {name: Cash, type: cash, asset_class: cash, sector: Cash, diversified: true, expense_ratio: 0.0, risk: 1}
-  SPAXX:  {name: Fidelity Government Money Market Fund, type: money_market, asset_class: cash, sector: Cash, diversified: true, expense_ratio: 0.0042, risk: 1}
-  VMFXX:  {name: Vanguard Federal Money Market Fund, type: money_market, asset_class: cash, sector: Cash, diversified: true, expense_ratio: 0.0011, risk: 1}
+  CASH:   {name: Cash, type: cash, asset_class: cash, sector: Cash, diversified: true, risk: 1}
+  SPAXX:  {name: Fidelity Government Money Market Fund, type: money_market, asset_class: cash, sector: Cash, diversified: true, risk: 1}
+  VMFXX:  {name: Vanguard Federal Money Market Fund, type: money_market, asset_class: cash, sector: Cash, diversified: true, risk: 1}
 
   # Broad US equity
-  VTI:    {name: Vanguard Total Stock Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  VOO:    {name: Vanguard S&P 500 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  SPY:    {name: SPDR S&P 500 ETF Trust, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.000945, risk: 6}
-  IVV:    {name: iShares Core S&P 500 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  SCHB:   {name: Schwab U.S. Broad Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  ITOT:   {name: iShares Core S&P Total U.S. Stock Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  FXAIX:  {name: Fidelity 500 Index Fund, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.00015, risk: 6}
-  VTSAX:  {name: Vanguard Total Stock Market Index Fund Admiral Shares, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0004, risk: 6}
-  VFIAX:  {name: Vanguard 500 Index Fund Admiral Shares, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0004, risk: 6}
-  SWTSX:  {name: Schwab Total Stock Market Index Fund, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0003, risk: 6}
-  QQQ:    {name: Invesco QQQ Trust, type: etf, asset_class: equity, sector: Technology, diversified: true, expense_ratio: 0.0020, risk: 7}
-  DIA:    {name: SPDR Dow Jones Industrial Average ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0016, risk: 6}
-  IWM:    {name: iShares Russell 2000 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0019, risk: 7}
-  VUG:    {name: Vanguard Growth ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0004, risk: 7}
-  VTV:    {name: Vanguard Value ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0004, risk: 6}
-  SCHD:   {name: Schwab U.S. Dividend Equity ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0006, risk: 6}
-  VIG:    {name: Vanguard Dividend Appreciation ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0005, risk: 6}
-  VYM:    {name: Vanguard High Dividend Yield ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0006, risk: 6}
+  VTI:    {name: Vanguard Total Stock Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  VOO:    {name: Vanguard S&P 500 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  SPY:    {name: SPDR S&P 500 ETF Trust, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  IVV:    {name: iShares Core S&P 500 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  SCHB:   {name: Schwab U.S. Broad Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  ITOT:   {name: iShares Core S&P Total U.S. Stock Market ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  FXAIX:  {name: Fidelity 500 Index Fund, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  VTSAX:  {name: Vanguard Total Stock Market Index Fund Admiral Shares, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  VFIAX:  {name: Vanguard 500 Index Fund Admiral Shares, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  SWTSX:  {name: Schwab Total Stock Market Index Fund, type: mutual_fund, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  QQQ:    {name: Invesco QQQ Trust, type: etf, asset_class: equity, sector: Technology, diversified: true, risk: 7}
+  DIA:    {name: SPDR Dow Jones Industrial Average ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  IWM:    {name: iShares Russell 2000 ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 7}
+  VUG:    {name: Vanguard Growth ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 7}
+  VTV:    {name: Vanguard Value ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  SCHD:   {name: Schwab U.S. Dividend Equity ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  VIG:    {name: Vanguard Dividend Appreciation ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
+  VYM:    {name: Vanguard High Dividend Yield ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
 
   # International and global equity
-  VXUS:   {name: Vanguard Total International Stock ETF, type: etf, asset_class: equity, sector: International, diversified: true, expense_ratio: 0.0005, risk: 6}
-  VEA:    {name: Vanguard FTSE Developed Markets ETF, type: etf, asset_class: equity, sector: International, diversified: true, expense_ratio: 0.0003, risk: 6}
-  VWO:    {name: Vanguard FTSE Emerging Markets ETF, type: etf, asset_class: equity, sector: International, diversified: true, expense_ratio: 0.0007, risk: 7}
-  IXUS:   {name: iShares Core MSCI Total International Stock ETF, type: etf, asset_class: equity, sector: International, diversified: true, expense_ratio: 0.0007, risk: 6}
-  VT:     {name: Vanguard Total World Stock ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, expense_ratio: 0.0006, risk: 6}
+  VXUS:   {name: Vanguard Total International Stock ETF, type: etf, asset_class: equity, sector: International, diversified: true, risk: 6}
+  VEA:    {name: Vanguard FTSE Developed Markets ETF, type: etf, asset_class: equity, sector: International, diversified: true, risk: 6}
+  VWO:    {name: Vanguard FTSE Emerging Markets ETF, type: etf, asset_class: equity, sector: International, diversified: true, risk: 7}
+  IXUS:   {name: iShares Core MSCI Total International Stock ETF, type: etf, asset_class: equity, sector: International, diversified: true, risk: 6}
+  VT:     {name: Vanguard Total World Stock ETF, type: etf, asset_class: equity, sector: Broad Market, diversified: true, risk: 6}
 
   # Bonds and cash-like funds
-  BND:    {name: Vanguard Total Bond Market ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0003, risk: 3}
-  AGG:    {name: iShares Core U.S. Aggregate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0003, risk: 3}
-  BNDX:   {name: Vanguard Total International Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0007, risk: 3}
-  TLT:    {name: iShares 20+ Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0015, risk: 5}
-  IEF:    {name: iShares 7-10 Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0015, risk: 3}
-  SHY:    {name: iShares 1-3 Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0015, risk: 2}
-  VTIP:   {name: Vanguard Short-Term Inflation-Protected Securities ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0003, risk: 2}
-  TIP:    {name: iShares TIPS Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0018, risk: 3}
-  LQD:    {name: iShares iBoxx $ Investment Grade Corporate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0014, risk: 4}
-  HYG:    {name: iShares iBoxx $ High Yield Corporate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0049, risk: 5}
-  MUB:    {name: iShares National Muni Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, expense_ratio: 0.0005, risk: 3}
-  SGOV:   {name: iShares 0-3 Month Treasury Bond ETF, type: etf, asset_class: cash, sector: Cash, diversified: true, expense_ratio: 0.0009, risk: 1}
-  BIL:    {name: SPDR Bloomberg 1-3 Month T-Bill ETF, type: etf, asset_class: cash, sector: Cash, diversified: true, expense_ratio: 0.001356, risk: 1}
+  BND:    {name: Vanguard Total Bond Market ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  AGG:    {name: iShares Core U.S. Aggregate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  BNDX:   {name: Vanguard Total International Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  TLT:    {name: iShares 20+ Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 5}
+  IEF:    {name: iShares 7-10 Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  SHY:    {name: iShares 1-3 Year Treasury Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 2}
+  VTIP:   {name: Vanguard Short-Term Inflation-Protected Securities ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 2}
+  TIP:    {name: iShares TIPS Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  LQD:    {name: iShares iBoxx $ Investment Grade Corporate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 4}
+  HYG:    {name: iShares iBoxx $ High Yield Corporate Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 5}
+  MUB:    {name: iShares National Muni Bond ETF, type: etf, asset_class: bond, sector: Fixed Income, diversified: true, risk: 3}
+  SGOV:   {name: iShares 0-3 Month Treasury Bond ETF, type: etf, asset_class: cash, sector: Cash, diversified: true, risk: 1}
+  BIL:    {name: SPDR Bloomberg 1-3 Month T-Bill ETF, type: etf, asset_class: cash, sector: Cash, diversified: true, risk: 1}
 
   # Multi-asset (look-through allocation)
-  AOK:    {name: iShares Core 30/70 Conservative Allocation ETF, type: etf, asset_class: bond, allocation: {equity: 0.3, bond: 0.7}, sector: Broad Market, diversified: true, expense_ratio: 0.0015, risk: 3}
-  AOR:    {name: iShares Core 60/40 Balanced Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.6, bond: 0.4}, sector: Broad Market, diversified: true, expense_ratio: 0.0015, risk: 5}
-  AOA:    {name: iShares Core 80/20 Aggressive Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.8, bond: 0.2}, sector: Broad Market, diversified: true, expense_ratio: 0.0015, risk: 6}
+  AOK:    {name: iShares Core 30/70 Conservative Allocation ETF, type: etf, asset_class: bond, allocation: {equity: 0.3, bond: 0.7}, sector: Broad Market, diversified: true, risk: 3}
+  AOR:    {name: iShares Core 60/40 Balanced Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.6, bond: 0.4}, sector: Broad Market, diversified: true, risk: 5}
+  AOA:    {name: iShares Core 80/20 Aggressive Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.8, bond: 0.2}, sector: Broad Market, diversified: true, risk: 6}
 
   # Real assets and crypto
-  VNQ:    {name: Vanguard Real Estate ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, expense_ratio: 0.0013, risk: 7}
-  SCHH:   {name: Schwab U.S. REIT ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, expense_ratio: 0.0007, risk: 7}
-  GLD:    {name: SPDR Gold Shares, type: etf, asset_class: commodity, sector: Commodities, diversified: true, expense_ratio: 0.0040, risk: 6}
-  IAU:    {name: iShares Gold Trust, type: etf, asset_class: commodity, sector: Commodities, diversified: true, expense_ratio: 0.0025, risk: 6}
-  IBIT:   {name: iShares Bitcoin Trust ETF, type: etf, asset_class: crypto, sector: Crypto, diversified: false, expense_ratio: 0.0025, risk: 10}
-  FBTC:   {name: Fidelity Wise Origin Bitcoin Fund, type: etf, asset_class: crypto, sector: Crypto, diversified: false, expense_ratio: 0.0025, risk: 10}
+  VNQ:    {name: Vanguard Real Estate ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, risk: 7}
+  SCHH:   {name: Schwab U.S. REIT ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, risk: 7}
+  GLD:    {name: SPDR Gold Shares, type: etf, asset_class: commodity, sector: Commodities, diversified: true, risk: 6}
+  IAU:    {name: iShares Gold Trust, type: etf, asset_class: commodity, sector: Commodities, diversified: true, risk: 6}
+  IBIT:   {name: iShares Bitcoin Trust ETF, type: etf, asset_class: crypto, sector: Crypto, diversified: false, risk: 10}
+  FBTC:   {name: Fidelity Wise Origin Bitcoin Fund, type: etf, asset_class: crypto, sector: Crypto, diversified: false, risk: 10}
 
   # Sector funds (diversified across companies, concentrated in one sector)
-  XLK:    {name: Technology Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Technology, diversified: true, expense_ratio: 0.0008, risk: 7}
-  VGT:    {name: Vanguard Information Technology ETF, type: etf, asset_class: equity, sector: Technology, diversified: true, expense_ratio: 0.0009, risk: 7}
-  XLF:    {name: Financial Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Financials, diversified: true, expense_ratio: 0.0008, risk: 7}
-  XLV:    {name: Health Care Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Health Care, diversified: true, expense_ratio: 0.0008, risk: 6}
-  XLE:    {name: Energy Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Energy, diversified: true, expense_ratio: 0.0008, risk: 8}
-  XLY:    {name: Consumer Discretionary Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Consumer Discretionary, diversified: true, expense_ratio: 0.0008, risk: 7}
-  XLP:    {name: Consumer Staples Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Consumer Staples, diversified: true, expense_ratio: 0.0008, risk: 5}
-  XLI:    {name: Industrial Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Industrials, diversified: true, expense_ratio: 0.0008, risk: 7}
-  XLB:    {name: Materials Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Materials, diversified: true, expense_ratio: 0.0008, risk: 7}
-  XLU:    {name: Utilities Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Utilities, diversified: true, expense_ratio: 0.0008, risk: 5}
-  XLRE:   {name: Real Estate Select Sector SPDR Fund, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, expense_ratio: 0.0008, risk: 7}
-  XLC:    {name: Communication Services Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Communication Services, diversified: true, expense_ratio: 0.0008, risk: 7}
+  XLK:    {name: Technology Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Technology, diversified: true, risk: 7}
+  VGT:    {name: Vanguard Information Technology ETF, type: etf, asset_class: equity, sector: Technology, diversified: true, risk: 7}
+  XLF:    {name: Financial Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Financials, diversified: true, risk: 7}
+  XLV:    {name: Health Care Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Health Care, diversified: true, risk: 6}
+  XLE:    {name: Energy Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Energy, diversified: true, risk: 8}
+  XLY:    {name: Consumer Discretionary Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Consumer Discretionary, diversified: true, risk: 7}
+  XLP:    {name: Consumer Staples Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Consumer Staples, diversified: true, risk: 5}
+  XLI:    {name: Industrial Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Industrials, diversified: true, risk: 7}
+  XLB:    {name: Materials Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Materials, diversified: true, risk: 7}
+  XLU:    {name: Utilities Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Utilities, diversified: true, risk: 5}
+  XLRE:   {name: Real Estate Select Sector SPDR Fund, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, risk: 7}
+  XLC:    {name: Communication Services Select Sector SPDR Fund, type: etf, asset_class: equity, sector: Communication Services, diversified: true, risk: 7}
 
   # Individual stocks
   AAPL:   {name: Apple Inc., type: stock, asset_class: equity, sector: Technology, diversified: false, risk: 8}
@@ -112,3 +115,361 @@ securities:
   WMT:    {name: Walmart Inc., type: stock, asset_class: equity, sector: Consumer Staples, diversified: false, risk: 6}
   COST:   {name: Costco Wholesale Corporation, type: stock, asset_class: equity, sector: Consumer Staples, diversified: false, risk: 7}
   XOM:    {name: Exxon Mobil Corporation, type: stock, asset_class: equity, sector: Energy, diversified: false, risk: 8}
+
+# Verified 2026-09-30 against each provider's official page or fact sheet.
+# SPDR pages list a gross expense ratio only. Where both appear, the net ratio is used.
+expense_ratios:
+  SPAXX:
+    ratio: 0.0042
+    status: verified
+    as_of: 2026-06-29
+    verified_on: 2026-09-30
+    source_url: "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2FB-CSPU-SUM.PDF"
+  VMFXX:
+    ratio: 0.0011
+    status: verified
+    as_of: 2025-12-19
+    verified_on: 2026-09-30
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0033.pdf"
+  VTI:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0970.pdf"
+  VOO:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0968.pdf"
+  SPY:
+    ratio: 0.000945
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy"
+  IVV:
+    ratio: 0.0003
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf"
+  SCHB:
+    ratio: 0.0003
+    status: VERIFY
+    as_of: null
+    verified_on: null
+    source_url: "https://www.schwabassetmanagement.com/products/schb"
+  ITOT:
+    ratio: 0.0003
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239724/ishares-core-sp-total-us-stock-market-etf"
+  FXAIX:
+    ratio: 0.00015
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F770893.PDF"
+  VTSAX:
+    ratio: 0.0004
+    status: verified
+    as_of: 2026-04-28
+    verified_on: 2026-09-30
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0585.pdf"
+  VFIAX:
+    ratio: 0.0004
+    status: verified
+    as_of: 2026-04-28
+    verified_on: 2026-09-30
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0540.pdf"
+  SWTSX:
+    ratio: 0.0003
+    status: VERIFY
+    as_of: null
+    verified_on: null
+    source_url: "https://www.schwab.com/research/mutual-funds/quotes/summary/swtsx"
+  QQQ:
+    ratio: 0.0018
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.invesco.com/qqq-etf/en/home.html"
+  DIA:
+    ratio: 0.0016
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/us/en/intermediary/etfs/spdr-dow-jones-industrial-average-etf-trust-dia"
+  IWM:
+    ratio: 0.0019
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf"
+  VUG:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0967.pdf"
+  VTV:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0966.pdf"
+  SCHD:
+    ratio: 0.0006
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://bynder.schwab.com/m/3fc90e8c7dd8c3f7"
+  VIG:
+    ratio: 0.0004
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0920.pdf"
+  VYM:
+    ratio: 0.0004
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0923.pdf"
+  VXUS:
+    ratio: 0.0005
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F3369.pdf"
+  VEA:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0936.pdf"
+  VWO:
+    ratio: 0.0006
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0964.pdf"
+  IXUS:
+    ratio: 0.0007
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/244048/ishares-core-msci-total-international-stock-etf"
+  VT:
+    ratio: 0.0006
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F3141.pdf"
+  BND:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0928.pdf"
+  AGG:
+    ratio: 0.0003
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf"
+  BNDX:
+    ratio: 0.0007
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F3711.pdf"
+  TLT:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf"
+  IEF:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239456/ishares-710-year-treasury-bond-etf"
+  SHY:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239452/ishares-13-year-treasury-bond-etf"
+  VTIP:
+    ratio: 0.0003
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F3365.pdf"
+  TIP:
+    ratio: 0.0018
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239467/ishares-tips-bond-etf"
+  LQD:
+    ratio: 0.0014
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239566/ishares-iboxx-investment-grade-corporate-bond-etf"
+  HYG:
+    ratio: 0.0049
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf"
+  MUB:
+    ratio: 0.0005
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239766/ishares-national-muni-bond-etf"
+  SGOV:
+    ratio: 0.0009
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/314116/ishares-0-3-month-treasury-bond-etf"
+  BIL:
+    ratio: 0.001353
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/us/en/intermediary/etfs/spdr-bloomberg-1-3-month-t-bill-etf-bil"
+  AOK:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239733/ishares-conservative-allocation-etf"
+  AOR:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239756/ishares-growth-allocation-etf"
+  AOA:
+    ratio: 0.0015
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239729/ishares-aggressive-allocation-etf"
+  VNQ:
+    ratio: 0.0013
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0986.pdf"
+  SCHH:
+    ratio: 0.0007
+    status: VERIFY
+    as_of: null
+    verified_on: null
+    source_url: "https://www.schwabassetmanagement.com/products/schh"
+  GLD:
+    ratio: 0.004
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.spdrgoldshares.com/usa/gld/"
+  IAU:
+    ratio: 0.0025
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/239561/ishares-gold-trust-fund"
+  IBIT:
+    ratio: 0.0025
+    status: verified
+    as_of: null
+    verified_on: 2026-09-30
+    source_url: "https://www.ishares.com/us/products/333011/ishares-bitcoin-trust-etf"
+  FBTC:
+    ratio: 0.0025
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F9911749.PDF"
+  XLK:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLK"
+  VGT:
+    ratio: 0.0009
+    status: verified
+    as_of: 2026-06-30
+    verified_on: 2026-09-30
+    source_url: "https://fund-docs.vanguard.com/F0958.pdf"
+  XLF:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLF"
+  XLV:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-30
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLV"
+  XLE:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-30
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLE"
+  XLY:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLY"
+  XLP:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLP"
+  XLI:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLI"
+  XLB:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLB"
+  XLU:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLU"
+  XLRE:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLRE"
+  XLC:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-09-29
+    verified_on: 2026-09-30
+    source_url: "https://www.ssga.com/mainfund/XLC"
