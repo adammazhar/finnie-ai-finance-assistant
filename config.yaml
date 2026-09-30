@@ -59,3 +59,19 @@ workflow:
   summarize_after: 30
   turn_timeout_s: 120
   router_min_confidence: 0.5
+
+analytics:
+  risk_free_rate: 0.04           # annual, for Sharpe ratio (illustrative assumption)
+  trading_days_per_year: 252
+  concentration_threshold: 0.20  # single-company weight that triggers a concentration note
+  sector_concentration_threshold: 0.40
+  high_expense_ratio: 0.005      # 0.50%
+  fee_growth_rate: 0.06          # assumed annual growth for fee-drag illustrations
+  min_history_days: 60           # fewer daily returns than this -> skip risk metrics
+  history_days: 252
+  benchmark: SPY
+  monte_carlo:
+    simulations: 10000
+    t_degrees_of_freedom: 5      # fatter tails than a normal distribution
+    inflation: 0.025
+    target_success_probability: 0.80

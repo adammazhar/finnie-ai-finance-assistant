@@ -133,7 +133,27 @@ class WorkflowConfig(_Section):
     router_min_confidence: float = Field(default=0.5, ge=0, le=1)
 
 
-YAML_SECTIONS = frozenset({"app", "llm", "rag", "market_data", "workflow"})
+class MonteCarloConfig(_Section):
+    simulations: int = Field(default=10_000, ge=100, le=200_000)
+    t_degrees_of_freedom: float | None = Field(default=5, gt=2)
+    inflation: float = Field(default=0.025, ge=-0.05, le=0.5)
+    target_success_probability: float = Field(default=0.8, gt=0, lt=1)
+
+
+class AnalyticsConfig(_Section):
+    risk_free_rate: float = Field(default=0.04, ge=-0.05, le=0.5)
+    trading_days_per_year: int = Field(default=252, gt=0)
+    concentration_threshold: float = Field(default=0.20, gt=0, le=1)
+    sector_concentration_threshold: float = Field(default=0.40, gt=0, le=1)
+    high_expense_ratio: float = Field(default=0.005, ge=0)
+    fee_growth_rate: float = Field(default=0.06, ge=-0.5, le=0.5)
+    min_history_days: int = Field(default=60, ge=2)
+    history_days: int = Field(default=252, ge=2, le=5000)
+    benchmark: str = "SPY"
+    monte_carlo: MonteCarloConfig = Field(default_factory=MonteCarloConfig)
+
+
+YAML_SECTIONS = frozenset({"app", "llm", "rag", "market_data", "workflow", "analytics"})
 
 
 class Settings(BaseSettings):
@@ -159,6 +179,7 @@ class Settings(BaseSettings):
     rag: RAGConfig = Field(default_factory=RAGConfig)
     market_data: MarketDataConfig = Field(default_factory=MarketDataConfig)
     workflow: WorkflowConfig = Field(default_factory=WorkflowConfig)
+    analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
 
     @classmethod
     def settings_customise_sources(

@@ -1,0 +1,30 @@
+# Reference allocations and planning assumptions for each risk tolerance.
+#
+# These are simplified, illustrative long-run assumptions for education and for Monte Carlo
+# projections. They are not forecasts, and real returns can be much better or worse.
+# Returns are nominal (before inflation) annual averages; volatility is the annual
+# standard deviation of returns.
+
+profiles:
+  conservative:
+    label: Conservative
+    description: >-
+      Prioritizes stability. A larger share in bonds and cash means smaller swings in
+      value, with lower expected long-run growth.
+    allocation: {equity: 0.30, bond: 0.60, cash: 0.10}
+    expected_return: 0.045
+    volatility: 0.06
+  moderate:
+    label: Moderate
+    description: >-
+      Balances growth and stability, similar to the classic 60/40 stock/bond mix.
+    allocation: {equity: 0.60, bond: 0.35, cash: 0.05}
+    expected_return: 0.06
+    volatility: 0.10
+  aggressive:
+    label: Aggressive
+    description: >-
+      Prioritizes long-run growth and accepts large short-term drops. Mostly stocks.
+    allocation: {equity: 0.90, bond: 0.10, cash: 0.0}
+    expected_return: 0.075
+    volatility: 0.15

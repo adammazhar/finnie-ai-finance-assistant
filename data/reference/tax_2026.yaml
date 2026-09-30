@@ -1,0 +1,198 @@
+# US federal tax reference figures for tax year 2026, used for education only.
+#
+# status: verified | VERIFY
+#   verified: confirmed against the IRS.gov page in source_url (date in verified_on)
+#   VERIFY:   not yet confirmed against IRS.gov. Finnie shows these with an
+#             "unconfirmed figure" caveat. Verification against IRS.gov is a Phase 4 task.
+#
+# Money amounts are US dollars. Rates are fractions (0.22 = 22%).
+
+tax_year: 2026
+jurisdiction: US federal
+last_reviewed: 2026-09-30
+
+figures:
+  employee_401k_deferral_limit:
+    label: 401(k)/403(b)/most 457 plans, employee contribution limit
+    value: 24500
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits
+    status: VERIFY
+  employee_401k_catch_up_50_plus:
+    label: 401(k) catch-up contribution, age 50+
+    value: 8000
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-catch-up-contributions
+    status: VERIFY
+  employee_401k_catch_up_60_to_63:
+    label: 401(k) higher catch-up contribution, ages 60-63
+    value: 11250
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-catch-up-contributions
+    status: VERIFY
+  ira_contribution_limit:
+    label: Traditional and Roth IRA contribution limit (combined)
+    value: 7500
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits
+    status: VERIFY
+  ira_catch_up_50_plus:
+    label: IRA catch-up contribution, age 50+
+    value: 1100
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits
+    status: VERIFY
+  roth_ira_phase_out_single:
+    label: Roth IRA income phase-out range, single filers (modified AGI)
+    value: [153000, 168000]
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/amount-of-roth-ira-contributions-that-you-can-make-for-2026
+    status: VERIFY
+  roth_ira_phase_out_married_joint:
+    label: Roth IRA income phase-out range, married filing jointly (modified AGI)
+    value: [242000, 252000]
+    source_url: https://www.irs.gov/retirement-plans/plan-participant-employee/amount-of-roth-ira-contributions-that-you-can-make-for-2026
+    status: VERIFY
+  hsa_limit_self_only:
+    label: HSA contribution limit, self-only coverage
+    value: 4400
+    source_url: https://www.irs.gov/publications/p969
+    status: VERIFY
+  hsa_limit_family:
+    label: HSA contribution limit, family coverage
+    value: 8750
+    source_url: https://www.irs.gov/publications/p969
+    status: VERIFY
+  hsa_catch_up_55_plus:
+    label: HSA catch-up contribution, age 55+
+    value: 1000
+    source_url: https://www.irs.gov/publications/p969
+    status: VERIFY
+  standard_deduction_single:
+    label: Standard deduction, single
+    value: 16100
+    source_url: https://www.irs.gov/filing/federal-income-tax-rates-and-brackets
+    status: VERIFY
+  standard_deduction_married_joint:
+    label: Standard deduction, married filing jointly
+    value: 32200
+    source_url: https://www.irs.gov/filing/federal-income-tax-rates-and-brackets
+    status: VERIFY
+  gift_tax_annual_exclusion:
+    label: Annual gift tax exclusion per recipient (relevant to 529 contributions)
+    value: 19000
+    source_url: https://www.irs.gov/businesses/small-businesses-self-employed/frequently-asked-questions-on-gift-taxes
+    status: VERIFY
+  capital_loss_deduction_limit:
+    label: Net capital loss deductible against ordinary income per year ($1,500 if married filing separately)
+    value: 3000
+    source_url: https://www.irs.gov/taxtopics/tc409
+    status: VERIFY
+  long_term_holding_period_days:
+    label: Holding period for long-term capital gains (more than one year)
+    value: 365
+    source_url: https://www.irs.gov/taxtopics/tc409
+    status: VERIFY
+  wash_sale_window_days:
+    label: Wash sale rule window (days before or after the sale)
+    value: 30
+    source_url: https://www.irs.gov/publications/p550
+    status: VERIFY
+  net_investment_income_tax_rate:
+    label: Net investment income tax rate (applies above income thresholds)
+    value: 0.038
+    source_url: https://www.irs.gov/individuals/net-investment-income-tax
+    status: VERIFY
+
+brackets:
+  ordinary_income:
+    label: Ordinary income tax brackets (taxable income)
+    source_url: https://www.irs.gov/filing/federal-income-tax-rates-and-brackets
+    status: VERIFY
+    single:
+      - {rate: 0.10, up_to: 12400}
+      - {rate: 0.12, up_to: 50400}
+      - {rate: 0.22, up_to: 105700}
+      - {rate: 0.24, up_to: 201775}
+      - {rate: 0.32, up_to: 256225}
+      - {rate: 0.35, up_to: 640600}
+      - {rate: 0.37, up_to: null}
+    married_joint:
+      - {rate: 0.10, up_to: 24800}
+      - {rate: 0.12, up_to: 100800}
+      - {rate: 0.22, up_to: 211400}
+      - {rate: 0.24, up_to: 403550}
+      - {rate: 0.32, up_to: 512450}
+      - {rate: 0.35, up_to: 768700}
+      - {rate: 0.37, up_to: null}
+  long_term_capital_gains:
+    label: Long-term capital gains and qualified dividend rates (taxable income)
+    source_url: https://www.irs.gov/taxtopics/tc409
+    status: VERIFY
+    single:
+      - {rate: 0.0, up_to: 49450}
+      - {rate: 0.15, up_to: 545500}
+      - {rate: 0.20, up_to: null}
+    married_joint:
+      - {rate: 0.0, up_to: 98900}
+      - {rate: 0.15, up_to: 613700}
+      - {rate: 0.20, up_to: null}
+
+accounts:
+  traditional_401k:
+    name: Traditional 401(k)
+    contributions: Pre-tax (lowers taxable income now)
+    growth: Tax-deferred
+    withdrawals: Taxed as ordinary income
+    limit_figures: [employee_401k_deferral_limit, employee_401k_catch_up_50_plus, employee_401k_catch_up_60_to_63]
+    early_withdrawal: Generally a 10% additional tax before age 59½, with some exceptions
+    required_distributions: Yes, starting at the required beginning age
+    notes: Many employers match part of contributions, which is extra money toward retirement.
+  roth_401k:
+    name: Roth 401(k)
+    contributions: After-tax (no deduction now)
+    growth: Tax-free
+    withdrawals: Tax-free if qualified (generally age 59½ and account open 5+ years)
+    limit_figures: [employee_401k_deferral_limit, employee_401k_catch_up_50_plus]
+    early_withdrawal: Earnings may be taxed and penalized if withdrawn early
+    required_distributions: No lifetime required distributions for Roth 401(k)s starting in 2024
+    notes: Shares the same employee limit as the traditional 401(k).
+  traditional_ira:
+    name: Traditional IRA
+    contributions: Possibly tax-deductible, depending on income and workplace plan coverage
+    growth: Tax-deferred
+    withdrawals: Taxed as ordinary income (deductible contributions and earnings)
+    limit_figures: [ira_contribution_limit, ira_catch_up_50_plus]
+    early_withdrawal: Generally a 10% additional tax before age 59½, with some exceptions
+    required_distributions: Yes, starting at the required beginning age
+    notes: The IRA limit is shared between traditional and Roth IRAs.
+  roth_ira:
+    name: Roth IRA
+    contributions: After-tax; eligibility phases out at higher incomes
+    growth: Tax-free
+    withdrawals: Contributions can come out any time; earnings are tax-free if qualified
+    limit_figures: [ira_contribution_limit, ira_catch_up_50_plus, roth_ira_phase_out_single, roth_ira_phase_out_married_joint]
+    early_withdrawal: Earnings withdrawn early may be taxed and penalized
+    required_distributions: None for the original owner
+    notes: Often discussed for people who expect higher tax rates later.
+  hsa:
+    name: Health Savings Account (HSA)
+    contributions: Pre-tax or deductible (requires a high-deductible health plan)
+    growth: Tax-free
+    withdrawals: Tax-free for qualified medical expenses
+    limit_figures: [hsa_limit_self_only, hsa_limit_family, hsa_catch_up_55_plus]
+    early_withdrawal: Non-medical withdrawals before 65 are taxed plus a 20% additional tax
+    required_distributions: None
+    notes: Sometimes called triple tax-advantaged when used for medical costs.
+  plan_529:
+    name: 529 Education Savings Plan
+    contributions: After-tax federally (some states offer deductions)
+    growth: Tax-free
+    withdrawals: Tax-free for qualified education expenses
+    limit_figures: [gift_tax_annual_exclusion]
+    early_withdrawal: Earnings on non-qualified withdrawals are taxed plus a 10% additional tax
+    required_distributions: None
+    notes: No federal annual contribution limit; large gifts interact with gift tax rules.
+  taxable_brokerage:
+    name: Taxable Brokerage Account
+    contributions: After-tax, no limit
+    growth: Dividends and realized gains are taxed each year
+    withdrawals: Only gains are taxed; long-term gains get lower rates
+    limit_figures: [long_term_holding_period_days, capital_loss_deduction_limit, wash_sale_window_days]
+    early_withdrawal: No age restrictions
+    required_distributions: None
+    notes: Flexible, and losses can offset gains (tax-loss harvesting).

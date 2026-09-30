@@ -4,6 +4,7 @@ pytest-cov==7.1.0
 pytest-mock==3.16.0
 pytest-socket==0.8.1
 responses==0.26.3
+hypothesis==6.168.3
 ruff==0.16.9
 mypy==2.3.1
 types-PyYAML==6.0.12.20260906

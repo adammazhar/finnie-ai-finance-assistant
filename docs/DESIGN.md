@@ -316,6 +316,22 @@ Output is framed as **educational observations**, e.g. *"TSLA is 62% of this por
 
 SPY, QQQ, DIA, and IWM serve as index proxies. The 11 SPDR sector ETFs cover sector performance. Indicators are **computed locally** from daily history to save API quota: SMA 50/200, RSI 14, 30-day realized volatility, 52-week range position, and golden/death-cross detection. A rule-based `market_mood` summary (breadth, trend, volatility) goes to the LLM, which interprets it in plain English.
 
+### 3.4 Implementation notes (Phase 3)
+
+- **Pure analytics, thin orchestration.** `analyze_portfolio()` takes holdings, prices, classifications, and optional histories and does no I/O, so every metric is tested against hand-computed values. `fetch_and_analyze()` gathers those inputs from the market data service. A missing price drops that holding (and says so), missing history skips risk metrics, and an unknown ticker is classified from its company overview with `known=False`.
+- **Diversification score (0–100)** has three parts:
+
+  | Part | Weight | Formula |
+  |---|---|---|
+  | Company concentration | 40% | `1 − sqrt(Σ w²)` over single-company holdings only (broad funds add no company risk) |
+  | Asset-class mix | 30% | `(1 − HHI) / (1 − 1/3)` across asset classes, capped at 1 |
+  | Sector spread | 30% | `(1 − HHI) / (1 − 1/11)` across the stock portion's sectors, with broad funds spread evenly, capped at 1 |
+
+  Reference points: one stock scores 0, 100% VTI scores 70, and 60/40 VTI/BND scores 91.6.
+- **Risk score (1–10):** the value-weighted average of each security's educational risk rating (`securities.yaml`), blended 50/50 with a volatility score (`1 + 25 × annualized volatility`, clipped to 1–10) when price history is available.
+- **Monte Carlo.** Each path's final balance is `B₀·G + c·A`, which is linear in the monthly contribution `c`. The simulation stores `G` and `A` per path at each year end. That gives exact success probabilities for any contribution, and the contribution needed for a target probability is the p-quantile of `(target − B₀·G) / A`, rounded up to the cent, with no search loop. Shocks are drawn one month at a time, so memory scales with the number of paths, not paths × months. Measured: 10k paths × 40 years in about 160 ms, and × 60 years in about 230 ms.
+- **Observations** are generated from rules, never by the LLM, and are phrased as education. A test checks they never contain "you should", "buy", or "sell".
+
 ---
 
 ## 4. RAG Design (`src/rag/`)
