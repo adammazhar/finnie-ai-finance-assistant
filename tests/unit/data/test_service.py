@@ -19,11 +19,14 @@ from src.data.service import MarketDataService, build_market_data_service
 from tests.fakes.market import BatchScriptedProvider, FakeYF, ScriptedProvider, price_frame
 
 
-def make_service(cache, md_config, clock, sleeps, price=(), news=(), mock=True, budget=None):
+def make_service(
+    cache, md_config, clock, sleeps, price=(), overview=None, news=(), mock=True, budget=None
+):
     return MarketDataService(
         cache=cache,
         config=md_config,
         price_providers=list(price),
+        overview_providers=None if overview is None else list(overview),
         news_providers=list(news),
         mock=MockMarketDataProvider(clock=clock) if mock else None,
         budget=budget,
@@ -44,45 +47,71 @@ def yfp(clock):
 
 @pytest.fixture
 def svc(cache, md_config, clock, sleeps, av, yfp):
-    return make_service(cache, md_config, clock, sleeps, price=[av, yfp], news=[yfp, av])
+    """Production order: quotes/history yfinance first, overviews Alpha Vantage first."""
+    return make_service(
+        cache, md_config, clock, sleeps, price=[yfp, av], overview=[av, yfp], news=[yfp, av]
+    )
+
+
+def test_quotes_and_history_try_yfinance_first(svc, av, yfp):
+    assert svc.get_quote("AAPL").freshness.source == "yfinance"
+    assert svc.get_daily_history("AAPL", 10).freshness.source == "yfinance"
+    assert av.calls_to("get_quote") == 0 and av.calls_to("get_daily_history") == 0
+
+
+def test_overviews_try_alpha_vantage_first(svc, av, yfp):
+    assert svc.get_company_overview("AAPL").freshness.source == "alpha_vantage"
+    assert yfp.calls_to("get_company_overview") == 0
+
+
+def test_quote_and_history_fall_back_to_alpha_vantage(svc, av, yfp):
+    yfp.scripts["get_quote"] = [ProviderError("yahoo down")]
+    yfp.scripts["get_daily_history"] = [RateLimitError("429")]
+    assert svc.get_quote("AAPL").freshness.source == "alpha_vantage"
+    assert svc.get_daily_history("AAPL", 10).freshness.source == "alpha_vantage"
+
+
+def test_overview_chain_defaults_to_price_chain(cache, md_config, clock, sleeps, av):
+    solo = make_service(cache, md_config, clock, sleeps, price=[av])
+    assert solo.get_company_overview("AAPL").freshness.source == "alpha_vantage"
 
 
 def test_primary_success_is_cached_for_ttl(svc, av, yfp, clock):
     q = svc.get_quote("aapl")
     assert q.ticker == "AAPL" and q.freshness.status == "live"
-    assert q.freshness.source == "alpha_vantage"
+    assert q.freshness.source == "yfinance"
 
     clock.advance(minutes=29)
     cached = svc.get_quote("AAPL")
-    assert cached.freshness.status == "cached" and cached.freshness.origin == "alpha_vantage"
+    assert cached.freshness.status == "cached" and cached.freshness.origin == "yfinance"
     assert cached.freshness.fetched_at == q.freshness.fetched_at
-    assert av.calls_to("get_quote") == 1 and yfp.calls_to("get_quote") == 0
+    assert yfp.calls_to("get_quote") == 1 and av.calls_to("get_quote") == 0
 
     clock.advance(minutes=2)  # past the 30-minute TTL
     assert svc.get_quote("AAPL").freshness.status == "live"
-    assert av.calls_to("get_quote") == 2
+    assert yfp.calls_to("get_quote") == 2
 
 
-def test_transient_errors_retry_with_backoff(svc, av, sleeps):
-    av.scripts["get_quote"] = [TransientProviderError("503"), TransientProviderError("503")]
-    assert svc.get_quote("AAPL").freshness.source == "alpha_vantage"
-    assert av.calls_to("get_quote") == 3 and len(sleeps) == 2
+def test_transient_errors_retry_with_backoff(svc, yfp, sleeps):
+    yfp.scripts["get_quote"] = [TransientProviderError("503"), TransientProviderError("503")]
+    assert svc.get_quote("AAPL").freshness.source == "yfinance"
+    assert yfp.calls_to("get_quote") == 3 and len(sleeps) == 2
 
 
 def test_rate_limit_falls_through_immediately(svc, av, yfp, sleeps):
-    av.scripts["get_quote"] = [RateLimitError("Note")]
-    assert svc.get_quote("AAPL").freshness.source == "yfinance"
-    assert av.calls_to("get_quote") == 1 and sleeps == []
+    yfp.scripts["get_quote"] = [RateLimitError("429")]
+    assert svc.get_quote("AAPL").freshness.source == "alpha_vantage"
+    assert yfp.calls_to("get_quote") == 1 and sleeps == []
 
 
 def test_exhausted_retries_fall_through(svc, av, yfp):
-    av.scripts["get_quote"] = [TransientProviderError("x")] * 3
-    assert svc.get_quote("AAPL").freshness.source == "yfinance"
+    yfp.scripts["get_quote"] = [TransientProviderError("x")] * 3
+    assert svc.get_quote("AAPL").freshness.source == "alpha_vantage"
 
 
-def test_unexpected_provider_bug_is_contained(svc, av, caplog):
-    av.scripts["get_quote"] = [KeyError("boom")]
-    assert svc.get_quote("AAPL").freshness.source == "yfinance"
+def test_unexpected_provider_bug_is_contained(svc, yfp, caplog):
+    yfp.scripts["get_quote"] = [KeyError("boom")]
+    assert svc.get_quote("AAPL").freshness.source == "alpha_vantage"
     assert "Unexpected provider error" in caplog.text
 
 
@@ -129,16 +158,16 @@ def test_no_providers_and_no_mock(cache, md_config, clock, sleeps):
         bare.get_quote("AAPL")
 
 
-def test_invalid_ticker_rejected_before_any_call(svc, av):
+def test_invalid_ticker_rejected_before_any_call(svc, av, yfp):
     with pytest.raises(InvalidTickerError):
         svc.get_quote("DROP TABLE")
-    assert av.calls == []
+    assert av.calls == [] and yfp.calls == []
 
 
-def test_corrupt_cache_entry_is_dropped(svc, cache, av):
-    cache.set("quote:AAPL", {"unexpected": True}, source="alpha_vantage")
+def test_corrupt_cache_entry_is_dropped(svc, cache, yfp):
+    cache.set("quote:AAPL", {"unexpected": True}, source="yfinance")
     assert svc.get_quote("AAPL").freshness.status == "live"
-    assert av.calls_to("get_quote") == 1
+    assert yfp.calls_to("get_quote") == 1
 
 
 def test_mock_results_stay_flagged_after_caching(svc, av, yfp, clock):
@@ -146,10 +175,10 @@ def test_mock_results_stay_flagged_after_caching(svc, av, yfp, clock):
     yfp.scripts["get_quote"] = [ProviderError("down")]
     svc.get_quote("KO")
     # demo data is not written to cache, so the next call tries providers again
-    assert svc.get_quote("KO").freshness.source == "alpha_vantage"
+    assert svc.get_quote("KO").freshness.source == "yfinance"
 
 
-def test_history_and_overview_use_longer_ttl(svc, av, clock):
+def test_history_and_overview_use_longer_ttl(svc, av, yfp, clock):
     hist = svc.get_daily_history("VOO", 30)
     assert len(hist.bars) == 30
     clock.advance(hours=11)
@@ -157,7 +186,8 @@ def test_history_and_overview_use_longer_ttl(svc, av, clock):
     svc.get_company_overview("VOO")
     clock.advance(hours=11)
     assert svc.get_company_overview("VOO").freshness.status == "cached"
-    assert av.calls_to("get_daily_history") == 1
+    assert yfp.calls_to("get_daily_history") == 1
+    assert av.calls_to("get_company_overview") == 1
 
 
 @pytest.mark.parametrize("days", [0, 5001])
@@ -175,9 +205,10 @@ def test_batch_quotes_mix_cache_batch_and_errors(svc, av, yfp, clock):
     assert (
         result.quotes["MSFT"].price == 50 and result.quotes["MSFT"].freshness.source == "yfinance"
     )
-    assert result.quotes["BRK.B"].freshness.source == "alpha_vantage"  # individual fallback
+    # BRK.B was missing from the batch, so it was fetched on its own
+    assert ("get_quote", ("BRK.B",)) in yfp.calls
     assert "bad ticker" in result.errors
-    assert yfp.calls[0] == ("get_quotes", (["MSFT", "GOOGL", "BRK.B", "VTI"],))
+    assert ("get_quotes", (["MSFT", "GOOGL", "BRK.B", "VTI"],)) in yfp.calls
     # batch results are cached for later single lookups
     assert svc.get_quote("GOOGL").freshness.status == "cached"
 
@@ -189,8 +220,8 @@ def test_batch_below_threshold_goes_individually(svc, yfp):
 
 def test_batch_failure_falls_back_to_individual(svc, av, yfp):
     yfp.scripts["get_quotes"] = [ProviderError("download failed")]
-    av.scripts["get_quote"] = [ProviderError("x")]  # AAPL fails on AV
-    yfp.scripts["get_quote"] = [ProviderError("x")]  # ...and on yfinance -> mock
+    yfp.scripts["get_quote"] = [ProviderError("x")]  # AAPL fails on yfinance
+    av.scripts["get_quote"] = [ProviderError("x")]  # ...and on Alpha Vantage -> demo data
     result = svc.get_quotes(["AAPL", "MSFT", "ZZZZ"])
     assert result.quotes["AAPL"].freshness.is_mock
     assert set(result.quotes) >= {"AAPL"}
@@ -256,7 +287,7 @@ def test_provider_status(cache, md_config, clock, sleeps, av, yfp):
 
     budget = DailyBudget(cache, "alpha_vantage", 25, clock=clock)
     budget.try_consume()
-    svc = make_service(cache, md_config, clock, sleeps, price=[av, yfp], news=[yfp], budget=budget)
+    svc = make_service(cache, md_config, clock, sleeps, price=[yfp, av], news=[yfp], budget=budget)
     status = {s.name: s for s in svc.provider_status()}
     assert status["alpha_vantage"].detail == "24 requests left today"
     assert status["yfinance"].detail == "available (no key needed)"
@@ -286,6 +317,7 @@ def test_build_without_keys_uses_yfinance_only(tmp_path, monkeypatch, clock):
         settings_with(tmp_path, monkeypatch), clock=clock, yf_module=FakeYF()
     )
     assert [p.name for p in svc._price] == ["yfinance"]
+    assert [p.name for p in svc._overview] == ["yfinance"]
     assert [p.name for p in svc._news] == ["yfinance"]
     assert (tmp_path / "cache.sqlite").exists()
 
@@ -298,7 +330,8 @@ def test_build_with_all_keys_orders_chains(tmp_path, monkeypatch, clock):
         TAVILY_API_KEY="tvly-fake-00000000",
     )
     svc = build_market_data_service(s, clock=clock, yf_module=FakeYF())
-    assert [p.name for p in svc._price] == ["alpha_vantage", "yfinance"]
+    assert [p.name for p in svc._price] == ["yfinance", "alpha_vantage"]
+    assert [p.name for p in svc._overview] == ["alpha_vantage", "yfinance"]
     assert [p.name for p in svc._news] == ["yfinance", "tavily", "alpha_vantage"]
     assert svc.provider_status()[0].detail == "25 requests left today"
 
@@ -325,12 +358,12 @@ def test_get_market_data_service_is_cached(monkeypatch):
 
 def test_secret_str_keys_are_passed_through(tmp_path, monkeypatch, clock):
     s = settings_with(tmp_path, monkeypatch, ALPHA_VANTAGE_API_KEY="FAKEAV1234567890")
-    av = build_market_data_service(s, clock=clock, yf_module=FakeYF())._price[0]
+    av = build_market_data_service(s, clock=clock, yf_module=FakeYF())._overview[0]
     assert isinstance(av._api_key, SecretStr)
 
 
 def test_unreadable_stale_entry_falls_through_to_demo(svc, cache, av, yfp):
-    cache.set("quote:KO", {"broken": True}, source="alpha_vantage")
+    cache.set("quote:KO", {"broken": True}, source="yfinance")
     av.scripts["get_quote"] = [ProviderError("down")]
     yfp.scripts["get_quote"] = [ProviderError("down")]
     assert svc.get_quote("KO").freshness.is_mock

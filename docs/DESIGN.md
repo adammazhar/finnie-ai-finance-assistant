@@ -15,7 +15,7 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | Multi-Agent Architecture (10) | All 6 agents, sophisticated inter-agent communication | §3: all 6 agents on one `BaseAgent` contract; staged plans; shared-state blackboard; bounded agent hand-offs |
 | LangGraph Workflow (10) | Flawless orchestration, advanced state management | §2: typed state with reducers, parallel fan-out via `Send`, checkpointed memory, follow-up query rewriting, layered fallbacks |
 | RAG (8) | Intelligent retrieval + source attribution | §4: FAISS + MiniLM, header-aware chunking, category filters, score thresholds, MMR, inline citations |
-| Real-time Data (7) | Robust integration, comprehensive error handling | §5: AV → yfinance → stale cache → mock chain, 30-min TTL, backoff, rate-limit detection, freshness badges |
+| Real-time Data (7) | Robust integration, comprehensive error handling | §5: per-lookup provider chains (yfinance ⇄ Alpha Vantage) → stale cache → mock, 30-min TTL, backoff, rate-limit detection, freshness badges |
 | MCP Server (5) | Claude Desktop integration | §9: FastMCP stdio server with 6 tools and KB resources, plus a Claude Desktop config |
 | Streamlit App (10) | Multi-tab, intuitive, responsive | §7: 5 tabs, shared session context, beginner-friendly UX |
 | Conversational Flow (8) | Perfect context preservation | §2.5: checkpointer per session, follow-up rewriting, profile and portfolio carried in state |
@@ -402,28 +402,36 @@ The UI shows sources in an expander. The Knowledge tab can open the full article
 flowchart LR
     Q["get_quote(ticker)"] --> C{"fresh cache<br/>(< 30 min)?"}
     C -- hit --> R["return (source=cache)"]
-    C -- miss --> AV["Alpha Vantage<br/>rate limiter + backoff"]
-    AV -- ok --> W["write cache"] --> R2["return (source=alpha_vantage)"]
-    AV -- fail/limit --> YF["yfinance<br/>backoff"]
-    YF -- ok --> W2["write cache"] --> R3["return (source=yfinance)"]
-    YF -- fail --> ST{"stale cache<br/>entry?"}
+    C -- miss --> YF["yfinance<br/>backoff"]
+    YF -- ok --> W["write cache"] --> R2["return (source=yfinance)"]
+    YF -- fail/limit --> AV["Alpha Vantage<br/>rate limiter + budget + backoff"]
+    AV -- ok --> W2["write cache"] --> R3["return (source=alpha_vantage)"]
+    AV -- fail --> ST{"stale cache<br/>entry?"}
     ST -- yes --> R4["return (is_stale=True)"]
     ST -- no --> MK["mock data<br/>data/reference/mock_market.json"] --> R5["return (is_mock=True)"]
 ```
 
-`MarketDataService` depends on a `MarketDataProvider` protocol (`get_quote`, `get_daily_history`, `get_company_overview`, `get_news`), which makes providers swappable and easy to fake.
+Each lookup type has its own provider order (see decision 9 in §16):
+
+| Lookup | Order |
+|---|---|
+| Quotes, daily history | yfinance → Alpha Vantage |
+| Company overview | Alpha Vantage → yfinance |
+| News | yfinance → Tavily → Alpha Vantage `NEWS_SENTIMENT` |
+
+Every chain ends with the stale cache entry, then demo data. `MarketDataService` depends on `PriceProvider` and `NewsProvider` protocols, which makes providers swappable and easy to fake.
 
 ### 5.2 Robustness details
 
 - **Alpha Vantage quirks.** The free tier is roughly **25 requests/day and 5/min**. AV returns **HTTP 200 with a `Note`/`Information` key** when rate-limited, so the client checks for this and raises `RateLimitError` instead of treating it as data. A client-side token bucket (5/min) avoids hitting the limit, and a daily budget counter in the cache skips AV once today's budget is spent.
-- **Backoff.** `tenacity`: exponential from 1s, ×2, max 3 attempts, full jitter. It retries only transient errors (timeouts, 5xx, rate limits), not 4xx or invalid symbols.
+- **Backoff.** `tenacity`: exponential from 1s, ×2, max 3 attempts, full jitter. It retries only transient errors (timeouts, connection failures, 5xx). Rate limits, other 4xx, and unknown symbols move straight to the next provider.
 - **Timeouts** are 10s per request. **Symbol validation** is `^[A-Z.\-^]{1,10}$`, rejected before any network call.
 - **Cache.** SQLite table `(key, payload_json, fetched_at, source)`. TTL is 30 min for quotes and news and 12h for daily history and company overview (config). Expired rows are kept for stale fallback. The clock is injectable for tests.
 - **Batching.** `get_quotes([...])` checks the cache first and fetches only misses, with yfinance batch download for many tickers.
 
 ### 5.3 Implementation notes (Phase 2, verified against live APIs on 2026-09-30)
 
-- **Alpha Vantage free `GLOBAL_QUOTE` is end-of-day.** During the session on Sep 30 it returned the Sep 29 close, while yfinance returned the current session. The badge therefore shows the market date whenever data is more than an hour older than the fetch (for example, *Live · just now · prices as of Sep 29, 04:00 PM ET*).
+- **Alpha Vantage free `GLOBAL_QUOTE` is end-of-day.** During the session on Sep 30 it returned the Sep 29 close, while yfinance returned the current session. As a result, quotes and history now try yfinance first (decision 9). The badge also shows the market date whenever data is more than an hour older than the fetch (for example, *Live · just now · prices as of Sep 29, 04:00 PM ET*), so a fallback to Alpha Vantage stays clearly labelled.
 - **Long history comes from yfinance.** The free `TIME_SERIES_DAILY` returns only 100 compact bars. Requests for more are passed to yfinance, which also returns split- and dividend-adjusted closes (`PriceHistory.adjusted`).
 - **Batching.** `get_quotes()` sends 3 or more uncached tickers (`market_data.batch_threshold`) to one yfinance batch download instead of spending Alpha Vantage budget per ticker.
 - **Demo data is limited.** Demo data exists only for the ~36 tickers in `data/reference/mock_market.json`. An unknown ticker gets "not found" or "unavailable", never invented prices. Demo results are never written to the cache.
@@ -754,3 +762,4 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 6 | GitHub Actions CI is included. |
 | 7 | The owner spot-checks knowledge base articles before they are committed. |
 | 8 | Work stops at the end of every phase for owner review before committing. `.env` and `docs/ik/` are never staged. |
+| 9 | *(2026-09-30, after Phase 2)* **Quotes and daily price history try yfinance first, with Alpha Vantage as the fallback. Company overviews keep Alpha Vantage first, and the news order (decision 5) is unchanged.** Reason: the Phase 2 live smoke check showed that Alpha Vantage's free `GLOBAL_QUOTE` is end-of-day. During the Sep 30 session it returned the Sep 29 close, while yfinance returned the current session, so Alpha Vantage first would show beginners yesterday's price during market hours. This also saves the 25/day Alpha Vantage budget for overviews and news sentiment. |

@@ -4,7 +4,8 @@ Each lookup walks the same chain:
 
 1. a fresh cache entry (within TTL)
 2. each live provider in order, with backoff on transient errors
-   (prices: Alpha Vantage, then yfinance; news: yfinance, Tavily, Alpha Vantage)
+   (quotes and history: yfinance, then Alpha Vantage; company overviews: Alpha Vantage,
+   then yfinance; news: yfinance, Tavily, Alpha Vantage)
 3. the stale cache entry, flagged ``is_stale``
 4. demo data, flagged ``is_mock``
 
@@ -81,6 +82,7 @@ class MarketDataService:
         cache: TTLCache,
         config: MarketDataConfig,
         price_providers: Sequence[PriceProvider],
+        overview_providers: Sequence[PriceProvider] | None = None,
         news_providers: Sequence[NewsProvider] = (),
         mock: MockMarketDataProvider | None = None,
         budget: DailyBudget | None = None,
@@ -89,7 +91,8 @@ class MarketDataService:
     ) -> None:
         self._cache = cache
         self._config = config
-        self._price = list(price_providers)
+        self._price = list(price_providers)  # quotes and daily history
+        self._overview = list(price_providers if overview_providers is None else overview_providers)
         self._news = list(news_providers)
         self._mock = mock
         self._budget = budget
@@ -163,7 +166,7 @@ class MarketDataService:
             CompanyOverview,
             f"overview:{symbol}",
             self._history_ttl,
-            [(p.name, _bind(p.get_company_overview, symbol)) for p in self._price],
+            [(p.name, _bind(p.get_company_overview, symbol)) for p in self._overview],
             mock=lambda m: m.get_company_overview(symbol),
         )
 
@@ -208,7 +211,7 @@ class MarketDataService:
 
     def provider_status(self) -> list[ProviderStatus]:
         """What's configured, for the UI sidebar and troubleshooting."""
-        names = {p.name for p in self._price} | {p.name for p in self._news}
+        names = {p.name for p in (*self._price, *self._overview)} | {p.name for p in self._news}
         statuses = []
         for name in ("alpha_vantage", "yfinance", "tavily"):
             enabled = name in names
@@ -356,13 +359,19 @@ def build_market_data_service(
     clock: Clock = utcnow,
     yf_module: Any = None,
 ) -> MarketDataService:
-    """Wire providers from settings. Providers without an API key are left out of the chain."""
+    """Wire providers from settings. Providers without an API key are left out of the chain.
+
+    Quotes and history try yfinance first: Alpha Vantage's free quotes are end-of-day, so
+    it would show yesterday's close during market hours (found in the Phase 2 live check).
+    Alpha Vantage stays first for company overviews, where its fundamentals are richer.
+    """
     settings = settings or get_settings()
     cfg = settings.market_data
     cache = TTLCache(settings.resolve_path(cfg.cache_path), clock=clock)
     yfinance = YFinanceProvider(yf_module=yf_module, clock=clock)
 
-    price: list[PriceProvider] = []
+    price: list[PriceProvider] = [yfinance]
+    overview: list[PriceProvider] = []
     news: list[NewsProvider] = [yfinance]
     budget = None
     if settings.alpha_vantage_api_key:
@@ -375,7 +384,8 @@ def build_market_data_service(
             clock=clock,
         )
         price.append(alpha_vantage)
-    price.append(yfinance)
+        overview.append(alpha_vantage)
+    overview.append(yfinance)
     if settings.tavily_api_key:
         news.append(TavilyNewsProvider(settings.tavily_api_key, timeout_s=cfg.request_timeout_s))
     if settings.alpha_vantage_api_key:
@@ -385,6 +395,7 @@ def build_market_data_service(
         cache=cache,
         config=cfg,
         price_providers=price,
+        overview_providers=overview,
         news_providers=news,
         mock=MockMarketDataProvider(clock=clock),
         budget=budget,
