@@ -41,6 +41,7 @@ market_data:
   news_ttl_minutes: 30
   history_ttl_hours: 12
   request_timeout_s: 10
+  batch_threshold: 3        # fetch this many uncached quotes in one yfinance batch call
   alpha_vantage:
     requests_per_minute: 5
     daily_budget: 25

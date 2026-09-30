@@ -75,6 +75,14 @@ def test_freshness_status_and_label(kwargs, status, label):
     assert f.label(NOW) == label
 
 
+def test_label_shows_market_date_when_data_is_older_than_fetch():
+    close = datetime(2026, 9, 29, 20, 0, tzinfo=UTC)  # 4:00 PM New York
+    f = Freshness(source="alpha_vantage", as_of=close, fetched_at=NOW)
+    assert f.label(NOW) == "Live · just now · prices as of Sep 29, 04:00 PM ET"
+    recent = Freshness(source="yfinance", as_of=NOW - timedelta(minutes=30), fetched_at=NOW)
+    assert "prices as of" not in recent.label(NOW)
+
+
 def test_freshness_mock_source_forces_flag_and_age_never_negative():
     f = make_freshness(source="mock")
     assert f.is_mock is True

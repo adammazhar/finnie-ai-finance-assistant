@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -20,8 +21,12 @@ AGENT_NAMES: tuple[AgentName, ...] = (
 
 KnowledgeLevel = Literal["beginner", "intermediate", "advanced"]
 RiskTolerance = Literal["conservative", "moderate", "aggressive"]
-DataSource = Literal["alpha_vantage", "yfinance", "cache", "mock"]
+DataSource = Literal["alpha_vantage", "yfinance", "tavily", "cache", "mock"]
 FreshnessStatus = Literal["live", "cached", "stale", "mock"]
+
+MARKET_TZ = ZoneInfo("America/New_York")
+# Data older than this relative to when it was fetched gets its market date shown.
+AS_OF_NOTE_THRESHOLD = timedelta(hours=1)
 
 TICKER_PATTERN = re.compile(r"^\^?[A-Z][A-Z0-9.\-]{0,9}$")
 
@@ -74,6 +79,7 @@ class Freshness(BaseModel):
     """Where a piece of market data came from and how old it is."""
 
     source: DataSource
+    origin: DataSource | None = None  # original provider when ``source`` is "cache"
     as_of: datetime
     fetched_at: datetime
     is_stale: bool = False
@@ -103,7 +109,12 @@ class Freshness(BaseModel):
             return "Demo data: live feed unavailable"
         age = _format_age(self.age_minutes(now))
         prefix = {"live": "Live", "cached": "Cached", "stale": "Stale"}[self.status]
-        return f"{prefix} · {age}"
+        text = f"{prefix} · {age}"
+        if self.fetched_at - self.as_of > AS_OF_NOTE_THRESHOLD:
+            # e.g. an end-of-day quote fetched the next morning
+            market = self.as_of.astimezone(MARKET_TZ)
+            text += f" · prices as of {market:%b} {market.day}, {market:%I:%M %p} ET"
+        return text
 
 
 def _format_age(minutes: float) -> str:

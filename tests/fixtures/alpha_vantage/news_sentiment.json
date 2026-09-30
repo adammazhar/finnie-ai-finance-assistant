@@ -1,0 +1,27 @@
+{
+    "items": "2",
+    "feed": [
+        {
+            "title": "Apple unveils new devices ahead of holiday season",
+            "url": "https://www.example-news.com/apple-devices",
+            "time_published": "20260929T143000",
+            "summary": "Apple announced updates to its product lineup.",
+            "source": "Example News",
+            "overall_sentiment_score": 0.21,
+            "overall_sentiment_label": "Somewhat-Bullish",
+            "ticker_sentiment": [{"ticker": "AAPL", "relevance_score": "0.9"}]
+        },
+        {
+            "title": "",
+            "url": "https://www.example-news.com/untitled"
+        },
+        {
+            "title": "Tech stocks mixed",
+            "url": "https://www.example-news.com/tech-mixed",
+            "time_published": "not-a-date",
+            "source": "Example Wire",
+            "overall_sentiment_score": "None",
+            "ticker_sentiment": []
+        }
+    ]
+}

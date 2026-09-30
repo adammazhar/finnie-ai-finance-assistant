@@ -118,6 +118,7 @@ class MarketDataConfig(_Section):
     news_ttl_minutes: int = Field(default=30, gt=0)
     history_ttl_hours: int = Field(default=12, gt=0)
     request_timeout_s: float = Field(default=10, gt=0)
+    batch_threshold: int = Field(default=3, ge=1)
     alpha_vantage: AlphaVantageConfig = Field(default_factory=AlphaVantageConfig)
     backoff: BackoffConfig = Field(default_factory=BackoffConfig)
 

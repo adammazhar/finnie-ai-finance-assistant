@@ -86,6 +86,7 @@ def test_configure_is_idempotent_and_quiets_http_libs(capture):
     ours = [h for h in logging.getLogger().handlers if getattr(h, "_finnie_handler", False)]
     assert len(ours) == 1
     assert logging.getLogger("httpx").level == logging.WARNING
+    assert logging.getLogger("yfinance").level == logging.CRITICAL
 
 
 def test_json_redacts_traceback_cached_by_another_handler(capture):

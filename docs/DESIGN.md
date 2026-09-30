@@ -421,7 +421,15 @@ flowchart LR
 - **Cache.** SQLite table `(key, payload_json, fetched_at, source)`. TTL is 30 min for quotes and news and 12h for daily history and company overview (config). Expired rows are kept for stale fallback. The clock is injectable for tests.
 - **Batching.** `get_quotes([...])` checks the cache first and fetches only misses, with yfinance batch download for many tickers.
 
-### 5.3 Freshness indicators
+### 5.3 Implementation notes (Phase 2, verified against live APIs on 2026-09-30)
+
+- **Alpha Vantage free `GLOBAL_QUOTE` is end-of-day.** During the session on Sep 30 it returned the Sep 29 close, while yfinance returned the current session. The badge therefore shows the market date whenever data is more than an hour older than the fetch (for example, *Live · just now · prices as of Sep 29, 04:00 PM ET*).
+- **Long history comes from yfinance.** The free `TIME_SERIES_DAILY` returns only 100 compact bars. Requests for more are passed to yfinance, which also returns split- and dividend-adjusted closes (`PriceHistory.adjusted`).
+- **Batching.** `get_quotes()` sends 3 or more uncached tickers (`market_data.batch_threshold`) to one yfinance batch download instead of spending Alpha Vantage budget per ticker.
+- **Demo data is limited.** Demo data exists only for the ~36 tickers in `data/reference/mock_market.json`. An unknown ticker gets "not found" or "unavailable", never invented prices. Demo results are never written to the cache.
+- **Error messages** never include request URLs, because Alpha Vantage query strings contain the API key.
+
+### 5.4 Freshness indicators
 
 Every payload carries:
 

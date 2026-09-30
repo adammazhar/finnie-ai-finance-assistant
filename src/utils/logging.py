@@ -92,4 +92,6 @@ def configure_logging(
 
     for name in _NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
+    # yfinance logs its own "possibly delisted" errors; our client already reports them.
+    logging.getLogger("yfinance").setLevel(logging.CRITICAL)
     return handler
