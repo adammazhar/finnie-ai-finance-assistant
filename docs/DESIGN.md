@@ -382,6 +382,30 @@ Quality controls:
   - Some sites block automated requests (e.g. HTTP 403 to bots). Those are retried with a browser user agent. If they still fail, the URL can only pass through a reviewed `link_allowlist.yaml` entry that states a reason; nothing is silently skipped.
 - Tax figures such as contribution limits live in `data/reference/tax_2026.yaml`. Each figure records `value`, `tax_year`, `source_url` (an IRS.gov page), and `status: verified | VERIFY`. Figures are verified against IRS.gov pages (IRS news releases for annual limits, Rev. Proc. inflation adjustments). Anything that can't be confirmed from an IRS.gov page is marked `VERIFY` and listed in the Phase 4 summary for the owner to check. The Tax agent shows `VERIFY` figures with an "unconfirmed" caveat, and a test lists them so none are missed.
 
+### 4.1a Knowledge base build (Phase 4)
+
+- **Contents:** 112 articles (11 categories, 450-800 words each) and a 172-term glossary. Articles were drafted by parallel writers following `data/knowledge_base/AUTHORING.md`: voice, originality, education-not-advice, verified 2026 tax figures only, and calendar-based holding period wording. Each writer opened every cited page to confirm it exists and covers the topic.
+- **Validator** (`src/rag/knowledge_base.py`, `scripts/validate_kb.py`) checks:
+  - front-matter schema
+  - id, file, and folder consistency
+  - 400-900 words and at least 2 `##` sections
+  - unique ids and titles
+  - no advice/guarantee language (e.g. "you should buy", "can't lose", "buy now", with "buy now, pay later" excluded)
+  - no placeholder text
+  - at least 100 articles with every category non-empty
+  - glossary: at least 150 unique terms, 8-90-word definitions, and `related` links that resolve
+
+  It runs in the unit tests against the real corpus.
+- **Link checker** (`src/rag/link_check.py`, `scripts/check_kb_links.py`) covers every source URL in articles, the glossary, and `data/reference/*.yaml`:
+  - **Allow-listed domains only**, with placeholder-URL detection. A URL containing "your-" is only flagged for literal placeholders like `your-url-here`.
+  - **Request order:** HEAD, then GET, always with the honest `FinnieLinkChecker/1.0` User-Agent (decision 14). Server errors retry with 1 s / 2 s backoff; 401/403/429 back off 5 s / 15 s and then fail unless allow-listed.
+  - **Politeness:** at most 2 concurrent requests per host.
+  - **Soft-404 detection:** investor.gov's glossary returns HTTP 200 with a generic page for terms that don't exist. A cited page fails when its title matches a made-up sibling URL's title and shares no words with its own path segment. That second condition stops sites that route by ID and ignore the slug (iShares) from being flagged.
+  - **Allow-list:** a failing URL passes only through an entry in `link_allowlist.yaml` with a written reason, and is reported as ALLOWLISTED. Entries that are no longer cited fail the run. Schwab's research pages (SCHB, SCHH, SWTSX) are allow-listed because they are a JavaScript shell identical for every path. The owner verified those expense ratios by hand.
+  - **Report:** results go to `data/knowledge_base/link_report.json` with project-relative paths.
+  - **CI:** runs as the separate `kb-links` job because unit tests block the network.
+- **Operational note:** investor.gov and ssga.com return HTTP 403 after bursts of automated requests. The per-host cap and longer throttling backoff keep normal runs under their limits.
+
 ### 4.2 Ingestion and chunking
 
 1. Load Markdown and parse front matter (`python-frontmatter`).
@@ -783,3 +807,6 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 11 | *(after Phase 3)* **Expense ratios** are verified against each fund provider's official page or fact sheet. They are stored in the `expense_ratios` section of `securities.yaml` with `ratio`, `status`, `as_of` (the date the provider states, or null), `verified_on`, and `source_url`. 56 of 59 funds were verified on 2026-09-30. SCHB, SCHH, and SWTSX are `VERIFY`, because Schwab's pages refused automated requests. Portfolio analysis flags unconfirmed ratios. SPDR pages list a gross ratio only. |
 | 12 | *(after Phase 3)* **Tax figures** were verified by the owner against IRS.gov on 2026-09-30: 401(k), IRA, Roth phase-outs, HSA, standard deduction, both bracket tables, and the capital-loss limit. `gift_tax_annual_exclusion` stays `VERIFY` for the owner, as do the holding-period rule, the wash-sale window, and the NIIT rate, which weren't part of that review. Verified items must carry `verified_on` and an IRS.gov `source_url` (enforced on load). |
 | 13 | *(after Phase 3)* **Holding period** is a calendar rule: long-term means sold *after* the one-year anniversary of purchase. A sale on the anniversary is short-term, and a Feb 29 purchase's anniversary is Feb 28. It is never a 365-day count, which gets leap years wrong. |
+| 14 | *(Phase 4 review)* **Honest link checking:** the link checker identifies itself as `FinnieLinkChecker/1.0` and never retries with a browser User-Agent. Sites that refuse automated checks are allow-listed with a written reason or replaced. Investopedia is not cited (it's removed from the domain allow-list); its citations were replaced with primary sources. |
+| 15 | *(Phase 4 review)* **RMD age:** 73 for people born 1951-1959 and 75 for 1960 or later (SECURE 2.0; IRS proposed regulations in IRB 2024-33 place 1959 at 73). The first RMD is due April 1 of the year after reaching the RMD age. IRS pages that still show age 72 as current are not cited. |
+| 16 | *(Phase 4 review)* **Remaining verifications done by the owner (2026-09-30):** gift tax exclusion $19,000, holding period (more than one year), wash sale (30 days before/after), NIIT 3.8%, and expense ratios SCHB 0.03%, SCHH 0.07% (net), SWTSX 0.03% on schwab.com. Nothing in `tax_2026.yaml` or `securities.yaml` is `VERIFY`. |

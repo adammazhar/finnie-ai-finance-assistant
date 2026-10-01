@@ -87,8 +87,9 @@ figures:
   gift_tax_annual_exclusion:
     label: Annual gift tax exclusion per recipient (relevant to 529 contributions)
     value: 19000
-    source_url: https://www.irs.gov/businesses/small-businesses-self-employed/frequently-asked-questions-on-gift-taxes
-    status: VERIFY
+    source_url: https://www.irs.gov/faqs/interest-dividends-other-types-of-income/gifts-inheritances/gifts-inheritances-1
+    status: verified
+    verified_on: 2026-09-30
   capital_loss_deduction_limit:
     label: Net capital loss deductible against ordinary income per year ($1,500 if married filing separately)
     value: 3000
@@ -100,17 +101,20 @@ figures:
       the one-year anniversary of purchase)
     value: 1
     source_url: https://www.irs.gov/taxtopics/tc409
-    status: VERIFY
+    status: verified
+    verified_on: 2026-09-30
   wash_sale_window_days:
     label: Wash sale rule window (days before or after the sale)
     value: 30
     source_url: https://www.irs.gov/publications/p550
-    status: VERIFY
+    status: verified
+    verified_on: 2026-09-30
   net_investment_income_tax_rate:
     label: Net investment income tax rate (applies above income thresholds)
     value: 0.038
     source_url: https://www.irs.gov/individuals/net-investment-income-tax
-    status: VERIFY
+    status: verified
+    verified_on: 2026-09-30
 
 brackets:
   ordinary_income:

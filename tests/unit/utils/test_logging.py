@@ -104,3 +104,9 @@ def test_json_redacts_traceback_cached_by_another_handler(capture):
     finally:
         root.removeHandler(earlier)
     assert "fakecached" not in capture.getvalue()
+
+
+def test_words_ending_in_sk_are_not_keys():
+    text = "https://www.investor.gov/concentration-risk-holdings-in-a-single-company"
+    assert redact(text) == text
+    assert redact("key=sk-abcdefghijklmnopqrstu") == "key=" + REDACTED

@@ -1,0 +1,16 @@
+# URLs that can't be verified automatically. Each needs a reason; the link checker reports
+# them as ALLOWLISTED (never silently skipped) and flags entries that are no longer cited.
+
+urls:
+  "https://www.schwab.com/research/mutual-funds/quotes/summary/swtsx": >-
+    Schwab's research pages are a JavaScript shell that returns the same HTML (title "Charles
+    Schwab") for any path, so the checker can't tell the fund page from a made-up URL. The
+    expense ratio was verified by the owner on schwab.com on 2026-09-30.
+  "https://www.schwab.com/research/etfs/quotes/summary/schb": >-
+    Schwab's research pages are a JavaScript shell that returns the same HTML for any path,
+    so the checker can't tell the fund page from a made-up URL. The expense ratio was
+    verified by the owner on schwab.com on 2026-09-30.
+  "https://www.schwab.com/research/etfs/quotes/summary/schh": >-
+    Schwab's research pages are a JavaScript shell that returns the same HTML for any path,
+    so the checker can't tell the fund page from a made-up URL. The expense ratio was
+    verified by the owner on schwab.com on 2026-09-30.

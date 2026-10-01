@@ -1,0 +1,529 @@
+sources:
+  - name: "Investor.gov - Glossary"
+    url: https://www.investor.gov/introduction-investing/investing-basics/glossary
+  - name: "FINRA - Investment Products"
+    url: https://www.finra.org/investors/investing/investment-products
+  - name: "IRS - Topic no. 409, Capital gains and losses"
+    url: https://www.irs.gov/taxtopics/tc409
+  - name: "CFPB - Ask CFPB"
+    url: https://www.consumerfinance.gov/ask-cfpb/
+  - name: "Nasdaq - Glossary of Stock Market Terms"
+    url: https://www.nasdaq.com/glossary
+last_reviewed: 2026-09-30
+terms:
+  - term: 401(k)
+    definition: "An employer-sponsored retirement plan that lets workers save part of each paycheck. Traditional contributions are made before income tax and taxed when withdrawn, while Roth contributions are taxed now. Many employers add matching money, and yearly contribution limits are set by the IRS."
+    related: [Employer match, Roth 401(k), Vesting, Contribution limit]
+  - term: 403(b)
+    definition: "A retirement plan similar to a 401(k) that is offered by public schools, hospitals, churches, and many other nonprofit organizations. It can hold mutual funds or annuities and usually shares the same contribution limits as a 401(k)."
+    related: [401(k)]
+  - term: 52-week range
+    definition: "The lowest and highest prices a security has traded at over the past year. It gives a quick sense of how much the price has moved and where today's price sits within that span. It says nothing on its own about where the price will go next."
+    related: [Volatility, Closing price]
+  - term: Active investing
+    definition: "An approach in which a fund manager or individual picks specific securities or times trades in an attempt to beat a benchmark. It usually involves more research, more trading, and higher costs than passive investing, and many active funds trail their benchmarks over long periods."
+    related: [Passive investing, Benchmark, Expense ratio]
+  - term: Alpha
+    definition: "A measure of how much an investment returned compared with what would be expected given its risk, often relative to a benchmark. Positive alpha means it did better than expected, and negative alpha means it did worse. Past alpha does not predict future results."
+    related: [Beta, Benchmark]
+  - term: Anchoring bias
+    definition: "The tendency to rely too heavily on the first number or piece of information you see. An investor might fixate on the price they paid for a stock and judge every later decision against it, even when that price no longer matters."
+    related: [Behavioral finance, Loss aversion]
+  - term: Annual percentage rate (APR)
+    definition: "The yearly cost of borrowing money, shown as a percentage. For loans it can include certain fees as well as interest, which makes it easier to compare offers. On credit cards, the APR is the interest rate charged on balances you carry."
+    related: [Annual percentage yield (APY), Interest, Credit utilization]
+  - term: Annual percentage yield (APY)
+    definition: "The yearly rate earned on a deposit account once compounding is included. Because interest earns interest, APY is slightly higher than the simple stated rate whenever interest is added more than once a year."
+    related: [Annual percentage rate (APR), Compound interest, Savings account]
+  - term: Annualized return
+    definition: "The average yearly rate of return that would turn a starting value into an ending value over a multi-year period, assuming steady compounding. It smooths out good and bad years, so it hides how bumpy the actual path was."
+    related: [Total return, Compound interest, Volatility]
+  - term: Ask price
+    definition: "The lowest price a seller is currently willing to accept for a security. When you place a market order to buy, you generally pay something close to the ask."
+    related: [Bid price, Bid-ask spread, Market order]
+  - term: Asset
+    definition: "Anything of value that a person or company owns, such as cash, investments, real estate, or equipment. On a personal level, subtracting what you owe from your assets gives your net worth."
+    related: [Net worth]
+  - term: Asset allocation
+    definition: "How an investor divides money among broad categories such as stocks, bonds, and cash. The mix is a major driver of both the ups and downs a portfolio experiences and its long-run growth, and it is often tied to time horizon and risk tolerance."
+    related: [Diversification, Rebalancing, Asset class, Risk tolerance]
+  - term: Asset class
+    definition: "A group of investments that share similar traits and tend to behave in similar ways, such as stocks, bonds, cash equivalents, or real estate. Different asset classes often respond differently to the same economic events."
+    related: [Asset allocation, Stock, Bond, Cash equivalent]
+  - term: Basis point
+    definition: "One hundredth of one percentage point, or 0.01%. It is a precise way to describe small changes in interest rates, yields, or fees. For example, a rate moving from 4.00% to 4.25% has risen 25 basis points."
+    related: [Yield, Expense ratio]
+  - term: Bear market
+    definition: "A period when prices of a broad market index fall substantially, commonly defined as a decline of 20% or more from a recent high. Bear markets often come with pessimism and may overlap with recessions, though not always."
+    related: [Bull market, Correction, Drawdown]
+  - term: Behavioral finance
+    definition: "The study of how psychology, emotions, and mental shortcuts affect financial decisions. It explains why people sometimes act against their own long-term interests, for example by panic selling during a downturn or chasing recent winners."
+    related: [Loss aversion, Herd behavior, Overconfidence bias, Confirmation bias]
+  - term: Benchmark
+    definition: "A standard, usually a market index, used to measure how an investment or portfolio has performed. A U.S. large-company stock fund, for instance, is often compared with the S&P 500."
+    related: [Index, S&P 500, Alpha]
+  - term: Beneficiary
+    definition: "The person or organization named to receive the money in an account, insurance policy, or trust when the owner dies. Beneficiary designations on retirement accounts generally take priority over instructions in a will."
+    related: [Individual retirement account (IRA), 401(k)]
+  - term: Beta
+    definition: "A measure of how much a security tends to move relative to the overall market. A beta of 1 means it has tended to move in line with the market, above 1 means larger swings, and below 1 means smaller swings. It is based on past data."
+    related: [Volatility, Market risk, Alpha, Correlation]
+  - term: Bid price
+    definition: "The highest price a buyer is currently willing to pay for a security. If you sell with a market order, you generally receive something close to the bid."
+    related: [Ask price, Bid-ask spread]
+  - term: Bid-ask spread
+    definition: "The gap between the bid price and the ask price. It is a hidden trading cost, since buying at the ask and immediately selling at the bid loses the spread. Heavily traded securities usually have narrower spreads."
+    related: [Bid price, Ask price, Liquidity]
+  - term: Bond
+    definition: "A loan you make to a government or company. In return, the issuer typically pays interest on a set schedule and repays the face value at maturity. Bond prices move opposite to interest rates, and the issuer could fail to pay."
+    related: [Coupon rate, Maturity date, Face value, Fixed income]
+  - term: Bond fund
+    definition: "A mutual fund or ETF that holds many bonds. Unlike a single bond, it has no maturity date, so its value keeps moving with interest rates and there is no fixed date when your principal comes back."
+    related: [Bond, Mutual fund, Exchange-traded fund (ETF), Duration]
+  - term: Brokerage account
+    definition: "An account at a brokerage firm used to buy, hold, and sell investments such as stocks, bonds, and funds. A standard brokerage account is taxable, meaning gains, dividends, and interest are generally taxed each year they occur."
+    related: [Taxable account, SIPC protection]
+  - term: Budget
+    definition: "A plan that compares expected income with planned spending and saving over a period, often a month. It helps you see where money goes and make deliberate choices about priorities."
+    related: [Emergency fund, Net worth]
+  - term: Bull market
+    definition: "A period when prices of a broad market index rise substantially over time, often described as a gain of 20% or more from a recent low. Bull markets tend to come with optimism and economic growth, but they eventually end."
+    related: [Bear market]
+  - term: Buy and hold
+    definition: "An investing approach in which you buy investments and keep them for many years regardless of short-term price swings. It relies on long-run growth and typically keeps trading costs and taxes low."
+    related: [Passive investing, Market timing, Time horizon]
+  - term: Capital gain
+    definition: "The profit from selling an asset for more than its cost basis. Gains on assets held more than one year are long-term and usually taxed at lower rates than short-term gains on assets held one year or less."
+    related: [Cost basis, Long-term capital gain, Short-term capital gain, Capital loss]
+  - term: Capital gains distribution
+    definition: "A payment a mutual fund or ETF makes to shareholders from profits it realized by selling holdings inside the fund. In a taxable account, these distributions are generally taxable even if you reinvest them and never sold a share yourself."
+    related: [Mutual fund, Capital gain, Taxable account]
+  - term: Capital loss
+    definition: "The loss from selling an asset for less than its cost basis. Capital losses first offset capital gains, and a limited amount of any remaining net loss can reduce ordinary income each year, with the rest carried forward."
+    related: [Capital gain, Tax-loss harvesting, Wash sale, Cost basis]
+  - term: Cash equivalent
+    definition: "A very short-term, highly liquid, low-risk holding that can quickly become cash with little change in value, such as a Treasury bill or money market fund."
+    related: [Money market fund, Treasury bill, Liquidity]
+  - term: Catch-up contribution
+    definition: "An extra amount that people age 50 or older may contribute to certain retirement accounts, such as a 401(k) or IRA, above the regular annual limit. The amounts are set by law and adjusted periodically."
+    related: [Contribution limit, 401(k), Individual retirement account (IRA)]
+  - term: Certificate of deposit (CD)
+    definition: "A bank or credit union deposit that pays a fixed interest rate for a set term, such as one year. Withdrawing before the term ends usually triggers a penalty. CDs at insured banks are covered by FDIC insurance up to legal limits."
+    related: [FDIC insurance, Annual percentage yield (APY), Savings account]
+  - term: Closing price
+    definition: "The last price at which a security traded during a regular trading session. Daily closing prices are the standard input for charts, returns, and indicators such as moving averages."
+    related: [52-week range, Moving average]
+  - term: Commission
+    definition: "A fee a broker charges for executing a trade. Many online brokers no longer charge commissions on stock and ETF trades, but other costs such as spreads or fund expenses still apply."
+    related: [Bid-ask spread, Expense ratio]
+  - term: Common stock
+    definition: "The most typical form of company ownership. Holders usually get voting rights and may receive dividends, but they are last in line to be paid if the company is liquidated."
+    related: [Stock, Preferred stock, Dividend]
+  - term: Compound interest
+    definition: "Interest earned on both the original amount and on interest previously added. Over long periods, compounding can make savings or investments grow much faster than simple interest, and it works against you on unpaid debt."
+    related: [Simple interest, Rule of 72, Annual percentage yield (APY)]
+  - term: Confirmation bias
+    definition: "The habit of seeking out and trusting information that supports what you already believe while downplaying evidence against it. For investors, it can mean ignoring warning signs about a favorite holding."
+    related: [Behavioral finance, Overconfidence bias]
+  - term: Consumer Price Index (CPI)
+    definition: "A measure, published monthly by the U.S. Bureau of Labor Statistics, of the average change in prices that urban consumers pay for a basket of goods and services. It is the most widely cited gauge of inflation."
+    related: [Inflation, Real return, Treasury Inflation-Protected Securities (TIPS)]
+  - term: Contribution limit
+    definition: "The maximum amount the IRS allows you to put into a tax-advantaged account, such as a 401(k), IRA, or HSA, in a given year. Limits are usually adjusted annually for inflation."
+    related: [Catch-up contribution, 401(k), Individual retirement account (IRA), Health savings account (HSA)]
+  - term: Corporate bond
+    definition: "A bond issued by a company to raise money. Corporate bonds usually pay more interest than government bonds of similar maturity to compensate for the added risk that the company could default."
+    related: [Bond, Credit rating, High-yield bond, Default]
+  - term: Correction
+    definition: "A decline of roughly 10% or more, but less than 20%, from a recent high in a stock, index, or market. Corrections happen fairly often and do not necessarily lead to a bear market."
+    related: [Bear market, Drawdown, Volatility]
+  - term: Correlation
+    definition: "A statistic from -1 to +1 that describes how two investments have moved together. Near +1 means they tended to move in the same direction, near -1 the opposite direction, and near 0 little relationship. Low correlation between holdings is what makes diversification work."
+    related: [Diversification, Beta, Standard deviation]
+  - term: Cost basis
+    definition: "The original value of an investment for tax purposes, usually the purchase price plus fees, adjusted for events such as reinvested dividends or stock splits. It is subtracted from the sale price to figure a capital gain or loss."
+    related: [Capital gain, Capital loss, Wash sale]
+  - term: Coupon rate
+    definition: "The annual interest rate a bond pays, stated as a percentage of its face value. A bond with a 5% coupon and a face value of 1,000 dollars pays 50 dollars a year, often in two installments."
+    related: [Bond, Face value, Yield]
+  - term: Credit rating
+    definition: "A grade from an agency such as Moody's, S&P, or Fitch that reflects its opinion of how likely a bond issuer is to pay on time. Bonds rated BBB- or Baa3 and above are called investment grade, and lower ratings are considered speculative."
+    related: [Corporate bond, High-yield bond, Default]
+  - term: Credit report
+    definition: "A record of your borrowing and repayment history kept by the credit bureaus Equifax, Experian, and TransUnion. Lenders, landlords, and others may review it, and you can get free copies through AnnualCreditReport.com."
+    related: [Credit score, Credit utilization]
+  - term: Credit score
+    definition: "A number, commonly from 300 to 850 for FICO scores, that summarizes how risky you appear as a borrower based on your credit report. Payment history and amounts owed weigh heavily. Higher scores can mean easier approval and lower interest rates."
+    related: [Credit report, Credit utilization, Annual percentage rate (APR)]
+  - term: Credit utilization
+    definition: "The share of your available revolving credit, such as credit card limits, that you are currently using. Lower utilization generally helps credit scores, while balances near the limit can hurt them."
+    related: [Credit score, Credit report]
+  - term: Death cross
+    definition: "A chart pattern that occurs when a shorter moving average, typically the 50-day, falls below a longer one, typically the 200-day. Some traders read it as a sign of weakening momentum, but it often gives false signals."
+    related: [Golden cross, Moving average, Technical analysis]
+  - term: Default
+    definition: "A failure by a borrower to make required interest or principal payments on time. For bondholders, a default can mean delayed payments or losing some or all of the money lent."
+    related: [Credit rating, Corporate bond, High-yield bond]
+  - term: Deflation
+    definition: "A general decline in the prices of goods and services across an economy, the opposite of inflation. Although lower prices sound appealing, prolonged deflation can discourage spending and make debts harder to repay."
+    related: [Inflation, Recession]
+  - term: Diversification
+    definition: "Spreading money across many investments, sectors, and asset classes so that a problem with any single holding has a smaller effect on the whole portfolio. It reduces some risks but cannot eliminate losses in a broad market decline."
+    related: [Asset allocation, Correlation, Index fund, Market risk]
+  - term: Dividend
+    definition: "A portion of a company's profits paid to shareholders, usually in cash on a regular schedule. Companies are not required to pay dividends and can reduce or stop them at any time."
+    related: [Dividend yield, Ex-dividend date, Qualified dividend]
+  - term: Dividend yield
+    definition: "A company's yearly dividends per share divided by its current share price, shown as a percentage. A very high yield can signal that the price has dropped because investors doubt the dividend will last."
+    related: [Dividend, Yield]
+  - term: Dollar-cost averaging
+    definition: "Investing a fixed amount at regular intervals, such as every paycheck, regardless of price. You automatically buy more shares when prices are low and fewer when high. It reduces the risk of investing everything at a bad moment but does not prevent losses."
+    related: [Market timing, Volatility, Buy and hold]
+  - term: Dow Jones Industrial Average
+    definition: "A stock market index of 30 large U.S. companies. Unlike most indexes, it is weighted by share price rather than company size, so higher-priced stocks have more influence on its movements."
+    related: [Index, S&P 500, Nasdaq Composite]
+  - term: Drawdown
+    definition: "The percentage decline from an investment's peak value to a later low point. Maximum drawdown is the largest such drop over a period, and it helps show how painful the worst stretch would have been for someone holding throughout."
+    related: [Volatility, Bear market, Standard deviation]
+  - term: Duration
+    definition: "A measure, in years, of how sensitive a bond or bond fund's price is to interest rate changes. As a rough guide, a duration of 6 means the price may fall about 6% if rates rise one percentage point."
+    related: [Interest rate risk, Bond fund, Yield to maturity]
+  - term: Early withdrawal penalty
+    definition: "An additional 10% tax that generally applies when money is taken out of a retirement account such as an IRA or 401(k) before age 59 1/2, on top of any regular income tax. The IRS lists several exceptions."
+    related: [Individual retirement account (IRA), 401(k), Roth IRA]
+  - term: Earnings per share (EPS)
+    definition: "A company's profit over a period divided by the number of its common shares outstanding. It is a building block for valuation measures like the price-to-earnings ratio."
+    related: [Price-to-earnings ratio (P/E), Fundamental analysis]
+  - term: Effective tax rate
+    definition: "The total tax you owe divided by your income, showing the average share of income paid in tax. It is lower than your marginal tax rate because the U.S. system taxes income in brackets."
+    related: [Marginal tax rate, Tax bracket]
+  - term: Emergency fund
+    definition: "Money set aside in a safe, easy-to-reach place, such as a savings account, to cover unexpected expenses or a loss of income. It can help you avoid high-interest debt or selling investments at a bad time."
+    related: [Savings account, Liquidity, Budget]
+  - term: Employer match
+    definition: "Money an employer adds to your workplace retirement account based on how much you contribute, for example 50 cents for every dollar up to a set percentage of pay. Matching contributions may be subject to a vesting schedule."
+    related: [401(k), Vesting]
+  - term: Equity
+    definition: "Ownership value. In investing it usually means stock, a share of ownership in a company. More generally, it is what an asset is worth minus what is owed on it, such as home equity."
+    related: [Stock, Net worth]
+  - term: Ex-dividend date
+    definition: "The cutoff date for receiving an upcoming dividend. If you buy a stock on or after this date, the seller rather than you gets that dividend. The share price often drops by about the dividend amount on this date."
+    related: [Dividend, Qualified dividend]
+  - term: Exchange
+    definition: "An organized marketplace where securities are bought and sold under set rules, such as the New York Stock Exchange or Nasdaq. Exchanges match buyers and sellers and publish trading prices."
+    related: [Stock, Ticker symbol, Liquidity]
+  - term: Exchange-traded fund (ETF)
+    definition: "A fund that holds a basket of investments, often tracking an index, and trades on an exchange throughout the day like a stock. ETFs typically have low expense ratios and can be relatively tax-efficient."
+    related: [Index fund, Mutual fund, Expense ratio]
+  - term: Expense ratio
+    definition: "The yearly cost of owning a mutual fund or ETF, shown as a percentage of the money you have invested. A 0.10% expense ratio costs about 10 cents a year per 100 dollars invested and is deducted automatically from fund assets."
+    related: [Mutual fund, Exchange-traded fund (ETF), Basis point]
+  - term: Face value
+    definition: "The amount a bond issuer promises to repay at maturity, also called par value. Interest payments are calculated from it. A bond's market price can be above or below its face value before it matures."
+    related: [Bond, Coupon rate, Maturity date]
+  - term: FDIC insurance
+    definition: "Protection from the Federal Deposit Insurance Corporation that covers deposits, such as checking, savings, and CDs, at insured banks up to legal limits if the bank fails. It does not cover stocks, bonds, mutual funds, or crypto."
+    related: [Certificate of deposit (CD), Savings account, SIPC protection]
+  - term: Federal funds rate
+    definition: "The interest rate at which banks lend reserves to each other overnight. The Federal Reserve sets a target range for it, and changes ripple out to rates on loans, savings accounts, and bonds."
+    related: [Federal Reserve, Monetary policy, Interest]
+  - term: Federal Reserve
+    definition: "The central bank of the United States. It conducts monetary policy aimed at maximum employment and stable prices, supervises many banks, and helps keep the financial system running smoothly."
+    related: [Federal funds rate, Monetary policy, Inflation]
+  - term: Fixed income
+    definition: "Investments that pay a set stream of interest, such as bonds and CDs. The term is often used as a label for the bond portion of a portfolio."
+    related: [Bond, Certificate of deposit (CD), Asset class]
+  - term: Fundamental analysis
+    definition: "Evaluating a security by studying the underlying business or economy, including revenue, earnings, debt, management, and competition, to estimate what it is worth."
+    related: [Technical analysis, Valuation, Earnings per share (EPS)]
+  - term: Golden cross
+    definition: "A chart pattern that occurs when a shorter moving average, typically the 50-day, rises above a longer one, typically the 200-day. Some traders view it as a sign of strengthening momentum, though it lags price and often gives false signals."
+    related: [Death cross, Moving average, Technical analysis]
+  - term: Gross domestic product (GDP)
+    definition: "The total value of goods and services produced within a country over a period. Changes in real, inflation-adjusted GDP are the main measure of whether an economy is growing or shrinking."
+    related: [Recession, Inflation]
+  - term: Growth stock
+    definition: "Shares of a company expected to grow revenue or earnings faster than average. Growth stocks often pay little or no dividend and trade at high valuations, which can make them swing more when expectations change."
+    related: [Value stock, Price-to-earnings ratio (P/E), Volatility]
+  - term: Health savings account (HSA)
+    definition: "A tax-advantaged account for people with a qualifying high-deductible health plan. Contributions can be tax-deductible, growth is tax-free, and withdrawals for qualified medical expenses are not taxed. Unused money rolls over year to year."
+    related: [Contribution limit, Tax-deferred]
+  - term: Herd behavior
+    definition: "The tendency to follow what many other investors are doing instead of making an independent judgment. It can fuel bubbles when everyone buys and sharp crashes when everyone sells."
+    related: [Behavioral finance]
+  - term: High-yield bond
+    definition: "A bond with a credit rating below investment grade, sometimes called a junk bond. It pays higher interest to make up for a greater chance that the issuer will default."
+    related: [Credit rating, Default, Corporate bond]
+  - term: Holding period
+    definition: "How long you own an investment. For U.S. taxes, an asset held more than one year, meaning sold after the one-year anniversary of the purchase date, produces a long-term gain or loss. One year or less is short-term."
+    related: [Long-term capital gain, Short-term capital gain]
+  - term: I bond
+    definition: "A U.S. savings bond sold through TreasuryDirect whose rate combines a fixed rate with an inflation rate reset every six months. It cannot be cashed in for the first year, and redeeming it within five years costs the last three months of interest."
+    related: [Inflation, Treasury Inflation-Protected Securities (TIPS)]
+  - term: Index
+    definition: "A measure that tracks the performance of a group of securities representing a market or segment, such as the S&P 500. You cannot invest in an index directly, but index funds try to mirror one."
+    related: [Index fund, Benchmark, S&P 500]
+  - term: Index fund
+    definition: "A mutual fund or ETF that aims to match the performance of a specific index by holding all or a representative sample of its securities. Index funds usually have low costs and little trading."
+    related: [Index, Passive investing, Exchange-traded fund (ETF), Expense ratio]
+  - term: Individual retirement account (IRA)
+    definition: "A tax-advantaged retirement account you open on your own, separate from an employer plan. The main types are traditional IRAs, with possible up-front deductions, and Roth IRAs, with possible tax-free withdrawals later."
+    related: [Traditional IRA, Roth IRA, Contribution limit, Rollover]
+  - term: Inflation
+    definition: "A general rise in prices over time, which reduces what each dollar can buy. It means money held in cash loses purchasing power, and investment returns need to beat inflation to grow in real terms."
+    related: [Consumer Price Index (CPI), Real return, Deflation]
+  - term: Interest
+    definition: "The price paid for using someone else's money. Borrowers pay interest to lenders, and savers or bondholders earn interest on money they lend or deposit."
+    related: [Simple interest, Compound interest, Annual percentage rate (APR)]
+  - term: Interest rate risk
+    definition: "The chance that a rise in interest rates will lower the value of existing bonds, since new bonds would pay more. Longer-term bonds usually carry more of this risk."
+    related: [Duration, Bond, Yield to maturity]
+  - term: Inverted yield curve
+    definition: "A situation in which short-term government bonds yield more than long-term ones, the reverse of normal. It has preceded many U.S. recessions, but it is not a reliable timer for when one might start."
+    related: [Yield curve, Recession]
+  - term: Large-cap stock
+    definition: "Shares of a company with a large market capitalization, commonly thought of as the biggest companies in the market. Large caps tend to be more established and less volatile than smaller companies."
+    related: [Market capitalization, Small-cap stock]
+  - term: Limit order
+    definition: "An order to buy or sell a security only at a specified price or better. It gives you price control, but the order may not be filled if the market never reaches your price."
+    related: [Market order]
+  - term: Liquidity
+    definition: "How quickly and easily something can be turned into cash without a big loss in value. Cash is very liquid, while real estate and some thinly traded securities are much less so."
+    related: [Cash equivalent, Bid-ask spread, Volume]
+  - term: Long-term capital gain
+    definition: "A profit on an asset held more than one year before it is sold. Long-term gains are taxed at 0%, 15%, or 20% depending on taxable income, which is often lower than ordinary income tax rates."
+    related: [Capital gain, Short-term capital gain, Holding period]
+  - term: Loss aversion
+    definition: "The tendency to feel losses more strongly than gains of the same size. It can lead investors to hold losing positions too long or avoid reasonable risks altogether."
+    related: [Behavioral finance, Anchoring bias]
+  - term: Marginal tax rate
+    definition: "The tax rate that applies to your next dollar of taxable income, determined by the highest tax bracket your income reaches. Moving into a higher bracket only affects the income within that bracket, not all of your income."
+    related: [Tax bracket, Effective tax rate, Ordinary income]
+  - term: Market capitalization
+    definition: "The total market value of a company's shares, found by multiplying the share price by the number of shares outstanding. It is used to group companies as large-cap, mid-cap, or small-cap."
+    related: [Large-cap stock, Small-cap stock]
+  - term: Market order
+    definition: "An order to buy or sell immediately at the best available current price. It is almost always filled, but the final price can differ from the last quote, especially in fast or thin markets."
+    related: [Limit order, Bid price, Ask price]
+  - term: Market risk
+    definition: "The possibility of losses because the overall market declines, affecting most investments at once. Also called systematic risk, it cannot be removed through diversification."
+    related: [Beta, Diversification, Volatility]
+  - term: Market timing
+    definition: "Trying to move in and out of investments based on predictions of short-term price moves. Research generally finds it hard to do consistently, and missing a few strong days can meaningfully reduce long-term returns."
+    related: [Buy and hold, Dollar-cost averaging]
+  - term: Maturity date
+    definition: "The date on which a bond's issuer must repay the face value and the bond stops paying interest. Maturities range from a few days to 30 years or more."
+    related: [Bond, Face value, Yield to maturity]
+  - term: Momentum
+    definition: "The tendency of assets that have recently risen or fallen to keep moving in the same direction for a while. Momentum indicators, such as RSI, try to measure the speed and strength of price changes."
+    related: [Relative strength index (RSI), Technical analysis]
+  - term: Monetary policy
+    definition: "Actions a central bank takes to influence interest rates and the money supply in pursuit of goals such as stable prices and full employment. In the U.S., it is set by the Federal Reserve."
+    related: [Federal Reserve, Federal funds rate]
+  - term: Money market fund
+    definition: "A mutual fund that invests in short-term, high-quality debt such as Treasury bills. It aims to keep a stable value, but it is not FDIC-insured and can lose money."
+    related: [Cash equivalent, Mutual fund, Treasury bill]
+  - term: Monte Carlo simulation
+    definition: "A technique that runs thousands of randomized scenarios of future returns to show a range of possible outcomes and their rough likelihoods. Results depend heavily on the assumptions used and are not forecasts."
+    related: [Standard deviation, Sequence of returns risk]
+  - term: Moving average
+    definition: "The average closing price over a set number of recent periods, such as 50 or 200 days, updated as each new day is added. It smooths daily noise so the general trend is easier to see."
+    related: [Golden cross, Death cross, Technical analysis, Closing price]
+  - term: Municipal bond
+    definition: "A bond issued by a state, city, or other local government to fund public projects. Interest is often exempt from federal income tax and sometimes from state tax, so its yield is usually lower than a comparable taxable bond."
+    related: [Bond]
+  - term: Mutual fund
+    definition: "A pooled investment that collects money from many investors to buy a portfolio of securities chosen by a manager or set to track an index. Shares are bought and sold once a day at the fund's net asset value."
+    related: [Net asset value (NAV), Exchange-traded fund (ETF), Expense ratio]
+  - term: Nasdaq Composite
+    definition: "A stock market index of nearly all stocks listed on the Nasdaq exchange, weighted by market capitalization. It is heavily weighted toward technology companies."
+    related: [Index, S&P 500, Dow Jones Industrial Average]
+  - term: Net asset value (NAV)
+    definition: "The per-share value of a fund, calculated by taking the total value of its holdings minus liabilities and dividing by the number of shares. Mutual funds trade at the NAV computed after the market closes."
+    related: [Mutual fund, Exchange-traded fund (ETF)]
+  - term: Net worth
+    definition: "The value of everything you own minus everything you owe. Tracking it over time gives a big-picture view of your financial progress."
+    related: [Asset, Budget]
+  - term: Ordinary income
+    definition: "Income taxed at regular federal income tax rates, such as wages, interest, short-term capital gains, and non-qualified dividends. It is distinct from long-term gains and qualified dividends, which usually get lower rates."
+    related: [Marginal tax rate, Short-term capital gain, Qualified dividend]
+  - term: Overbought
+    definition: "A technical-analysis label for a security whose price has risen quickly enough that some traders expect a pause or pullback. A reading above 70 on the RSI is a common signal, but prices can stay overbought for long periods."
+    related: [Oversold, Relative strength index (RSI)]
+  - term: Overconfidence bias
+    definition: "The tendency to overrate your own knowledge, skill, or ability to predict markets. It can lead to trading too often, holding too few investments, and underestimating risk."
+    related: [Behavioral finance, Confirmation bias]
+  - term: Oversold
+    definition: "A technical-analysis label for a security whose price has fallen quickly enough that some traders expect a bounce. A reading below 30 on the RSI is a common signal, though prices can keep falling."
+    related: [Overbought, Relative strength index (RSI)]
+  - term: Passive investing
+    definition: "An approach that aims to match a market's return, usually through index funds, rather than beat it. It typically involves low costs, broad diversification, and infrequent trading."
+    related: [Index fund, Active investing, Buy and hold]
+  - term: Portfolio
+    definition: "The full collection of investments a person or institution holds, such as stocks, bonds, funds, and cash. Looking at the portfolio as a whole shows its overall risk and diversification."
+    related: [Asset allocation, Diversification, Rebalancing]
+  - term: Preferred stock
+    definition: "A type of stock that usually pays a fixed dividend and is paid before common stock if a company is liquidated. Preferred shareholders typically have no voting rights, and the shares often behave somewhat like bonds."
+    related: [Common stock, Dividend, Bond]
+  - term: Price-to-earnings ratio (P/E)
+    definition: "A company's share price divided by its earnings per share. It shows how much investors pay for each dollar of profit. A high P/E can reflect expected growth or overly optimistic pricing, and comparisons work best within the same industry."
+    related: [Earnings per share (EPS), Valuation, Growth stock, Value stock]
+  - term: Principal
+    definition: "The original amount of money invested or borrowed, not counting interest or earnings. For a bond, it is usually the face value repaid at maturity."
+    related: [Interest, Face value]
+  - term: Prospectus
+    definition: "A legal document describing an investment offering, such as a mutual fund or new stock, including its goals, risks, fees, and management. Funds must provide one, and it is the main source for understanding what you own."
+    related: [Mutual fund, Expense ratio]
+  - term: Qualified dividend
+    definition: "A dividend that meets IRS rules, including a minimum holding period, to be taxed at the lower long-term capital gains rates rather than ordinary income rates. Most dividends from U.S. companies can qualify."
+    related: [Dividend, Long-term capital gain, Ordinary income, Ex-dividend date]
+  - term: Real return
+    definition: "An investment's return after subtracting inflation. It shows how much purchasing power actually grew. A 6% return in a year with 3% inflation is roughly a 3% real return."
+    related: [Inflation, Consumer Price Index (CPI)]
+  - term: Rebalancing
+    definition: "Buying or selling holdings to bring a portfolio back to its target asset allocation after market moves have shifted it. It keeps the portfolio's risk level close to the original plan, and in taxable accounts it can trigger taxes."
+    related: [Asset allocation, Portfolio, Diversification]
+  - term: Recency bias
+    definition: "Giving too much weight to recent events when predicting the future, such as assuming a market that rose last year will keep rising. It can lead to buying high and selling low."
+    related: [Behavioral finance, Herd behavior]
+  - term: Recession
+    definition: "A significant, widespread decline in economic activity lasting more than a few months, usually visible in employment, income, production, and spending. In the U.S., the National Bureau of Economic Research dates official recessions."
+    related: [Gross domestic product (GDP), Inverted yield curve]
+  - term: Relative strength index (RSI)
+    definition: "A momentum indicator scaled from 0 to 100 that compares the size of recent gains with recent losses, commonly over 14 periods. Readings above 70 are often labeled overbought and below 30 oversold."
+    related: [Overbought, Oversold, Momentum, Technical analysis]
+  - term: Required minimum distribution (RMD)
+    definition: "The minimum amount the IRS requires you to withdraw each year from traditional IRAs and most workplace retirement plans once you reach your RMD age: 73 if you were born 1951-1959, or 75 if born in 1960 or later. The first RMD is due by April 1 of the year after you reach that age. Missing an RMD can trigger a penalty tax."
+    related: [Traditional IRA, 401(k), Roth IRA]
+  - term: Risk tolerance
+    definition: "How much fluctuation and potential loss an investor can accept, both emotionally and financially. It depends on factors such as time horizon, income stability, and personal comfort with seeing values drop."
+    related: [Asset allocation, Time horizon, Volatility]
+  - term: Risk-free rate
+    definition: "The return on an investment considered to have essentially no default risk, usually approximated by short-term U.S. Treasury bill yields. It is the baseline used in measures such as the Sharpe ratio."
+    related: [Treasury bill, Sharpe ratio]
+  - term: Rollover
+    definition: "Moving retirement savings from one account to another, such as from an old 401(k) into an IRA, without it being taxed. A direct transfer between institutions avoids withholding and deadline issues that can arise with indirect rollovers."
+    related: [401(k), Individual retirement account (IRA), Traditional IRA]
+  - term: Roth 401(k)
+    definition: "A 401(k) option in which contributions are made with after-tax money. Qualified withdrawals in retirement, including earnings, are tax-free. It shares the same contribution limit as a traditional 401(k)."
+    related: [401(k), Roth IRA]
+  - term: Roth IRA
+    definition: "An individual retirement account funded with after-tax money. Contributions are not deductible, but qualified withdrawals of earnings in retirement are tax-free, and the original owner has no required minimum distributions. Income limits restrict who can contribute directly."
+    related: [Traditional IRA, Individual retirement account (IRA), Roth 401(k)]
+  - term: Rule of 72
+    definition: "A shortcut for estimating how many years it takes money to double at a given annual rate. Divide 72 by the rate, so at 6% a year it takes roughly 12 years. It is an approximation, not a projection of actual returns."
+    related: [Compound interest, Annualized return]
+  - term: S&P 500
+    definition: "A stock market index of about 500 large U.S. companies, weighted by market capitalization. It covers most of the value of the U.S. stock market and is a common benchmark for stock performance."
+    related: [Index, Benchmark, Index fund, Large-cap stock]
+  - term: Savings account
+    definition: "A deposit account at a bank or credit union that pays interest and keeps money easy to access. At insured institutions it is protected by FDIC or NCUA insurance up to legal limits."
+    related: [Emergency fund, FDIC insurance, Annual percentage yield (APY)]
+  - term: Securities and Exchange Commission (SEC)
+    definition: "The U.S. federal agency that regulates securities markets, enforces securities laws, and requires public companies and funds to disclose key information to investors."
+    related: [Prospectus]
+  - term: Sequence of returns risk
+    definition: "The risk that poor returns early in retirement, while you are withdrawing money, do lasting damage to a portfolio even if later average returns are good. The same returns in a different order can produce very different results."
+    related: [Monte Carlo simulation, Drawdown]
+  - term: Share
+    definition: "A single unit of ownership in a company, mutual fund, or ETF. Owning more shares means owning a larger portion of the whole."
+    related: [Stock, Stock split]
+  - term: Sharpe ratio
+    definition: "A measure of risk-adjusted return, calculated as an investment's return above the risk-free rate divided by its standard deviation. Higher values mean more return per unit of volatility, based on historical data."
+    related: [Risk-free rate, Standard deviation, Volatility]
+  - term: Short-term capital gain
+    definition: "A profit on an asset held one year or less before it is sold. Short-term gains are taxed as ordinary income, generally at higher rates than long-term gains."
+    related: [Capital gain, Long-term capital gain, Holding period, Ordinary income]
+  - term: Simple interest
+    definition: "Interest calculated only on the original principal, not on interest already earned. Borrowing 1,000 dollars at 5% simple interest costs 50 dollars a year."
+    related: [Compound interest, Principal]
+  - term: SIPC protection
+    definition: "Coverage from the Securities Investor Protection Corporation that helps restore customers' cash and securities, up to legal limits, if a member brokerage firm fails. It does not protect against investment losses from market declines."
+    related: [Brokerage account, FDIC insurance]
+  - term: Small-cap stock
+    definition: "Shares of a company with a relatively small market capitalization. Small caps can offer more growth potential but tend to be more volatile and less liquid than larger companies."
+    related: [Market capitalization, Large-cap stock]
+  - term: Standard deduction
+    definition: "A flat amount that reduces your taxable income if you do not itemize deductions. The amount depends on filing status and is adjusted for inflation each year."
+    related: [Tax bracket]
+  - term: Standard deviation
+    definition: "A statistic showing how widely values spread around their average. For investments, it measures how much returns have varied, and it is the most common way to express volatility. Higher means a bumpier ride."
+    related: [Volatility, Sharpe ratio, Correlation]
+  - term: Stock
+    definition: "A share of ownership in a company. Stockholders can benefit if the company grows and its share price rises or it pays dividends, but they can lose some or all of their investment if it struggles."
+    related: [Common stock, Share, Dividend, Equity]
+  - term: Stock split
+    definition: "When a company divides each existing share into more shares, lowering the price per share proportionally. A 2-for-1 split doubles your share count and halves the price, leaving the total value unchanged."
+    related: [Share, Cost basis]
+  - term: Target-date fund
+    definition: "A fund built around an expected retirement year that holds a mix of stocks and bonds and gradually shifts toward more conservative holdings as that year approaches. Funds with the same target year can differ in their mix and fees."
+    related: [Asset allocation, Mutual fund, Rebalancing]
+  - term: Tax bracket
+    definition: "A range of taxable income taxed at a particular rate. The U.S. uses several brackets, so each portion of income is taxed at its own bracket's rate rather than all income at one rate."
+    related: [Marginal tax rate, Effective tax rate]
+  - term: Tax-deferred
+    definition: "Describes accounts where taxes on contributions or growth are postponed until money is withdrawn, as in traditional 401(k)s and IRAs. Withdrawals are then usually taxed as ordinary income."
+    related: [Traditional IRA, 401(k)]
+  - term: Tax-loss harvesting
+    definition: "Selling investments at a loss in a taxable account to offset capital gains and, within annual limits, some ordinary income. Wash sale rules restrict buying the same or substantially identical investment around the sale."
+    related: [Capital loss, Wash sale, Cost basis]
+  - term: Taxable account
+    definition: "An investment account without special tax treatment, such as a standard brokerage account. Interest, dividends, and realized gains are generally taxed in the year they occur, but there are no contribution limits or withdrawal restrictions."
+    related: [Brokerage account, Tax-loss harvesting, Capital gains distribution]
+  - term: Technical analysis
+    definition: "Studying past price and volume patterns on charts to try to anticipate future price moves. Tools include moving averages, RSI, and support and resistance levels. Its predictive value is debated."
+    related: [Fundamental analysis, Moving average, Relative strength index (RSI)]
+  - term: Ticker symbol
+    definition: "A short code of letters that identifies a publicly traded security on an exchange, used to look up quotes and place orders."
+    related: [Exchange, Stock]
+  - term: Time horizon
+    definition: "The length of time you expect to hold an investment before you need the money. Longer horizons generally give more time to recover from market declines."
+    related: [Risk tolerance, Asset allocation]
+  - term: Total return
+    definition: "The full gain or loss on an investment over a period, combining price change with income such as dividends or interest, usually assuming that income is reinvested."
+    related: [Dividend, Annualized return]
+  - term: Traditional IRA
+    definition: "An individual retirement account where contributions may be tax-deductible depending on income and workplace plan coverage. Investments grow tax-deferred, and withdrawals are generally taxed as ordinary income. Required minimum distributions apply later in life."
+    related: [Roth IRA, Individual retirement account (IRA), Required minimum distribution (RMD), Tax-deferred]
+  - term: Treasury bill
+    definition: "A short-term U.S. government security that matures in one year or less. It is sold at a discount to face value, and the difference is your interest."
+    related: [Treasury note, Treasury bond, Cash equivalent, Risk-free rate]
+  - term: Treasury bond
+    definition: "A long-term U.S. government security, issued with a 20- or 30-year maturity, that pays interest every six months. Its long maturity makes its price sensitive to interest rate changes."
+    related: [Treasury bill, Treasury note, Interest rate risk]
+  - term: Treasury Inflation-Protected Securities (TIPS)
+    definition: "U.S. government securities whose principal adjusts up or down with the Consumer Price Index. Interest is paid every six months on the adjusted principal, helping preserve purchasing power."
+    related: [Inflation, Consumer Price Index (CPI), I bond]
+  - term: Treasury note
+    definition: "A U.S. government security with a maturity of 2 to 10 years that pays interest every six months. The 10-year note yield is widely watched as a benchmark for mortgage and other rates."
+    related: [Treasury bill, Treasury bond, Yield curve]
+  - term: Unrealized gain
+    definition: "An increase in an investment's value that exists only on paper because you have not sold it. It is generally not taxed until realized, and it can shrink or disappear if the price falls."
+    related: [Capital gain, Cost basis]
+  - term: Valuation
+    definition: "An estimate of what a company or asset is worth, often judged with ratios like price-to-earnings or price-to-book. Valuation helps show whether the current price looks expensive or cheap relative to fundamentals."
+    related: [Price-to-earnings ratio (P/E), Fundamental analysis]
+  - term: Value stock
+    definition: "Shares that trade at a low price relative to measures such as earnings, book value, or dividends. Value investors believe such stocks may be underpriced, though a low price can also reflect real problems."
+    related: [Growth stock, Price-to-earnings ratio (P/E), Valuation]
+  - term: Vesting
+    definition: "The process of earning full ownership of employer contributions, such as a 401(k) match, usually by staying with the employer for a set time. Your own contributions are always fully vested."
+    related: [Employer match, 401(k)]
+  - term: Volatility
+    definition: "How much and how quickly an investment's price moves up and down. It is often measured by standard deviation. Higher volatility means wider swings in both directions."
+    related: [Standard deviation, Beta, Drawdown, Risk tolerance]
+  - term: Volume
+    definition: "The number of shares or contracts traded during a period, such as a day. Higher volume usually means better liquidity and can signal stronger interest behind a price move."
+    related: [Liquidity, Technical analysis]
+  - term: Wash sale
+    definition: "Selling a security at a loss and buying the same or a substantially identical one within 30 days before or after the sale. The IRS disallows the loss for now, adding it instead to the cost basis of the new shares."
+    related: [Tax-loss harvesting, Capital loss, Cost basis]
+  - term: Yield
+    definition: "The income an investment produces, such as interest or dividends, shown as a percentage of its price or value. For bonds, yield moves opposite to price."
+    related: [Dividend yield, Yield to maturity, Coupon rate]
+  - term: Yield curve
+    definition: "A chart plotting yields of bonds with the same credit quality, usually Treasuries, across different maturities. It normally slopes upward because longer loans usually pay more; its shape reflects expectations about rates and growth."
+    related: [Inverted yield curve, Treasury note, Interest rate risk]
+  - term: Yield to maturity
+    definition: "The total annual return a bond would provide if bought at today's price and held to maturity with all payments made as promised. It accounts for coupon payments and any gain or loss relative to face value."
+    related: [Yield, Bond, Maturity date, Duration]

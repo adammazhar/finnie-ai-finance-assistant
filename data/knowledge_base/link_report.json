@@ -1,0 +1,3473 @@
+{
+  "checked_at": "2026-10-01T00:06:03+00:00",
+  "total": 258,
+  "passed": 258,
+  "failed": 0,
+  "allowlisted": 3,
+  "stale_allowlist_entries": [],
+  "results": [
+    {
+      "url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0033.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0033.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0540.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0540.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0585.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0585.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://bynder.schwab.com/m/3fc90e8c7dd8c3f7",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://bynder.schwab.com/m/3fc90e8c7dd8c3f7",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://consumer.ftc.gov/articles/free-credit-reports",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://consumer.ftc.gov/articles/free-credit-reports",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-005.md"
+      ]
+    },
+    {
+      "url": "https://consumer.ftc.gov/articles/investment-scams",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://consumer.ftc.gov/articles/investment-scams",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-010.md"
+      ]
+    },
+    {
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_setting-smart-goals_tool_2021-08.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://files.consumerfinance.gov/f/documents/cfpb_setting-smart-goals_tool_2021-08.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-001.md"
+      ]
+    },
+    {
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_ymyg-toolkit_reducing-debt-worksheet.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://files.consumerfinance.gov/f/documents/cfpb_ymyg-toolkit_reducing-debt-worksheet.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-004.md"
+      ]
+    },
+    {
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_events-purchases_tool_2018-11.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_events-purchases_tool_2018-11.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-004.md",
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-006.md"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0920.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0920.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0923.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0923.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0928.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0928.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0936.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0936.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0958.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0958.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0964.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0964.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0966.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0966.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0967.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0967.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0968.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0968.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0970.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0970.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F0986.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F0986.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F3141.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F3141.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F3365.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F3365.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F3369.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F3369.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://fund-docs.vanguard.com/F3711.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://fund-docs.vanguard.com/F3711.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F770893.PDF",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F770893.PDF",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F9911749.PDF",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2F9911749.PDF",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2FB-CSPU-SUM.PDF",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://institutional.fidelity.com/app/proxy/content?literatureURL=%2FB-CSPU-SUM.PDF",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-100",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/investor-resilience-world-investor-week-2022-investor-bulletin",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-007.md"
+      ]
+    },
+    {
+      "url": "https://investor.vanguard.com/investment-products/etfs/etf-investment-options",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://investor.vanguard.com/investment-products/etfs/etf-investment-options",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-006.md"
+      ]
+    },
+    {
+      "url": "https://investor.vanguard.com/investor-resources-education/portfolio-management/diversifying-your-portfolio",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://investor.vanguard.com/investor-resources-education/portfolio-management/diversifying-your-portfolio",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-001.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-004.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-005.md"
+      ]
+    },
+    {
+      "url": "https://investor.vanguard.com/investor-resources-education/portfolio-management/performance-details",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://investor.vanguard.com/investor-resources-education/portfolio-management/performance-details",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-009.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-010.md"
+      ]
+    },
+    {
+      "url": "https://www.bea.gov/data/gdp/gross-domestic-product",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.bea.gov/data/gdp/gross-domestic-product",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.bls.gov/cpi/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.bls.gov/cpi/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-006.md"
+      ]
+    },
+    {
+      "url": "https://www.bls.gov/cpi/questions-and-answers.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.bls.gov/cpi/questions-and-answers.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/archive/blog/budgeting-how-to-create-a-budget-and-stick-with-it/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-001.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-002.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/archive/blog/servicemembers-immediate-actions-financial-success-pay-down-debt-make-plan-start-early/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/archive/blog/servicemembers-immediate-actions-financial-success-pay-down-debt-make-plan-start-early/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-003.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/ask-cfpb/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/ask-cfpb/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/glossary.yaml"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-certificate-of-deposit-cd-en-917/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-certificate-of-deposit-cd-en-917/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-009.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-card-interest-rate-what-does-apr-mean-en-44/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-card-interest-rate-what-does-apr-mean-en-44/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-006.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-score-en-315/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-score-en-315/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-005.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-daily-periodic-rate-on-a-credit-card-en-46/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-daily-periodic-rate-on-a-credit-card-en-46/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-006.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/consumer-tools/financial-well-being/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/consumer-tools/financial-well-being/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-007.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/consumer-tools/money-as-you-grow/teen-young-adult/explore-protecting/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/consumer-tools/money-as-you-grow/teen-young-adult/explore-protecting/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-008.md"
+      ]
+    },
+    {
+      "url": "https://www.consumerfinance.gov/owning-a-home/prepare/determine-your-down-payment/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.consumerfinance.gov/owning-a-home/prepare/determine-your-down-payment/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-002.md"
+      ]
+    },
+    {
+      "url": "https://www.dol.gov/sites/dolgov/files/EBSA/about-ebsa/our-activities/resource-center/faqs/retirement-plans-and-erisa.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.dol.gov/sites/dolgov/files/EBSA/about-ebsa/our-activities/resource-center/faqs/retirement-plans-and-erisa.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-003.md"
+      ]
+    },
+    {
+      "url": "https://www.fdic.gov/resources/deposit-insurance/understanding-deposit-insurance",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fdic.gov/resources/deposit-insurance/understanding-deposit-insurance",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-002.md",
+        "data/knowledge_base/personal_finance/personal_finance-009.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreserve.gov/econres/scfindex.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreserve.gov/econres/scfindex.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-007.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreserve.gov/faqs/economy_14400.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreserve.gov/faqs/economy_14400.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-005.md",
+        "data/knowledge_base/market_economics/market_economics-006.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreserve.gov/faqs/what-economic-goals-does-federal-reserve-seek-to-achieve-through-monetary-policy.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreserve.gov/faqs/what-economic-goals-does-federal-reserve-seek-to-achieve-through-monetary-policy.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-005.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomc.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreserve.gov/monetarypolicy/fomc.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-005.md",
+        "data/knowledge_base/market_economics/market_economics-009.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreserve.gov/monetarypolicy/monetary-policy-what-are-its-goals-how-does-it-work.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreserve.gov/monetarypolicy/monetary-policy-what-are-its-goals-how-does-it-work.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-009.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreservehistory.org/essays/great-recession-of-200709",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreservehistory.org/essays/great-recession-of-200709",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-004.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreservehistory.org/essays/stock-market-crash-of-1929",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreservehistory.org/essays/stock-market-crash-of-1929",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-004.md"
+      ]
+    },
+    {
+      "url": "https://www.federalreservehistory.org/essays/stock-market-crash-of-1987",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.federalreservehistory.org/essays/stock-market-crash-of-1987",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-004.md"
+      ]
+    },
+    {
+      "url": "https://www.fidelity.com/learning-center/investment-products/etf/tracking-error-and-tracking-difference",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fidelity.com/learning-center/investment-products/etf/tracking-error-and-tracking-difference",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-010.md"
+      ]
+    },
+    {
+      "url": "https://www.fidelity.com/learning-center/investment-products/fixed-income-bonds/duration",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fidelity.com/learning-center/investment-products/fixed-income-bonds/duration",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-004.md"
+      ]
+    },
+    {
+      "url": "https://www.fidelity.com/learning-center/smart-money/what-is-volatility",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fidelity.com/learning-center/smart-money/what-is-volatility",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-009.md"
+      ]
+    },
+    {
+      "url": "https://www.fidelity.com/learning-center/trading-investing/markets-sectors/business-cycle-investing-implications",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fidelity.com/learning-center/trading-investing/markets-sectors/business-cycle-investing-implications",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-008.md",
+        "data/knowledge_base/market_economics/market_economics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.fidelity.com/planning/retirement/pdf/rip_methodology.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.fidelity.com/planning/retirement/pdf/rip_methodology.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-005.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/insights/bonds-interest-rate-changes-duration",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/insights/bonds-interest-rate-changes-duration",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-004.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/insights/key-terms-tough-times-vocabulary-stressed-markets",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/insights/key-terms-tough-times-vocabulary-stressed-markets",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-003.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/insights/money-market-funds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/insights/money-market-funds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-008.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/investing/investment-products",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-products",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/glossary.yaml"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/investing/investment-products/bonds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-products/bonds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-003.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-005.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/investing/investment-products/exchange-traded-funds-and-products",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-products/exchange-traded-funds-and-products",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-002.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/investing/investment-products/insurance",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-products/insurance",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-008.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/investing/investment-products/stocks",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-products/stocks",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-001.md",
+        "data/knowledge_base/stocks/stocks-002.md",
+        "data/knowledge_base/stocks/stocks-003.md"
+      ]
+    },
+    {
+      "url": "https://www.finra.org/investors/learn-to-invest/types-investments/retirement/401k-investing/401k-rollovers",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.finra.org/investors/investing/investment-accounts/retirement-accounts",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-012.md"
+      ]
+    },
+    {
+      "url": "https://www.invesco.com/qqq-etf/en/home.html",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.invesco.com/qqq-etf/en/home.html",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/general-resources/publications-research/info-sheets/beginners-guide-asset",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-007.md",
+        "data/knowledge_base/investing_basics/investing_basics-003.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-001.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-002.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-003.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/news-alerts/alerts-bulletins/updated-investor-bulletin-how-fees-expenses-affect",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/retirement-toolkit/employer-sponsored-plans/traditional-and-roth-401k-plans",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/retirement-toolkit/employer-sponsored-plans/traditional-and-roth-401k-plans",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-002.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/retirement-toolkit/first-job",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/retirement-toolkit/first-job",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-001.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/dont-make-same-mistakes-over-and-over-again",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/dont-make-same-mistakes-over-and-over-again",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-012.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/dont-panic-plan-it",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/dont-panic-plan-it",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-003.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/it-time-rebalance-your-investment-portfolio",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/it-time-rebalance-your-investment-portfolio",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/say-no-go-fomo",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/say-no-go-fomo",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/thinking-day-trading-know-risks",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/additional-resources/spotlight/formerdirectorlorischock-directors-take/thinking-day-trading-know-risks",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-002.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/characteristics-mutual-funds-exchange-traded-funds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/characteristics-mutual-funds-exchange-traded-funds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-003.md",
+        "data/knowledge_base/taxes/taxes-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/crypto-asset-securities",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/crypto-asset-securities",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/crypto-scams",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/crypto-scams",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/investor-alert-thinking-about-investing-latest-hot-stock-understand-significant-risks-short-term",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/investor-alert-thinking-about-investing-latest-hot-stock-understand-significant-risks-short-term",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-004.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/social-media-and-investment-fraud-investor-alert",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/social-media-and-investment-fraud-investor-alert",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-14",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-14",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-15",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-15",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-26",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-26",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-011.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-35",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-35",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-42",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-42",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-43",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-43",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-47",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-47",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-012.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-72",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-72",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-007.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-008.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-002.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-003.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-005.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-86",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-86",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-001.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-002.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-004.md",
+        "data/knowledge_base/market_economics/market_economics-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/how-read-2",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/how-read-2",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/international-investing",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/international-investing",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/introduction-529-plans-investor-bulletin",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/introduction-529-plans-investor-bulletin",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-003.md",
+        "data/knowledge_base/taxes/taxes-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/municipal",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/municipal",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/mutual-fund-and-etf-fees-and-expenses-investor-bulletin",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/mutual-fund-and-etf-fees-and-expenses-investor-bulletin",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-003.md",
+        "data/knowledge_base/funds_etfs/funds_etfs-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/target-date-funds-investor-bulletin",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/target-date-funds-investor-bulletin",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-006.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-011.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated-8",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated-8",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/what-are",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/what-are",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/what-are-0",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/what-are-0",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/getting-started/asset-allocation",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/getting-started/asset-allocation",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-002.md",
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-006.md",
+        "data/knowledge_base/investing_basics/investing_basics-004.md",
+        "data/knowledge_base/investing_basics/investing_basics-006.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-001.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-002.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-006.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-011.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/getting-started/understanding-fees",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/getting-started/understanding-fees",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-009.md",
+        "data/knowledge_base/investing_basics/investing_basics-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/glossary.yaml"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/529-plans",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/529-plans",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bid-price",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bid-price",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-002.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bond-funds-and-income-funds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bond-funds-and-income-funds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bull-market",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/bull-market",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/dividend",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/dividend",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/dollar-cost-averaging",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/dollar-cost-averaging",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/ex-dividend-dates-when-are-you-entitled-stock-and",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/ex-dividend-dates-when-are-you-entitled-stock-and",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-005.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/expense-ratio",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/expense-ratio",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-005.md",
+        "data/knowledge_base/investing_basics/investing_basics-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/form-10-k",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/form-10-k",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/form-10-q",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/form-10-q",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-007.md",
+        "data/knowledge_base/stocks/stocks-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/index-fund",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/index-fund",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/initial-public-offering-ipo",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/initial-public-offering-ipo",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/liquidity-or-marketability",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/liquidity-or-marketability",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/market-capitalization",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/market-capitalization",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/mutual-fund-prospectus",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/mutual-fund-prospectus",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/net-asset-value",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/net-asset-value",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/passive-fund-passively-managed-fund",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/passive-fund-passively-managed-fund",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-011.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/price-earnings-pe-ratio",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/price-earnings-pe-ratio",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/rebalancing",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/rebalancing",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/reverse-stock-splits",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/reverse-stock-splits",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/stock-split",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/stock-split",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/target-date-fund",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/target-date-fund",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/time-horizon",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/time-horizon",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-002.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/executing-order",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/executing-order",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/types-brokerage-accounts",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/types-brokerage-accounts",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/types-orders",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/types-orders",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-001.md",
+        "data/knowledge_base/stocks/stocks-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/invest-your-goals",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/invest-your-goals",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-004.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-accounts/tax-advantaged-accounts",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-accounts/tax-advantaged-accounts",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-007.md",
+        "data/knowledge_base/taxes/taxes-008.md",
+        "data/knowledge_base/taxes/taxes-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-accounts/tax-advantaged-accounts/retirement-savings/individual-retirement-accounts-iras",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-accounts/tax-advantaged-accounts/retirement-savings/individual-retirement-accounts-iras",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/bonds-or-fixed-income-products/bonds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/bonds-or-fixed-income-products/bonds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-001.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-003.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-1",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-funds-etfs/mutual-funds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-2",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-2",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-002.md",
+        "data/knowledge_base/funds_etfs/funds_etfs-007.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-4",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-4",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-004.md",
+        "data/knowledge_base/funds_etfs/funds_etfs-010.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-006.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-012.md",
+        "data/knowledge_base/stocks/stocks-003.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-5",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-5",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-008.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-6",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/mutual-funds-and-exchange-traded-6",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/stocks",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/investment-products/stocks",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-001.md",
+        "data/knowledge_base/stocks/stocks-001.md",
+        "data/knowledge_base/stocks/stocks-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/define-your-goals",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/define-your-goals",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/diversify-your-investments",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/diversify-your-investments",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-012.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/learn-about-investment-options",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/learn-about-investment-options",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-006.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/save-rainy-day",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/save-rainy-day",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-001.md",
+        "data/knowledge_base/investing_basics/investing_basics-009.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/small-savings-add-big-money",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/small-savings-add-big-money",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-002.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/understand-what-it-means-invest",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/save-and-invest/understand-what-it-means-invest",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-001.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/what-risk",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/introduction-investing/investing-basics/what-risk",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/financial_planning_goals/financial_planning_goals-005.md",
+        "data/knowledge_base/investing_basics/investing_basics-003.md",
+        "data/knowledge_base/investing_basics/investing_basics-009.md",
+        "data/knowledge_base/investing_basics/investing_basics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.investor.gov/sites/investorgov/files/2019-02/mutual-funds-ETFs.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.investor.gov/sites/investorgov/files/2019-02/mutual-funds-ETFs.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-001.md",
+        "data/knowledge_base/funds_etfs/funds_etfs-002.md",
+        "data/knowledge_base/funds_etfs/funds_etfs-003.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/faqs/capital-gains-losses-and-sale-of-home/mutual-funds-costs-distributions-etc",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/faqs/capital-gains-losses-and-sale-of-home/mutual-funds-costs-distributions-etc",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-003.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/faqs/interest-dividends-other-types-of-income/gifts-inheritances/gifts-inheritances-1",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/faqs/interest-dividends-other-types-of-income/gifts-inheritances/gifts-inheritances-1",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-011.md",
+        "data/knowledge_base/taxes/taxes-012.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/individuals/net-investment-income-tax",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/individuals/net-investment-income-tax",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/instructions/i1099b",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/instructions/i1099b",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-006.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/irb/2024-33_IRB",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/irb/2024-33_IRB",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-010.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-005.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-007.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-008.md",
+        "data/knowledge_base/taxes/taxes-007.md",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-011.md",
+        "data/knowledge_base/taxes/taxes-012.md",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-002.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/publications/p550",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/publications/p550",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-005.md",
+        "data/knowledge_base/taxes/taxes-002.md",
+        "data/knowledge_base/taxes/taxes-003.md",
+        "data/knowledge_base/taxes/taxes-004.md",
+        "data/knowledge_base/taxes/taxes-005.md",
+        "data/knowledge_base/taxes/taxes-006.md",
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/publications/p590b",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/publications/p590b",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-005.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/publications/p969",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/publications/p969",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-008.md",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/publications/p970",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/publications/p970",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-009.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/401k-plans",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/401k-plans",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-002.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-401k-and-profit-sharing-plan-contribution-limits",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-003.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-008.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-catch-up-contributions",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-catch-up-contributions",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-007.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-008.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-exceptions-to-tax-on-early-distributions",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-exceptions-to-tax-on-early-distributions",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-002.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-004.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-007.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-required-minimum-distributions-rmds",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-required-minimum-distributions-rmds",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-004.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-005.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-006.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-010.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-012.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-010.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/roth-iras",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/roth-iras",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-005.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/retirement-plans/traditional-iras",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/retirement-plans/traditional-iras",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-004.md",
+        "data/knowledge_base/retirement_planning/retirement_planning-006.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/taxtopics/tc403",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/taxtopics/tc403",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-001.md",
+        "data/knowledge_base/taxes/taxes-010.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/taxtopics/tc404",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/taxtopics/tc404",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-001.md",
+        "data/knowledge_base/taxes/taxes-004.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/taxtopics/tc409",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/taxtopics/tc409",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-001.md",
+        "data/knowledge_base/taxes/taxes-002.md",
+        "data/knowledge_base/taxes/taxes-005.md",
+        "data/knowledge_base/taxes/taxes-006.md",
+        "data/knowledge_base/glossary.yaml",
+        "data/reference/tax_2026.yaml",
+        "data/reference/tax_2026.yaml"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/taxtopics/tc413",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/taxtopics/tc413",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-012.md"
+      ]
+    },
+    {
+      "url": "https://www.irs.gov/taxtopics/tc703",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.irs.gov/taxtopics/tc703",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/taxes/taxes-003.md"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239452/ishares-13-year-treasury-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239452/ishares-13-year-treasury-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239456/ishares-710-year-treasury-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239456/ishares-710-year-treasury-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239467/ishares-tips-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239467/ishares-tips-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239561/ishares-gold-trust-fund",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239561/ishares-gold-trust-fund",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239566/ishares-iboxx-investment-grade-corporate-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239566/ishares-iboxx-investment-grade-corporate-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239724/ishares-core-sp-total-us-stock-market-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239724/ishares-core-sp-total-us-stock-market-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239729/ishares-aggressive-allocation-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239729/ishares-aggressive-allocation-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239733/ishares-conservative-allocation-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239733/ishares-conservative-allocation-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239756/ishares-growth-allocation-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239756/ishares-growth-allocation-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/239766/ishares-national-muni-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/239766/ishares-national-muni-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/244048/ishares-core-msci-total-international-stock-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/244048/ishares-core-msci-total-international-stock-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/314116/ishares-0-3-month-treasury-bond-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/314116/ishares-0-3-month-treasury-bond-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ishares.com/us/products/333011/ishares-bitcoin-trust-etf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ishares.com/us/products/333011/ishares-bitcoin-trust-etf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.myfico.com/credit-education/what-is-a-fico-score",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.myfico.com/credit-education/what-is-a-fico-score",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-005.md"
+      ]
+    },
+    {
+      "url": "https://www.nasdaq.com/glossary",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.nasdaq.com/glossary",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/glossary.yaml"
+      ]
+    },
+    {
+      "url": "https://www.nasdaq.com/products/global-indexes/nasdaq-composite",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.nasdaq.com/products/global-indexes/nasdaq-composite",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-002.md"
+      ]
+    },
+    {
+      "url": "https://www.nber.org/research/business-cycle-dating",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.nber.org/research/business-cycle-dating",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-008.md"
+      ]
+    },
+    {
+      "url": "https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.nber.org/research/data/us-business-cycle-expansions-and-contractions",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-008.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/automated-investing/portfolio-construction",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/automated-investing/portfolio-construction",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-005.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/investing-bias/overconfidence",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/investing-bias/overconfidence",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-005.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/investing-bias/recency",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/investing-bias/recency",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-006.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/beyond-4-rule-how-much-can-you-spend-retirement",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/beyond-4-rule-how-much-can-you-spend-retirement",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-009.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/bull-vs-bear-understanding-market-phases",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/bull-vs-bear-understanding-market-phases",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-003.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/emotional-biases-and-money",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/emotional-biases-and-money",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/risk_behavioral/risk_behavioral-002.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-006.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/how-correlation-can-dilute-diversification",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/how-correlation-can-dilute-diversification",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-004.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/how-to-read-an-earnings-report",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/how-to-read-an-earnings-report",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-010.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/risk-holding-too-much-company-stock",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/risk-holding-too-much-company-stock",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-007.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/stock-analysis-using-pe-ratio",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/stock-analysis-using-pe-ratio",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-004.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/ups-and-downs-stock-market-volatility",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/ups-and-downs-stock-market-volatility",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/portfolio_management/portfolio_management-009.md",
+        "data/knowledge_base/risk_behavioral/risk_behavioral-007.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/learn/story/with-rate-cuts-ahead-stock-buybacks-may-continue",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/learn/story/with-rate-cuts-ahead-stock-buybacks-may-continue",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-008.md"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/research/etfs/quotes/summary/schb",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/research/etfs/quotes/summary/schb",
+      "method": "HEAD",
+      "error": "soft 404: the page looks the same as the site's page for a made-up URL",
+      "allowlisted": true,
+      "allowlist_reason": "Schwab's research pages are a JavaScript shell that returns the same HTML for any path, so the checker can't tell the fund page from a made-up URL. The expense ratio was verified by the owner on schwab.com on 2026-09-30.",
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/research/etfs/quotes/summary/schh",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/research/etfs/quotes/summary/schh",
+      "method": "HEAD",
+      "error": "soft 404: the page looks the same as the site's page for a made-up URL",
+      "allowlisted": true,
+      "allowlist_reason": "Schwab's research pages are a JavaScript shell that returns the same HTML for any path, so the checker can't tell the fund page from a made-up URL. The expense ratio was verified by the owner on schwab.com on 2026-09-30.",
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.schwab.com/research/mutual-funds/quotes/summary/swtsx",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.schwab.com/research/mutual-funds/quotes/summary/swtsx",
+      "method": "HEAD",
+      "error": "soft 404: the page looks the same as the site's page for a made-up URL",
+      "allowlisted": true,
+      "allowlist_reason": "Schwab's research pages are a JavaScript shell that returns the same HTML (title \"Charles Schwab\") for any path, so the checker can't tell the fund page from a made-up URL. The expense ratio was verified by the owner on schwab.com on 2026-09-30.",
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/about/reports-publications/investorpubsbegfinstmtguide",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/about/reports-publications/investorpubsbegfinstmtguide",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-007.md"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/files/ia_affinityfraud.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/files/ia_affinityfraud.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-010.md"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/files/ib_corporatebonds.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/files/ib_corporatebonds.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-002.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-003.md",
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-005.md"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/investor/seniors/managingyourincome.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/investor/seniors/managingyourincome.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-009.md"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/investor/tools/quiz/6a.htm",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/investor/tools/quiz/6a.htm",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/personal_finance/personal_finance-003.md"
+      ]
+    },
+    {
+      "url": "https://www.sec.gov/newsroom/press-releases/2009-104-sec-charges-operators-reserve-primary-fund-fraud",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sec.gov/newsroom/press-releases/2009-104-sec-charges-operators-reserve-primary-fund-fraud",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-008.md"
+      ]
+    },
+    {
+      "url": "https://www.sipc.org/for-investors/what-sipc-protects",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.sipc.org/for-investors/what-sipc-protects",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.spdrgoldshares.com/usa/gld/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spdrgoldshares.com/usa/gld/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/documents/education/talking-points-an-overview-of-sp-500-sector-indices-and-25-years-of-gics.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/documents/education/talking-points-an-overview-of-sp-500-sector-indices-and-25-years-of-gics.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/documents/research/research-distinguishing-style-from-pure-style.pdf",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/documents/research/research-distinguishing-style-from-pure-style.pdf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/stocks/stocks-006.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/indices/equity/dow-jones-industrial-average/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/indices/equity/dow-jones-industrial-average/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-002.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-002.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/landing/topic/gics/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/landing/topic/gics/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-007.md",
+        "data/knowledge_base/market_economics/market_economics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/research-insights/spiva/about-spiva/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/research-insights/spiva/about-spiva/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/investing_basics/investing_basics-011.md"
+      ]
+    },
+    {
+      "url": "https://www.spglobal.com/spdji/en/spiva/article/spiva-us/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.spglobal.com/spdji/en/spiva/article/spiva-us/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/funds_etfs/funds_etfs-004.md"
+      ]
+    },
+    {
+      "url": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-011.md"
+      ]
+    },
+    {
+      "url": "https://www.ssa.gov/benefits/retirement/planner/credits.html",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssa.gov/benefits/retirement/planner/credits.html",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-011.md"
+      ]
+    },
+    {
+      "url": "https://www.ssa.gov/benefits/retirement/planner/delayret.html",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssa.gov/benefits/retirement/planner/delayret.html",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/retirement_planning/retirement_planning-011.md"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLB",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-materials-select-sector-spdr-etf-xlb",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLC",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-communication-services-select-sector-spdr-etf-xlc",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLE",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-energy-select-sector-spdr-etf-xle",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLF",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-financial-select-sector-spdr-etf-xlf",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLI",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-industrial-select-sector-spdr-etf-xli",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLK",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-technology-select-sector-spdr-etf-xlk",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLP",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-consumer-staples-select-sector-spdr-etf-xlp",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLRE",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-real-estate-select-sector-spdr-etf-xlre",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLU",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-utilities-select-sector-spdr-etf-xlu",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLV",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-health-care-select-sector-spdr-etf-xlv",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/mainfund/XLY",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-consumer-discretionary-select-sector-spdr-etf-xly",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-bloomberg-1-3-month-t-bill-etf-bil",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-bloomberg-1-3-month-t-bill-etf-bil",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-dow-jones-industrial-average-etf-trust-dia",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-dow-jones-industrial-average-etf-trust-dia",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/reference/securities.yaml"
+      ]
+    },
+    {
+      "url": "https://www.stlouisfed.org/on-the-economy/2023/sep/what-probability-recession-message-yield-spreads",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.stlouisfed.org/on-the-economy/2023/sep/what-probability-recession-message-yield-spreads",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-007.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/marketable-securities/tips/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/marketable-securities/tips/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-007.md",
+        "data/knowledge_base/investing_basics/investing_basics-010.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/marketable-securities/treasury-bills/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/marketable-securities/treasury-bills/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-006.md",
+        "data/knowledge_base/portfolio_management/portfolio_management-010.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/marketable-securities/treasury-bonds/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/marketable-securities/treasury-bonds/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-006.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/marketable-securities/treasury-notes/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/marketable-securities/treasury-notes/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-006.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/research-center/history-of-savings-bond/comparing-tips-to-i/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/research-center/history-of-savings-bond/comparing-tips-to-i/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/market_economics/market_economics-006.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/savings-bonds/i-bonds/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/savings-bonds/i-bonds/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-007.md"
+      ]
+    },
+    {
+      "url": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
+      "ok": true,
+      "status": 200,
+      "final_url": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
+      "method": "HEAD",
+      "error": null,
+      "allowlisted": false,
+      "allowlist_reason": null,
+      "used_by": [
+        "data/knowledge_base/bonds_fixed_income/bonds_fixed_income-007.md"
+      ]
+    }
+  ]
+}

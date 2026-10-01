@@ -129,7 +129,12 @@ def test_expense_ratios_are_sourced():
     assert vtsax.verified and vtsax.as_of == date(2026, 4, 28)
     assert vtsax.verified_on == date(2026, 9, 30)
     assert catalog.get("IVV").fees.as_of is None  # iShares pages state no fee date
-    assert catalog.unverified_expense_ratios() == ["SCHB", "SCHH", "SWTSX"]
+    assert catalog.unverified_expense_ratios() == []
+    # verified by the owner on schwab.com on 2026-09-30
+    for ticker, ratio in (("SCHB", 0.0003), ("SCHH", 0.0007), ("SWTSX", 0.0003)):
+        fees = catalog.get(ticker).fees
+        assert (fees.ratio, fees.status, fees.as_of) == (ratio, "verified", date(2026, 9, 30))
+        assert fees.source_url.startswith("https://www.schwab.com/research/")
     assert catalog.get("AAPL").fees is None and catalog.get("AAPL").expense_ratio == 0.0
     assert catalog.get("CASH").fees is None and catalog.get("CASH").expense_ratio == 0.0
 

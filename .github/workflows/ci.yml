@@ -27,3 +27,23 @@ jobs:
         run: mypy
       - name: Test (network blocked, coverage gate 90%)
         run: pytest
+
+  kb-links:
+    # Network-dependent, so it runs separately from the (network-blocked) unit tests.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+      - name: Validate knowledge base
+        run: python scripts/validate_kb.py
+      - name: Check every source link
+        run: python scripts/check_kb_links.py --no-report

@@ -19,9 +19,9 @@ _HANDLER_MARKER = "_finnie_handler"
 _NOISY_LOGGERS = ("httpx", "httpcore", "urllib3", "openai", "anthropic")
 
 SECRET_PATTERNS = (
-    re.compile(r"sk-ant-[A-Za-z0-9_\-]{8,}"),
-    re.compile(r"sk-(?:proj-)?[A-Za-z0-9_\-]{16,}"),
-    re.compile(r"tvly-[A-Za-z0-9_\-]{8,}"),
+    re.compile(r"(?<![A-Za-z0-9])sk-ant-[A-Za-z0-9_\-]{8,}"),
+    re.compile(r"(?<![A-Za-z0-9])sk-(?:proj-)?[A-Za-z0-9_\-]{16,}"),
+    re.compile(r"(?<![A-Za-z0-9])tvly-[A-Za-z0-9_\-]{8,}"),
     re.compile(r"(?i)(api[_-]?key[\"']?\s*[:=]\s*[\"']?)[A-Za-z0-9_\-]{8,}"),
 )
 REDACTED = "[REDACTED]"

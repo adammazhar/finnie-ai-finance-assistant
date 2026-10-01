@@ -118,6 +118,7 @@ securities:
 
 # Verified 2026-09-30 against each provider's official page or fact sheet.
 # SPDR pages list a gross expense ratio only. Where both appear, the net ratio is used.
+# SCHB (total), SCHH (net), and SWTSX (total) were verified by the owner on schwab.com.
 expense_ratios:
   SPAXX:
     ratio: 0.0042
@@ -157,10 +158,10 @@ expense_ratios:
     source_url: "https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf"
   SCHB:
     ratio: 0.0003
-    status: VERIFY
-    as_of: null
-    verified_on: null
-    source_url: "https://www.schwabassetmanagement.com/products/schb"
+    status: verified
+    as_of: 2026-09-30
+    verified_on: 2026-09-30
+    source_url: "https://www.schwab.com/research/etfs/quotes/summary/schb"
   ITOT:
     ratio: 0.0003
     status: verified
@@ -187,9 +188,9 @@ expense_ratios:
     source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0540.pdf"
   SWTSX:
     ratio: 0.0003
-    status: VERIFY
-    as_of: null
-    verified_on: null
+    status: verified
+    as_of: 2026-09-30
+    verified_on: 2026-09-30
     source_url: "https://www.schwab.com/research/mutual-funds/quotes/summary/swtsx"
   QQQ:
     ratio: 0.0018
@@ -373,10 +374,10 @@ expense_ratios:
     source_url: "https://fund-docs.vanguard.com/F0986.pdf"
   SCHH:
     ratio: 0.0007
-    status: VERIFY
-    as_of: null
-    verified_on: null
-    source_url: "https://www.schwabassetmanagement.com/products/schh"
+    status: verified
+    as_of: 2026-09-30
+    verified_on: 2026-09-30
+    source_url: "https://www.schwab.com/research/etfs/quotes/summary/schh"
   GLD:
     ratio: 0.004
     status: verified

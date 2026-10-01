@@ -63,4 +63,4 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 ignore_missing_imports = true
-files = ["src/core", "src/data", "src/utils"]
+files = ["src/core", "src/data", "src/utils", "src/rag"]

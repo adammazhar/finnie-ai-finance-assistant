@@ -52,16 +52,29 @@ def test_owner_verified_figures():
         assert table.source_url == INFLATION_URL
 
 
-def test_remaining_unverified_items():
+OWNER_VERIFIED_LATER = {
+    "gift_tax_annual_exclusion": (
+        19_000,
+        "https://www.irs.gov/faqs/interest-dividends-other-types-of-income/gifts-inheritances/"
+        "gifts-inheritances-1",
+    ),
+    "long_term_holding_period_years": (1, "https://www.irs.gov/taxtopics/tc409"),
+    "wash_sale_window_days": (30, "https://www.irs.gov/publications/p550"),
+    "net_investment_income_tax_rate": (
+        0.038,
+        "https://www.irs.gov/individuals/net-investment-income-tax",
+    ),
+}
+
+
+def test_every_figure_is_now_verified():
     assert REF.tax_year == 2026 and REF.jurisdiction == "US federal"
     assert get_tax_reference(2026) is REF
-    pending = [item.split(":")[0] for item in REF.unverified()]
-    assert pending == [
-        "gift_tax_annual_exclusion",
-        "long_term_holding_period_years",
-        "wash_sale_window_days",
-        "net_investment_income_tax_rate",
-    ]
+    assert REF.unverified() == []
+    for key, (value, url) in OWNER_VERIFIED_LATER.items():
+        figure = REF.figure(key)
+        assert (figure.value, figure.source_url) == (value, url), key
+        assert figure.verified and figure.verified_on == date(2026, 9, 30), key
     assert all(f.source_url.startswith("https://www.irs.gov/") for f in REF.figures.values())
     with pytest.raises(KeyError, match="Unknown tax figure"):
         REF.figure("nope")
@@ -84,7 +97,7 @@ def test_compare_accounts():
     assert [r.name for r in rows] == ["Roth IRA", "Traditional IRA", "529 Education Savings Plan"]
     assert rows[0].growth == "Tax-free"
     assert not rows[0].has_unverified_figures  # IRA limits and Roth phase-outs are verified
-    assert rows[2].has_unverified_figures  # gift tax exclusion is still VERIFY
+    assert not any(row.has_unverified_figures for row in rows)
     assert [f.key for f in rows[1].limits] == ["ira_contribution_limit", "ira_catch_up_50_plus"]
     assert len(compare_accounts(REF)) == 7
     with pytest.raises(KeyError, match="Unknown account type"):
@@ -153,8 +166,7 @@ def test_capital_gains_illustration_long_vs_short():
     assert long_term.first_long_term_sale_date == date(2026, 3, 2)
     assert long_term.tax_if_short_term == 1_200 and long_term.applied_tax == 82.5
     assert long_term.difference == 1_117.5 and long_term.effective_rate_on_gain == 0.0083
-    # the holding-period rule itself is still VERIFY, so the caveat stays
-    assert long_term.uses_unverified_figures and UNVERIFIED_NOTE in long_term.caveats
+    assert not long_term.uses_unverified_figures and UNVERIFIED_NOTE not in long_term.caveats
 
     on_anniversary = illustrate_capital_gains(
         REF,
@@ -192,13 +204,13 @@ def test_capital_gains_input_validation(kwargs):
         illustrate_capital_gains(REF, **args)
 
 
-def test_verified_figures_drop_the_caveat(tmp_path):
-    def verify_holding_rule(data):
+def test_unverified_holding_rule_adds_the_caveat(tmp_path):
+    def unverify_holding_rule(data):
         rule = data["figures"]["long_term_holding_period_years"]
-        rule["status"] = "verified"
-        rule["verified_on"] = date(2026, 10, 1)
+        rule["status"] = "VERIFY"
+        del rule["verified_on"]
 
-    ref = load_modified(tmp_path, verify_holding_rule)
+    ref = load_modified(tmp_path, unverify_holding_rule)
     result = illustrate_capital_gains(
         ref,
         gain=100,
@@ -206,8 +218,8 @@ def test_verified_figures_drop_the_caveat(tmp_path):
         sale_date=date(2026, 1, 1),
         taxable_income=0,
     )
-    assert not result.uses_unverified_figures and UNVERIFIED_NOTE not in result.caveats
-    assert len(ref.unverified()) == 3
+    assert result.uses_unverified_figures and UNVERIFIED_NOTE in result.caveats
+    assert [item.split(":")[0] for item in ref.unverified()] == ["long_term_holding_period_years"]
 
 
 def load_modified(tmp_path, mutate):
