@@ -14,3 +14,21 @@ urls:
     Schwab's research pages are a JavaScript shell that returns the same HTML for any path,
     so the checker can't tell the fund page from a made-up URL. The expense ratio was
     verified by the owner on schwab.com on 2026-09-30.
+  "https://www.finra.org/investors/insights/bonds-interest-rate-changes-duration": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/insights/key-terms-tough-times-vocabulary-stressed-markets": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/insights/money-market-funds": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/investing/investment-products": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/investing/investment-products/bonds": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/investing/investment-products/exchange-traded-funds-and-products": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/investing/investment-products/insurance": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/investing/investment-products/stocks": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
+  "https://www.finra.org/investors/learn-to-invest/types-investments/retirement/401k-investing/401k-rollovers": >-
+    FINRA's bot protection (Cloudflare) intermittently answers automated checks from cloud IP ranges, including GitHub Actions, with HTTP 429. The page returned HTTP 200 to the honest FinnieLinkChecker User-Agent from a residential connection on 2026-09-30. Used only when a check fails.
