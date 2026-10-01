@@ -17,6 +17,7 @@ include = ["src*"]
 
 [tool.setuptools.package-data]
 "src.agents" = ["prompts/*.md"]
+"src.workflow" = ["prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -65,4 +66,4 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 ignore_missing_imports = true
-files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents"]
+files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents", "src/workflow"]

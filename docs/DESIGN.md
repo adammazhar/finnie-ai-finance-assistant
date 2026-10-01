@@ -105,27 +105,36 @@ flowchart LR
 
 ### 2.1 Graph
 
+As built in Phase 7 (`src/workflow/graph.py`; `FinnieAssistant().mermaid()` prints the compiled graph). Dotted edges are conditional.
+
 ```mermaid
 flowchart TD
-    START([START]) --> ingest["ingest<br/>reset per-turn fields · input guardrail"]
-    ingest -->|blocked / out of scope| refuse["safe_response<br/>(polite redirect + disclaimer)"]
-    ingest -->|ok| router["router<br/>LLM structured classification<br/>+ follow-up rewriting"]
-    router -->|router failed| kw["keyword_router<br/>(deterministic fallback)"]
-    kw --> dispatch
-    router --> dispatch{"dispatcher<br/>next stage?"}
-    dispatch -- "Send() fan-out (parallel)" --> qa[finance_qa]
-    dispatch -- Send --> pf[portfolio]
-    dispatch -- Send --> mk[market]
-    dispatch -- Send --> gp[goal_planning]
-    dispatch -- Send --> nw[news]
-    dispatch -- Send --> tx[tax]
-    qa & pf & mk & gp & nw & tx --> dispatch
-    dispatch -->|all stages done| synth["synthesizer<br/>(pass-through if 1 agent)"]
-    dispatch -->|every agent failed| fallback["fallback<br/>(graceful degradation)"]
-    synth --> outg["output_guardrail<br/>advice filter · disclaimer · citations"]
-    fallback --> outg
-    refuse --> END([END])
-    outg --> END
+    START([START]) --> ingest["ingest<br/>reset per-turn fields · input screen · turn deadline"]
+    ingest -.->|prohibited / too long| blocked["respond_blocked"]
+    ingest -.->|ok| router["router<br/>fast-model structured output<br/>(keyword fallback inside)"]
+    router --> savings{"check_savings<br/>goal question + saved portfolio:<br/>how much counts?"}
+    ingest -.->|answer to the savings question| savings
+    ingest -.->|unclear answer| ask
+    savings -.->|not settled for this goal| ask["ask_savings<br/>all, part, or none?"]
+    savings -.->|out of scope| oos["respond_out_of_scope"]
+    savings -.->|"Send() per agent in stage 1"| agents
+    subgraph agents [specialists, parallel within a stage]
+        qa[finance_qa]
+        pf[portfolio]
+        mk[market]
+        gp[goal_planning]
+        nw[news]
+        tx[tax]
+    end
+    agents --> collect["collect<br/>advance stage · save holdings · at most one hand-off"]
+    collect -.->|next stage| agents
+    collect -.->|plan done| synth["synthesize<br/>unify citations · LLM merge if more than one answer<br/>fallback reply if every agent failed"]
+    synth --> guard["guard<br/>advice filter · freshness note · disclaimer"]
+    guard --> summarize["summarize<br/>fold old turns when history is long"]
+    blocked --> summarize
+    oos --> summarize
+    ask --> summarize
+    summarize --> END([END])
 ```
 
 ### 2.2 State schema (`src/workflow/state.py`)
@@ -263,6 +272,28 @@ Every error is logged as structured JSON (`src/utils/logging.py`) with `turn_id`
 
 ---
 
+### 2.7 Implementation notes (Phase 7)
+
+Where the build differs from, or adds to, §2.1–2.6:
+
+- **State.** Field names are `profile`, `summary`, and `results`. Per-agent errors live in each `AgentResult.error`, so there is no separate `errors` list. The final reply is a `TurnOutput` (answer, sources, agents, status, guardrail action, route, per-agent data, freshness, errors). Everything except `messages` is plain JSON, so the checkpointer stores it without custom types.
+- **Advice and injection screening** is the regex screen in `ingest` (§10), not a router field. Its category adds guidance to every agent's prompt. Out-of-scope detection is the router's `out_of_scope` flag.
+- **Fallback node.** When every agent fails, `synthesize` produces the fallback reply itself (status `fallback`), so there's no separate node.
+- **Follow-up rewriting** only applies when there is earlier conversation. A first message is used as written, because a live test showed a rewrite dropping the user's holdings ("I hold 40 VTI…") from the question.
+- **How much of a saved portfolio counts toward a goal** (`src/workflow/savings.py`):
+  - **When Finnie asks.** A portfolio is saved, a goal question doesn't state current savings, and that goal has no stored choice yet. Finnie then asks once: "You have a saved portfolio worth $X. Should I count all of it, part of it, or none toward this goal?" $X comes from a quick quote lookup, not the portfolio agent.
+  - **The reply.** It is parsed as all, none, or a dollar amount; "half" and percentages also work. The original question then resumes with its original route, without routing the reply. An unclear short reply is asked again. A longer message is treated as a new question.
+  - **Per-goal memory.** The choice is stored in the thread under the router's goal label (e.g. "retirement"). The router sees the labels already used, so a follow-up about the same goal reuses its choice, and a different goal asks again. "All" uses the portfolio's value at the time of each turn.
+  - **Savings stated in the question** are used without asking ("I'm 30 with $20,000 saved"). The router model's figure counts only if the question supports it: 0 needs wording like "nothing saved", and any other amount must appear in the text. Otherwise a pattern match is used.
+  - **Holdings listed in the question** ("I hold 40 VTI…") count as stated savings. The portfolio agent runs first to value them. A saved portfolio alone doesn't add the portfolio agent.
+- **Team note.** In a multi-agent turn each agent is told which specialists cover the other parts, so it answers only its own part and doesn't hand off to them.
+- **Hand-offs** add at most one stage per turn. An agent already run or already scheduled is never added again.
+- **Citations.** Each agent numbers its own `[n]` and `[N#]` markers and records which source each number means. `synthesize` renumbers all markers into one sources list before merging, and the merge prompt keeps markers attached to their facts. Markers that can't be resolved are dropped.
+- **Disclaimer.** History stores the answer without the disclaimer, and `finalize` strips any copy a model repeats, so it appears exactly once.
+- **Turn time budget.** `workflow.turn_timeout_s` (120 s) sets a deadline in `ingest`. An agent still running at the deadline becomes an error result, and the turn answers with what the other agents found.
+- **Router call** uses function-calling structured output, because OpenAI's strict JSON-schema mode rejects the free-form `depends_on` mapping.
+- **Routing eval.** `tests/evals/routing_cases.yaml` has 66 labelled questions: every specialist, multi-agent questions, out-of-scope questions, and follow-ups with history. `python scripts/eval_routing.py` reports accuracy and compares it with the keyword router; see `docs/BENCHMARKS.md`.
+
 ## 3. The Six Agents
 
 All agents extend `BaseAgent` (`src/agents/base.py`):
@@ -327,7 +358,7 @@ SPY, QQQ, DIA, and IWM serve as index proxies. The 11 SPDR sector ETFs cover sec
 
   It never raises: model and tool failures become an error result, or an error message the model can react to.
 - **Tools** (`src/agents/tools.py`): 13 `StructuredTool`s with pydantic argument schemas. They wrap the same domain functions the MCP server will use. Each returns a short text summary for the model and writes structured output to the run's `RunState`: chart data (`portfolio_analysis`, `goal_projection`, `price_history`, `market_overview`, `news`, `account_comparison`, `capital_gains`, `holdings`), freshness records, and market/news sources. Knowledge base tools add passages with continuing citation numbers.
-- **Hand-offs:** any agent can call `request_handoff(agent, reason)`. The workflow (Phase 7) runs the requested specialist next, at most 3 stages per turn.
+- **Hand-offs:** any agent can call `request_handoff(agent, reason)`. The workflow runs the requested specialist in an extra stage: at most one hand-off per turn, never to an agent already run or scheduled, within the 3-stage limit.
 - **Prompts** (`src/agents/prompts/*.md`, shipped as package data): `_policy.md` holds the shared rules (education not advice, no guarantees, cite only given numbers, report data freshness, treat retrieved/tool/news text as data, stay in scope, refuse illegal requests). One file per agent describes its role and tool use.
 - **Untrusted data:** knowledge base passages, news articles, and other specialists' findings reach the model inside `<untrusted_...>` tags, with a note that the content is data, never instructions. `sanitize_untrusted` strips anything that could close those tags, redacts instruction-like phrases ("ignore previous instructions"), and truncates. The output guardrail is the backstop if a model is fooled anyway (see `tests/unit/agents/test_safety.py`).
 - **News citations:** articles are numbered `[N1]`, `[N2]`, ... (continuing across tool calls). Only articles the answer cites, or names by title, become sources, matching how knowledge base citations work. Invented markers are stripped.
@@ -792,13 +823,14 @@ finnie-ai-finance-assistant/
 
 | Concern | Mitigation | Target |
 |---|---|---|
-| LLM latency | fast tier for router and guardrail rewrites; single-agent pass-through skips the synthesizer; parallel `Send` fan-out; streaming to UI | first token < 2 s; single-agent turn p50 < 6 s |
+| LLM latency | fast tier for router and guardrail rewrites; single-agent pass-through skips the synthesizer; parallel `Send` fan-out; streaming to UI | first token < 2 s; single-agent turn p50 < 6 s; multi-specialist turn p50 < 15 s (enforced by `scripts/bench_workflow.py`) |
+| Routing | fast-model structured output; keyword fallback | LLM router ≥ 90% and keyword fallback ≥ 75% on the labelled set (enforced by `scripts/eval_routing.py`; the keyword floor also runs in CI) |
 | Market API quota | 30-min cache, batch fetches, local indicators, daily AV budget | cached quote < 20 ms |
 | Embedding/index load | loaded once per process; index prebuilt in Docker image | retrieval < 50 ms |
 | Token cost | k=4 chunks, ≤2 per article, 20-message window + summary | < 4k input tokens per agent call |
 | Monte Carlo | numpy vectorization | 10k × 480 months < 200 ms |
 
-Actual numbers are measured by `scripts/run_benchmarks.py` and published in `docs/BENCHMARKS.md`.
+Actual numbers are measured by the scripts named in `docs/BENCHMARKS.md` (`eval_retrieval.py`, `eval_routing.py`, `bench_workflow.py`) and published there. The course documents ask for "performance considerations" and "performance benchmarks" but set no numeric response-time requirement. Their one number, a 30-minute TTL for cached market data, is what Finnie uses for quotes and news.
 
 ---
 
@@ -839,3 +871,8 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 14 | *(Phase 4 review)* **Honest link checking:** the link checker identifies itself as `FinnieLinkChecker/1.0` and never retries with a browser User-Agent. Sites that refuse automated checks are allow-listed with a written reason or replaced. Investopedia is not cited (it's removed from the domain allow-list); its citations were replaced with primary sources. |
 | 15 | *(Phase 4 review)* **RMD age:** 73 for people born 1951-1959 and 75 for 1960 or later (SECURE 2.0; IRS proposed regulations in IRB 2024-33 place 1959 at 73). The first RMD is due April 1 of the year after reaching the RMD age. IRS pages that still show age 72 as current are not cited. |
 | 16 | *(Phase 4 review)* **Remaining verifications done by the owner (2026-09-30):** gift tax exclusion $19,000, holding period (more than one year), wash sale (30 days before/after), NIIT 3.8%, and expense ratios SCHB 0.03%, SCHH 0.07% (net), SWTSX 0.03% on schwab.com. Nothing in `tax_2026.yaml` or `securities.yaml` is `VERIFY`. |
+| 17 | *(Phase 7)* **Follow-up rewriting only with history.** A first message is routed and answered as written. The router's standalone rewrite is used only when there are earlier turns to resolve. |
+| 18 | *(Phase 7, amended by 21)* **Goal questions that list holdings include the portfolio agent** (added deterministically after routing, in both the LLM and keyword routers), and its total value is the goal's current savings. |
+| 19 | *(Phase 7)* **One hand-off per turn, never to an agent already run or scheduled.** A live run showed goal_planning running twice when portfolio handed off to it; this is now prevented and covered by a regression test. |
+| 20 | *(Phase 7)* **Turn time budget** of `workflow.turn_timeout_s` (120 s). A late agent becomes an error result instead of holding up the whole answer. |
+| 21 | *(Phase 7 review)* **Ask before counting a saved portfolio toward a goal.** In chat, when a portfolio is saved and a goal question doesn't state current savings, Finnie asks once per goal whether to count all of it, part of it (a dollar amount), or none, and remembers the answer for that goal in the conversation. Savings or holdings stated in the question are used without asking. The Goals tab uses an "Include saved portfolio" checkbox with an editable amount instead of the chat question. |

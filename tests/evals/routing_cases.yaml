@@ -1,0 +1,104 @@
+# Routing evaluation set: each question lists the specialist(s) that must be chosen.
+# A case is correct when every expected agent is chosen (extra agents are counted
+# separately) and out-of-scope questions are declined. `alternatives` lists other
+# acceptable sets for genuinely ambiguous questions. `history` gives earlier turns
+# (user, Finnie, user, ...) for follow-ups; `has_portfolio` means a portfolio is saved.
+# A saved portfolio doesn't add the portfolio agent to goal questions (the user is asked how
+# much of it counts); holdings listed in the question do.
+
+cases:
+  # finance_qa: concepts and definitions
+  - {question: "What is an ETF?", agents: [finance_qa]}
+  - {question: "Can you explain compound interest like I'm new to this?", agents: [finance_qa]}
+  - {question: "What's the difference between stocks and bonds?", agents: [finance_qa]}
+  - {question: "What does diversification mean?", agents: [finance_qa], alternatives: [[portfolio]]}
+  - {question: "What is a bear market?", agents: [finance_qa]}
+  - {question: "How does an expense ratio work?", agents: [finance_qa]}
+  - {question: "What is dollar-cost averaging?", agents: [finance_qa]}
+  - {question: "What is insider trading and why is it illegal?", agents: [finance_qa]}
+  - {question: "How does the SEC detect pump and dump schemes?", agents: [finance_qa]}
+  - {question: "Hi! What can you help me with?", agents: [finance_qa]}
+
+  # portfolio: the user's own holdings
+  - {question: "Can you analyze my portfolio?", agents: [portfolio], has_portfolio: true}
+  - {question: "Am I too concentrated in tech?", agents: [portfolio], has_portfolio: true}
+  - {question: "I own 50 AAPL, 20 MSFT and 10 BND. How diversified am I?", agents: [portfolio]}
+  - {question: "What's the Sharpe ratio of my holdings?", agents: [portfolio], has_portfolio: true}
+  - {question: "How much am I paying in fund fees across my portfolio?", agents: [portfolio], has_portfolio: true}
+  - {question: "Is my allocation too aggressive for someone my age?", agents: [portfolio], has_portfolio: true}
+  - {question: "What's the overall risk level of my investments?", agents: [portfolio], has_portfolio: true}
+  - {question: "Show me the sector breakdown of my stocks.", agents: [portfolio], has_portfolio: true}
+
+  # market: prices, trends, company overviews
+  - {question: "How is AAPL doing today?", agents: [market]}
+  - {question: "What's the price of $NVDA right now?", agents: [market]}
+  - {question: "How did the S&P 500 do today?", agents: [market]}
+  - {question: "Is TSLA trading above its 50-day moving average?", agents: [market]}
+  - {question: "What's Microsoft's 52-week range?", agents: [market]}
+  - {question: "Give me an overview of Costco as a company.", agents: [market]}
+  - {question: "Which sectors are up today?", agents: [market]}
+  - {question: "How have VOO and QQQ performed this year?", agents: [market]}
+
+  # goal_planning: projections toward a savings target
+  - {question: "Am I on track to have $1 million by 65 if I save $500 a month starting at 35?", agents: [goal_planning]}
+  - {question: "How much do I need to save monthly for a $60,000 down payment in 5 years?", agents: [goal_planning]}
+  - {question: "I'm 30 with $20,000 saved. Could I reach $500,000 by 55?", agents: [goal_planning]}
+  - {question: "If I put $300 a month into a college fund for 18 years, what might it grow to?", agents: [goal_planning]}
+  - {question: "What are my chances of reaching $250k in 15 years with $800 a month?", agents: [goal_planning]}
+  - {question: "Run a projection for saving $1,000 a month over 25 years toward $750,000.", agents: [goal_planning]}
+  - {question: "Can I retire early at 50 if I save $1,500 a month from age 30?", agents: [goal_planning]}
+  - {question: "Am I on track for $400,000 in 20 years with my current investments?", agents: [goal_planning], has_portfolio: true}
+
+  # news
+  - {question: "Any news on Nvidia?", agents: [news]}
+  - {question: "Why did TSLA drop today?", agents: [news], alternatives: [[market]]}
+  - {question: "What are the latest headlines about Apple?", agents: [news]}
+  - {question: "What's been happening in the markets this week?", agents: [news], alternatives: [[market]]}
+  - {question: "Has there been any news about Microsoft's earnings?", agents: [news]}
+  - {question: "What's the news sentiment around Meta lately?", agents: [news]}
+
+  # tax
+  - {question: "How are long-term capital gains taxed?", agents: [tax]}
+  - {question: "What's a wash sale?", agents: [tax]}
+  - {question: "Should I use a Roth or a traditional IRA?", agents: [tax]}
+  - {question: "What is the 401(k) contribution limit for 2026?", agents: [tax]}
+  - {question: "When do I have to start taking required minimum distributions?", agents: [tax]}
+  - {question: "If I sell my TSLA shares after 8 months, how is the gain taxed?", agents: [tax]}
+  - {question: "Can I deduct investment losses on my taxes?", agents: [tax]}
+  - {question: "How does tax-loss harvesting work?", agents: [tax]}
+  - {question: "How can an HSA be used for investing?", agents: [tax]}
+
+  # several specialists
+  - {question: "How is TSLA doing today and is there any news about it?", agents: [market, news]}
+  - {question: "I hold 40 VTI and 30 TSLA. Am I on track for $400,000 in 20 years if I add $700 a month?", agents: [portfolio, goal_planning]}
+  - {question: "What's AAPL trading at, and what would I owe in taxes if I sold my shares at a gain after two years?", agents: [market, tax]}
+  - {question: "Is my portfolio too risky, and is there any news about my biggest holding?", agents: [portfolio, news], has_portfolio: true}
+  - {question: "Explain what an ETF is, and how is VOO doing today?", agents: [finance_qa, market]}
+  - {question: "What are the tax implications of selling my holdings, and how concentrated am I?", agents: [portfolio, tax], has_portfolio: true}
+
+  # out of scope
+  - {question: "What's a good lasagna recipe?", out_of_scope: true}
+  - {question: "What's the weather in Paris tomorrow?", out_of_scope: true}
+  - {question: "Write a poem about my cat.", out_of_scope: true}
+  - {question: "Who won the last World Cup?", out_of_scope: true}
+  - {question: "Can you fix this Python error: KeyError 'name'?", out_of_scope: true}
+  - {question: "Recommend some hiking trails near Denver.", out_of_scope: true}
+
+  # follow-ups that only make sense with the conversation
+  - question: "What about taxes if I sold it?"
+    agents: [tax]
+    history: ["How is TSLA doing today?", "TSLA is at $354.81, up 0.6% today."]
+  - question: "And how is VOO doing today?"
+    agents: [market]
+    history: ["What's an ETF?", "An ETF is a fund that trades on an exchange like a stock."]
+  - question: "Am I on track for $500k in 20 years then?"
+    agents: [goal_planning]
+    has_portfolio: true
+    history: ["Analyze my portfolio.", "Your portfolio is worth $29,121 and is 88% stocks."]
+  - question: "Why is it moving so much?"
+    agents: [news]
+    alternatives: [[market]]
+    history: ["What's NVDA's price?", "NVDA is at $182.10, down 4.2% today."]
+  - question: "And what about a good pasta recipe?"
+    out_of_scope: true
+    history: ["What is a bond?", "A bond is a loan you make to a government or company."]

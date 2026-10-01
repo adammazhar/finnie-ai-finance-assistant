@@ -43,7 +43,8 @@ def test_structured_output_validates_dicts_and_passes_objects():
     assert runnable.invoke("q1") == Route(agent="tax")
     assert runnable.invoke("q2") == Route(agent="news")
     assert fake.structured_schemas == [Route]
-    assert fake.with_structured_output(dict).invoke("q3") == {"agent": "tax"}
+    # one script per model: a new runnable continues where the last left off
+    assert fake.with_structured_output(Route).invoke("q3") == Route(agent="news")
 
 
 def test_bind_tools_records_tools():

@@ -116,6 +116,11 @@ def format_blocks(blocks: list[ContextBlock]) -> str:
     )
 
 
+def source_key(source: Source) -> str:
+    """Stable identity for a source across agents: article id, else URL, else title."""
+    return source.article_id or source.url or source.title
+
+
 def used_news(news: list[Source], cited: list[int], answer: str) -> list[Source]:
     """News articles the answer used: cited as [N#], or (as a fallback) named by title."""
     lowered = answer.lower()
@@ -220,6 +225,13 @@ class BaseAgent:
         removed = check.removed + [f"N{n}" for n in news_check.removed]
         if removed:
             logger.info("Removed invalid citations %s", removed, extra={"agent": self.name})
+        # Which source each surviving marker points to, so the workflow can renumber
+        # citations when it combines several agents' answers into one.
+        by_block = {b.number: b.source for b in state.blocks}
+        state.data["citations"] = {
+            "kb": {str(n): source_key(by_block[n]) for n in check.cited},
+            "news": {str(n): source_key(state.news[n - 1]) for n in news_check.cited},
+        }
         state.data.setdefault("meta", {}).update(
             {
                 "latency_ms": round((time.perf_counter() - started) * 1000, 1),

@@ -599,6 +599,27 @@ class MarketData(Protocol):
     def get_treasury_bill_yield(self) -> Quote: ...
 
 
+def portfolio_total(
+    holdings: Sequence[Holding], market: MarketData, catalog: SecurityCatalog | None = None
+) -> float | None:
+    """Current market value from quotes alone (no history), or ``None`` if nothing is priced.
+
+    Cheaper than ``fetch_and_analyze`` for when only the total is needed.
+    """
+    catalog = catalog or get_catalog()
+    merged = merge_holdings(holdings)
+    cash = {h.ticker for h in merged if (info := catalog.get(h.ticker)) and info.type in CASH_TYPES}
+    try:
+        quotes = market.get_quotes([h.ticker for h in merged if h.ticker not in cash]).quotes
+    except MarketDataError:
+        quotes = {}
+    prices = {t: q.price for t, q in quotes.items()} | dict.fromkeys(cash, 1.0)
+    priced = [h for h in merged if prices.get(h.ticker)]
+    if not priced:
+        return None
+    return round(sum(h.shares * prices[h.ticker] for h in priced), 2)
+
+
 def fetch_and_analyze(
     holdings: Sequence[Holding],
     market: MarketData,

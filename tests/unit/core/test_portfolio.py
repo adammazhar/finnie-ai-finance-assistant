@@ -596,3 +596,27 @@ def test_fetch_and_analyze_uses_global_defaults_and_rejects_empty():
     assert fetch_and_analyze([Holding(ticker="VTI", shares=1)], market).total_value == 100
     with pytest.raises(PortfolioError):
         fetch_and_analyze([], market)
+
+
+# ---- portfolio_total ------------------------------------------------------------------
+
+
+def test_portfolio_total_from_quotes_and_cash():
+    from src.core.portfolio import portfolio_total
+
+    market = FakeMarket({"VTI": 300.0})
+    holdings = [Holding(ticker="VTI", shares=2), Holding(ticker="CASH", shares=50)]
+    assert portfolio_total(holdings, market) == 650.0
+    assert portfolio_total([Holding(ticker="ZZZZ", shares=1)], market) is None
+
+
+def test_portfolio_total_when_quotes_fail():
+    from src.core.portfolio import portfolio_total
+    from src.data.errors import DataUnavailableError
+
+    class Down:
+        def get_quotes(self, tickers):
+            raise DataUnavailableError("down")
+
+    assert portfolio_total([Holding(ticker="VTI", shares=1)], Down()) is None  # type: ignore[arg-type]
+    assert portfolio_total([Holding(ticker="CASH", shares=5)], Down()) == 5.0  # type: ignore[arg-type]

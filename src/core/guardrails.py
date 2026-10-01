@@ -273,9 +273,15 @@ def freshness_notice(freshness: Sequence[Freshness]) -> str | None:
 
 def finalize(text: str, freshness: Sequence[Freshness] = ()) -> str:
     """Append the freshness note (if any) and the disclaimer."""
-    parts = [text.rstrip()]
+    body = strip_disclaimer(text)
+    parts = [body]
     note = freshness_notice(freshness)
-    if note:
+    if note and note not in body:
         parts.append(note)
     parts.append(SHORT_DISCLAIMER)
     return "\n\n".join(parts)
+
+
+def strip_disclaimer(text: str) -> str:
+    """Remove any copies of the disclaimer (models sometimes repeat it from history)."""
+    return text.replace(SHORT_DISCLAIMER, "").rstrip()

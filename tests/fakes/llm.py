@@ -19,7 +19,8 @@ class FakeChatModel(BaseChatModel):
     - ``responses``: ``str``, ``AIMessage`` (may carry ``tool_calls``), or an ``Exception``
       to raise. The last response repeats once the script is exhausted.
     - ``structured_responses``: objects returned by ``with_structured_output`` runnables,
-      in order; an ``Exception`` entry is raised.
+      in order across all of them (one script per model, like ``responses``); an
+      ``Exception`` entry is raised.
     """
 
     responses: list[Any] = Field(default_factory=lambda: ["ok"])
@@ -27,6 +28,7 @@ class FakeChatModel(BaseChatModel):
     calls: list[list[Any]] = Field(default_factory=list)
     bound_tools: list[Any] = Field(default_factory=list)
     structured_schemas: list[Any] = Field(default_factory=list)
+    structured_calls: int = 0
     name: str = "fake"
 
     @property
@@ -62,12 +64,11 @@ class FakeChatModel(BaseChatModel):
         self, schema: Any, **kwargs: Any
     ) -> Runnable[Any, Any]:
         self.structured_schemas.append(schema)
-        counter = {"n": 0}
 
         def respond(messages: Any) -> Any:
             self.calls.append(messages if isinstance(messages, list) else [messages])
-            item = self._next(self.structured_responses, counter["n"])
-            counter["n"] += 1
+            item = self._next(self.structured_responses, self.structured_calls)
+            self.structured_calls += 1
             if (
                 isinstance(schema, type)
                 and issubclass(schema, BaseModel)
