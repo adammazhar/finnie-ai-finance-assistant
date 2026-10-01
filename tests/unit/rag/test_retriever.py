@@ -9,6 +9,10 @@ from src.rag.knowledge_base import SourceRef
 from src.rag.retriever import Retriever, build_retriever
 from tests.fakes.embeddings import FakeEmbeddings
 
+# Real chunking imports LangChain's text splitters (and with them torch), which takes about
+# 20 s per process. One xdist worker runs all such tests, so only it pays that cost.
+pytestmark = pytest.mark.xdist_group("text_splitters")
+
 
 @pytest.fixture
 def retriever(kb, rag_config, embeddings):

@@ -1,7 +1,13 @@
+import pytest
+
 from src.core.config import RAGConfig
 from src.rag.chunking import INTRO_SECTION, build_chunks, chunk_article, chunk_glossary
 from src.rag.knowledge_base import load_articles, load_glossary
 from tests.unit.rag.conftest import write_article
+
+# Real chunking imports LangChain's text splitters (and with them torch), which takes about
+# 20 s per process. One xdist worker runs all such tests, so only it pays that cost.
+pytestmark = pytest.mark.xdist_group("text_splitters")
 
 
 def test_article_chunks_follow_sections(kb, rag_config):

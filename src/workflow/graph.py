@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from typing import Any
 
 from langchain_core.messages import HumanMessage
@@ -28,6 +28,7 @@ from src.agents.context import AgentContext, build_agent_context
 from src.agents.registry import build_agents
 from src.core.models import Holding, UserProfile
 from src.workflow.nodes import Deps, TurnOutput, after_ingest, fan_out, make_nodes
+from src.workflow.progress import Progress
 from src.workflow.state import FinnieState
 
 logger = logging.getLogger(__name__)
@@ -79,22 +80,19 @@ class FinnieAssistant:
     def _config(self, thread_id: str) -> dict[str, Any]:
         return {"configurable": {"thread_id": thread_id}, "recursion_limit": RECURSION_LIMIT}
 
-    def ask(
-        self,
-        question: str,
-        *,
-        thread_id: str,
-        profile: UserProfile | None = None,
-        portfolio: list[Holding] | None = None,
-    ) -> TurnOutput:
-        """Answer one message. ``profile``/``portfolio`` update what's saved for the thread."""
-        started = time.perf_counter()
+    @staticmethod
+    def _update(
+        question: str, profile: UserProfile | None, portfolio: list[Holding] | None
+    ) -> dict[str, Any]:
         update: dict[str, Any] = {"messages": [HumanMessage(content=question)]}
         if profile is not None:
             update["profile"] = profile.model_dump()
         if portfolio is not None:
             update["portfolio"] = [h.model_dump() for h in portfolio]
-        state = self.graph.invoke(update, self._config(thread_id))
+        return update
+
+    @staticmethod
+    def _finished(state: dict[str, Any], started: float) -> TurnOutput:
         output = TurnOutput.model_validate(state["output"])
         logger.info(
             "Turn finished",
@@ -105,6 +103,35 @@ class FinnieAssistant:
             },
         )
         return output
+
+    def ask(
+        self,
+        question: str,
+        *,
+        thread_id: str,
+        profile: UserProfile | None = None,
+        portfolio: list[Holding] | None = None,
+    ) -> TurnOutput:
+        """Answer one message. ``profile``/``portfolio`` update what's saved for the thread."""
+        started = time.perf_counter()
+        update = self._update(question, profile, portfolio)
+        return self._finished(self.graph.invoke(update, self._config(thread_id)), started)
+
+    def stream(
+        self,
+        question: str,
+        *,
+        thread_id: str,
+        profile: UserProfile | None = None,
+        portfolio: list[Holding] | None = None,
+    ) -> Iterator[Progress | TurnOutput]:
+        """Like ``ask``, but yields ``Progress`` events while the turn runs, then the output."""
+        started = time.perf_counter()
+        config = self._config(thread_id)
+        update = self._update(question, profile, portfolio)
+        for event in self.graph.stream(update, config, stream_mode="custom"):
+            yield Progress.model_validate(event)
+        yield self._finished(self.state(thread_id), started)
 
     def state(self, thread_id: str) -> dict[str, Any]:
         """The saved conversation state (messages, profile, portfolio, summary)."""

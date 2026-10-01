@@ -34,6 +34,7 @@ NON_EQUITY_SECTORS = frozenset({"Fixed Income", "Cash", "Commodities", "Crypto",
 PROFILE_GROUPS = ("equity", "bond", "cash", "other")
 FEE_DRAG_YEARS = (10, 20, 30)
 CASH_TYPES = frozenset({"cash", "money_market"})
+FUND_TYPES = frozenset({"etf", "mutual_fund", "money_market"})
 
 # Diversification score weights (see diversification_score)
 W_CONCENTRATION, W_ASSET_CLASS, W_SECTOR = 0.4, 0.3, 0.3
@@ -87,6 +88,20 @@ class AllocationGap(BaseModel):
         return self.current - self.target
 
 
+class Backtest(BaseModel):
+    """Today's holdings (same share counts) over the past year vs the benchmark, both at 100.
+
+    A back-test of the current portfolio, not the user's actual past results: it ignores
+    trades, deposits, and withdrawals made during the year.
+    """
+
+    dates: list[date]
+    portfolio: list[float]
+    benchmark: list[float] | None
+    benchmark_ticker: str
+    coverage: float = Field(description="Share of portfolio value with price history")
+
+
 class PortfolioAnalysis(BaseModel):
     total_value: float
     holdings: list[HoldingValuation]
@@ -108,6 +123,7 @@ class PortfolioAnalysis(BaseModel):
     unrealized_gain_pct: float | None
     risk_metrics: RiskMetrics | None
     correlation: dict[str, dict[str, float]] | None
+    backtest: Backtest | None = None
     profile: str | None
     profile_gaps: list[AllocationGap]
     observations: list[str]
@@ -331,6 +347,70 @@ def daily_returns(closes: Mapping[str, pd.Series]) -> pd.DataFrame:
     return frame.pct_change().dropna()
 
 
+def backtest(
+    closes: Mapping[str, pd.Series],
+    shares: Mapping[str, float],
+    benchmark_closes: pd.Series | None,
+    *,
+    benchmark_ticker: str,
+    days: int,
+    coverage: float,
+) -> Backtest | None:
+    """Value today's share counts on each past trading day, normalized to 100 at the start."""
+    frame = pd.concat({t: s for t, s in closes.items() if t in shares}, axis=1).sort_index()
+    frame = frame.dropna().iloc[-(days + 1) :]
+    if len(frame) < 2:
+        return None
+    values = frame @ pd.Series({t: shares[t] for t in frame.columns})
+    portfolio = values / values.iloc[0] * 100
+    bench = None
+    if benchmark_closes is not None:
+        aligned = benchmark_closes.reindex(frame.index).ffill().bfill()
+        if aligned.notna().all() and aligned.iloc[0] > 0:
+            bench = [round(float(v), 2) for v in aligned / aligned.iloc[0] * 100]
+    return Backtest(
+        dates=[ts.date() for ts in frame.index],
+        portfolio=[round(float(v), 2) for v in portfolio],
+        benchmark=bench,
+        benchmark_ticker=benchmark_ticker,
+        coverage=coverage,
+    )
+
+
+def fund_expense_ratio(rows: Sequence[HoldingValuation]) -> float | None:
+    """Value-weighted expense ratio across the funds alone (stocks don't charge one)."""
+    funds = [r for r in rows if r.type in FUND_TYPES and r.expense_ratio is not None]
+    value = sum(r.value for r in funds)
+    if not value:
+        return None
+    return sum(r.value * (r.expense_ratio or 0.0) for r in funds) / value
+
+
+def expense_ratio_label(analysis: PortfolioAnalysis) -> str:
+    """The one wording for fees, used by the Portfolio tab and the chat.
+
+    E.g. "Portfolio expense ratio: 0.03% (funds only; VTI and BND charge 0.03% each,
+    individual stocks have no expense ratio)."
+    """
+    funds = [h for h in analysis.holdings if h.type in FUND_TYPES and h.expense_ratio is not None]
+    stocks = [h for h in analysis.holdings if h.type == "stock"]
+    ratio = fund_expense_ratio(analysis.holdings)
+    if ratio is None:
+        return "Portfolio expense ratio: none (no funds; individual stocks have no expense ratio)."
+    by_ratio: dict[float, list[str]] = defaultdict(list)
+    for h in funds:
+        by_ratio[round(h.expense_ratio or 0.0, 6)].append(h.ticker)
+    parts = []
+    for fee, tickers in sorted(by_ratio.items()):
+        names = tickers[0] if len(tickers) == 1 else ", ".join(tickers[:-1]) + f" and {tickers[-1]}"
+        verb = "charges" if len(tickers) == 1 else "charge"
+        each = "" if len(tickers) == 1 else " each"
+        parts.append(f"{names} {verb} {fee:.2%}{each}")
+    if stocks:
+        parts.append("individual stocks have no expense ratio")
+    return f"Portfolio expense ratio: {ratio:.2%} (funds only; {', '.join(parts)})."
+
+
 def risk_metrics(
     returns: pd.Series,
     *,
@@ -434,6 +514,7 @@ def analyze_portfolio(
 
     metrics = None
     correlation = None
+    past_year = None
     if closes:
         available = {t: s for t, s in closes.items() if t in weights}
         returns = daily_returns(available)
@@ -454,6 +535,14 @@ def analyze_portfolio(
                 coverage=round(covered, 4),
             )
             correlation = correlation_matrix(returns)
+            past_year = backtest(
+                available,
+                {r.ticker: r.shares for r in rows},
+                benchmark_closes,
+                benchmark_ticker=config.benchmark,
+                days=config.trading_days_per_year,
+                coverage=round(covered, 4),
+            )
 
     score, level = risk_score(rows, securities, metrics.annual_volatility if metrics else None)
     concentrated = [
@@ -488,6 +577,7 @@ def analyze_portfolio(
         unrealized_gain_pct=gain / total_basis if gain is not None and total_basis else None,
         risk_metrics=metrics,
         correlation=correlation,
+        backtest=past_year,
         profile=profile.name if profile else None,
         profile_gaps=gaps,
         observations=[],
@@ -533,10 +623,10 @@ def build_observations(
             "types spread risk across many investments."
         )
 
-    ratio = analysis.weighted_expense_ratio
+    ratio = fund_expense_ratio(analysis.holdings)
     if ratio is not None and ratio > config.high_expense_ratio:
         notes.append(
-            f"The weighted expense ratio is about {ratio:.2%} a year. At an assumed "
+            f"The portfolio expense ratio (funds only) is about {ratio:.2%} a year. At an assumed "
             f"{config.fee_growth_rate:.0%} annual growth, fees at this level would reduce the "
             f"portfolio's value by roughly ${analysis.fee_drag.get(30, 0):,.0f} over 30 years. "
             "Many broad index funds charge under 0.10%."
@@ -599,13 +689,10 @@ class MarketData(Protocol):
     def get_treasury_bill_yield(self) -> Quote: ...
 
 
-def portfolio_total(
+def holding_values(
     holdings: Sequence[Holding], market: MarketData, catalog: SecurityCatalog | None = None
-) -> float | None:
-    """Current market value from quotes alone (no history), or ``None`` if nothing is priced.
-
-    Cheaper than ``fetch_and_analyze`` for when only the total is needed.
-    """
+) -> dict[str, float]:
+    """Each priced holding's current value, from quotes alone (no history)."""
     catalog = catalog or get_catalog()
     merged = merge_holdings(holdings)
     cash = {h.ticker for h in merged if (info := catalog.get(h.ticker)) and info.type in CASH_TYPES}
@@ -614,10 +701,18 @@ def portfolio_total(
     except MarketDataError:
         quotes = {}
     prices = {t: q.price for t, q in quotes.items()} | dict.fromkeys(cash, 1.0)
-    priced = [h for h in merged if prices.get(h.ticker)]
-    if not priced:
-        return None
-    return round(sum(h.shares * prices[h.ticker] for h in priced), 2)
+    return {h.ticker: h.shares * prices[h.ticker] for h in merged if prices.get(h.ticker)}
+
+
+def portfolio_total(
+    holdings: Sequence[Holding], market: MarketData, catalog: SecurityCatalog | None = None
+) -> float | None:
+    """Current market value from quotes alone, or ``None`` if nothing is priced.
+
+    Cheaper than ``fetch_and_analyze`` for when only the total is needed.
+    """
+    values = holding_values(holdings, market, catalog)
+    return round(sum(values.values()), 2) if values else None
 
 
 def fetch_and_analyze(

@@ -18,6 +18,8 @@ dist/
 .coverage
 .coverage.*
 coverage.xml
+coverage.unit
+coverage.ui
 htmlcov/
 
 # Generated data

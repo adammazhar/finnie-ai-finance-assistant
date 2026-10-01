@@ -1,4 +1,4 @@
-from src.workflow.synthesis import MERGE_PROMPT, synthesize, unify_citations
+from src.workflow.synthesis import MERGE_PROMPT, synthesize, tidy_citations, unify_citations
 from tests.fakes.llm import FakeChatModel
 from tests.unit.workflow.conftest import freshness, kb_source, market_source, news_source, result
 
@@ -30,12 +30,30 @@ def test_markers_renumbered_into_one_list():
     }
 
 
-def test_unresolvable_markers_dropped_and_market_data_kept():
+def test_unresolvable_markers_dropped_and_market_data_not_listed():
+    """Market data goes in the freshness note, not the sources list."""
     quote = market_source()
     r = cited("market", "TSLA is up [1] and [N4].", extra=[quote])
     unified = unify_citations([r])
     assert unified.answers["market"] == "TSLA is up  and ."
-    assert unified.sources == [quote]
+    assert unified.sources == []
+
+
+def test_tidy_citations_dedupes_and_renumbers_by_first_use():
+    a, b, c = kb_source("a"), kb_source("b"), kb_source("c")
+    text, sources = tidy_citations("Fees [3][1][3] matter. Also [1][1] and [9].", [a, b, c])
+    assert text == "Fees [1][2] matter. Also [2] and ."
+    assert sources == [c, a]  # b was never cited
+    assert tidy_citations("No markers.", [a]) == ("No markers.", [])
+
+
+def test_merged_answer_lists_only_what_it_cites():
+    llm = FakeChatModel(responses=["Taxes [2][2][2]."])  # the merge dropped the ETF citation
+    a = cited("finance_qa", "ETFs [1].", kb=[kb_source("funds-001")])
+    b = cited("tax", "Taxes [1].", kb=[kb_source("taxes-002")])
+    out = synthesize([a, b], llm)
+    assert out.text == "Taxes [1]."
+    assert [s.article_id for s in out.sources] == ["taxes-002"]
 
 
 def test_results_without_citation_maps():

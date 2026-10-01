@@ -1,9 +1,15 @@
+import pytest
 import yaml
 
 from src.rag.chunking import build_chunks
 from src.rag.evaluation import EvalCase, EvalSet, evaluate, load_eval_set, sweep
 from src.rag.index import VectorIndex
 from src.rag.retriever import Retriever
+
+# Real chunking imports LangChain's text splitters (and with them torch), which takes about
+# 20 s per process. One xdist worker runs all such tests, so only it pays that cost.
+pytestmark = pytest.mark.xdist_group("text_splitters")
+
 
 EVAL = EvalSet(
     cases=[

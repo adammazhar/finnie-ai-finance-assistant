@@ -46,8 +46,24 @@ This downloads the model into the Hugging Face cache (`~/.cache/huggingface` by 
 ### 4. Check the installation
 
 ```bash
-pytest                                   # unit and integration tests; the network is blocked, so no API calls
+pytest                                   # all tests, in parallel; the network is blocked, so no API calls
 python scripts/validate_kb.py            # knowledge base rules
 python scripts/check_kb_links.py         # every source link (needs internet)
 python scripts/eval_retrieval.py         # retrieval quality on the evaluation set
+python scripts/eval_routing.py           # routing accuracy (calls the fast model once per case)
+python scripts/bench_workflow.py         # end-to-end latency with live models and data
 ```
+
+### 5. Run the app
+
+```bash
+streamlit run src/web_app/app.py
+```
+
+Open http://localhost:8501. On a first visit Finnie asks for your knowledge level and risk tolerance; there's a 5-question quiz if you're unsure. The sidebar has **New conversation**, your recent conversations, a **Profile** button to change those answers, and a system status icon. The tabs:
+
+- **Chat**: ask anything in the box pinned at the bottom. You see which specialists are working while they run. The answer then streams in, with the specialists who wrote it, the sources it cites (open any knowledge base article in Knowledge), and charts when relevant. When you ask about a savings goal and have a saved portfolio, Finnie first asks how much of the portfolio counts toward that goal.
+- **Portfolio**: enter holdings in the table, upload a CSV (`ticker,shares,cost_basis`), or load a sample. You get allocation, diversification, risk, the portfolio expense ratio, past-year risk measures, a back-test of today's holdings against SPY, and a comparison with a typical mix for your risk tolerance. Holdings saved here are used in chat too.
+- **Markets**: index and sector moves today, plus a lookup for any ticker with its price trend, moving averages, RSI, company facts, and recent English-language news.
+- **Goals**: a Monte Carlo projection for one goal, with the chance of reaching it. Tick **Include saved portfolio** and edit the amount to count some or all of your portfolio.
+- **Knowledge**: search the knowledge base, browse articles by category, and look up glossary terms.

@@ -15,6 +15,7 @@ from src.data.models import (
     PriceHistory,
     Quote,
 )
+from src.data.service import ProviderStatus
 
 NOW = datetime(2026, 9, 30, 18, 0, tzinfo=UTC)
 
@@ -144,6 +145,9 @@ class FakeMarketService:
     def get_treasury_bill_yield(self):
         self._check("get_treasury_bill_yield")
         return Quote(ticker="^IRX", price=4.03, freshness=fresh())
+
+    def provider_status(self):
+        return [ProviderStatus(name="yfinance", enabled=True, detail="fake")]
 
     def get_news(self, ticker=None, query=None, limit=5):
         self._check("get_news", ticker, query, limit)

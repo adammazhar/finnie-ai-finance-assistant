@@ -1,0 +1,41 @@
+# Finnie's look: clean fintech style, white background, navy primary, green accents.
+# Scoped CSS for the few things a theme can't set lives in src/web_app/theme.py.
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+# No hot reload. The watcher walks every loaded module, which makes transformers import
+# hundreds of optional model modules (each failing on missing torchvision) and slows the
+# app. Restart it to pick up code changes.
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#0B2545"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6FA"
+textColor = "#1B2433"
+linkColor = "#0E7C5A"
+linkUnderline = false
+greenColor = "#12A26F"
+blueColor = "#1F4E8C"
+font = "sans-serif"
+baseFontSize = 15
+headingFontWeights = [700, 650, 600]
+metricValueFontSize = "1.6rem"
+metricValueFontWeight = 650
+baseRadius = "0.75rem"
+buttonRadius = "0.6rem"
+borderColor = "#E3E8EF"
+showWidgetBorder = true
+dataframeHeaderBackgroundColor = "#F4F6FA"
+chartCategoricalColors = ["#0B2545", "#12A26F", "#E69F00", "#56B4E9", "#CC79A7", "#D55E00"]
+
+[theme.sidebar]
+backgroundColor = "#F7F9FC"
+secondaryBackgroundColor = "#EDF1F7"
+borderColor = "#E3E8EF"

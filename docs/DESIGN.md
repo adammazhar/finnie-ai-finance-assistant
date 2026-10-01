@@ -621,7 +621,41 @@ llm:
 
 Every chart has a title and labeled axes with units, currency and percent formatting, colorblind-safe palettes, hover tooltips, and a freshness caption when it shows market data.
 
----
+### 7.4 Implementation notes (Phase 8)
+
+These notes describe what was built. Where they differ from §7.1–7.2, the notes win (owner review, 2026-10-01).
+
+- **Layout.**
+  - The tab bar is a segmented control styled as tabs, not `st.tabs`. The app then knows the open page, renders only that page, and can place `st.chat_input` at the top level of the Chat page, where Streamlit pins it to the bottom of the window. Other pages have no input.
+  - Pages: Chat, Portfolio, Markets, Goals, and Knowledge. Knowledge has Search, Browse, and Glossary views, which other pages can open directly ("Read article", "Open in Glossary").
+- **Look.** A clean fintech theme in `.streamlit/config.toml`: white background, navy primary (#0B2545), green accents (#12A26F), card-style metrics, and rounded inputs. A small amount of scoped CSS in `src/web_app/theme.py` targets keyed elements (`st-key-*`) for the tab underline, sidebar list, and chat column.
+- **Chat, modeled on Claude.ai.**
+  - One centered reading column (760 px). User messages appear as light bubbles. The input is pinned and rounded.
+  - Starter questions show only before the first message.
+  - While specialists work, a status box shows each step. The answer then streams in after the guardrail approves it (decision 22). After an answer the page reruns once, so the sidebar's conversation list updates.
+- **Sidebar, modeled on Claude.ai.**
+  - The Finnie name, a **New conversation** button, and **Recent** conversations from this session. Each conversation is its own workflow thread, and you can switch back to any of them.
+  - A **Profile** button, a **System status** popover (models and market data), and the disclaimer as a small footer.
+- **Profile.** A first visit shows an onboarding screen: knowledge level, risk tolerance with the 5-question quiz, and optional age and horizon. The same form opens from the sidebar's Profile button.
+- **Sources** list only what the answer cites, numbered in order of first use, with repeated markers collapsed ("[1][2][1]" becomes "[1][2]").
+  - A knowledge base source shows the article title (with **Read article**, which opens it in Knowledge) and the original source's domain as a separate link.
+  - Market data isn't listed as a source. The answer's freshness note covers it.
+- **Dollar signs.** Streamlit renders text between two `$` signs as math. All markdown-rendered text goes through `formatting.md()`, which escapes `$`: answers, article bodies, snippets, titles, captions, and assumptions.
+- **Portfolio.**
+  - One fee wording everywhere, in the chat and the tab: "Portfolio expense ratio: 0.04% (funds only; VTI and BND charge 0.03% each, VXUS charges 0.05%)". The ratio is weighted over funds only; stocks have no expense ratio.
+  - A **performance vs SPY back-test**: today's holdings at today's share counts, valued over the past year and normalized to 100. It is labelled as a back-test, not the user's actual past return.
+- **Markets.**
+  - The company overview shows structured fields (sector, industry, market cap, P/E, dividend yield) with an as-of date. It shows only the first sentence of the provider's description, labelled with its source, because descriptions can be years old.
+  - News is English-only (a cheap character-set and common-word check; a provider whose articles are all filtered out falls through to the next). Its freshness reads "News fetched …".
+- **Goals.** The chance of success is stated in words ("Chance of reaching this goal: under 1%"; never 0% or 100%). Below 25%, a short note explains what changes the outcome: more time, higher contributions, or a smaller target. The chat's goal tool uses the same wording.
+- **Knowledge.** Search results are sorted by relevance and labelled "Strong match", "Good match", or "Related" instead of raw scores. Snippets end at a complete sentence. The glossary lists its sources once, at the end.
+- **Answers.**
+  - Claims the passages don't cover stay general (policy rule 3), for example "about 500 large U.S. companies chosen by a committee".
+  - "Should I buy X?" answers stay educational but start from the user's data. The user's position ("TSLA is already 36% of my saved portfolio …") is attached to their question as context, and knowledge base search looks for the concepts investors weigh (concentration, diversification, volatility), so the answer has passages to cite.
+- **Not built:** feedback storage beyond logging. Thumbs up and down are logged with the thread id and turn.
+- **Operations.**
+  - `streamlit run` puts `src/web_app` first on `sys.path`. A module named `profile.py` there shadowed Python's `profile` and broke torch's imports, so the app removes that folder from `sys.path` and the module is named `profile_page.py`.
+  - The file watcher is off (`fileWatcherType = "none"`): walking every loaded module made transformers try hundreds of optional imports.
 
 ## 8. Goal Planning with Monte Carlo (`src/core/monte_carlo.py`) ★ bonus
 
@@ -824,6 +858,7 @@ finnie-ai-finance-assistant/
 | Concern | Mitigation | Target |
 |---|---|---|
 | LLM latency | fast tier for router and guardrail rewrites; single-agent pass-through skips the synthesizer; parallel `Send` fan-out; streaming to UI | first token < 2 s; single-agent turn p50 < 6 s; multi-specialist turn p50 < 15 s (enforced by `scripts/bench_workflow.py`) |
+| Feedback while waiting | progress events streamed from the graph nodes; status box shown when the question is sent | first visible progress p95 < 1 s (enforced by `scripts/bench_workflow.py`) |
 | Routing | fast-model structured output; keyword fallback | LLM router ≥ 90% and keyword fallback ≥ 75% on the labelled set (enforced by `scripts/eval_routing.py`; the keyword floor also runs in CI) |
 | Market API quota | 30-min cache, batch fetches, local indicators, daily AV budget | cached quote < 20 ms |
 | Embedding/index load | loaded once per process; index prebuilt in Docker image | retrieval < 50 ms |
@@ -876,3 +911,8 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 19 | *(Phase 7)* **One hand-off per turn, never to an agent already run or scheduled.** A live run showed goal_planning running twice when portfolio handed off to it; this is now prevented and covered by a regression test. |
 | 20 | *(Phase 7)* **Turn time budget** of `workflow.turn_timeout_s` (120 s). A late agent becomes an error result instead of holding up the whole answer. |
 | 21 | *(Phase 7 review)* **Ask before counting a saved portfolio toward a goal.** In chat, when a portfolio is saved and a goal question doesn't state current savings, Finnie asks once per goal whether to count all of it, part of it (a dollar amount), or none, and remembers the answer for that goal in the conversation. Savings or holdings stated in the question are used without asking. The Goals tab uses an "Include saved portfolio" checkbox with an editable amount instead of the chat question. |
+| 22 | *(Phase 8)* **Progress, then a streamed answer.** The chat shows each workflow step and specialist as it runs (`FinnieAssistant.stream`). The final answer streams in only after the output guardrail has approved it, so users never see text that is then rewritten. |
+| 23 | *(Phase 8 review)* **Tab bar as a segmented control** so the chat input can be pinned at the bottom (Streamlit doesn't pin `st.chat_input` inside `st.tabs`) and only the open page renders. Sidebar and chat follow Claude.ai's layout. Profile settings moved out of the sidebar into an onboarding screen and a Profile page. |
+| 24 | *(Phase 8 review)* **Sources list only what the answer cites**, renumbered by first use, with repeated markers removed. Market data appears in the freshness note instead. Knowledge base sources show the article (openable in Knowledge) and the original source separately. |
+| 25 | *(Phase 8 review)* **Escape `$` in all markdown-rendered text** (`formatting.md`), and use `$` in knowledge base text again instead of writing "dollars". |
+| 26 | *(Phase 8 review)* **Tests run in parallel** (`pytest -n auto --dist loadgroup`). CI runs the unit and UI suites as separate jobs and enforces one coverage gate on their combined data. LangChain's text splitters import torch (about 20 s per process), so they're imported lazily, the agent and UI tests build their small indexes directly, and the chunking tests share one xdist worker. |

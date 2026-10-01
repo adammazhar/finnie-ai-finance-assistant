@@ -78,6 +78,13 @@ class AgentRequest(BaseModel):
     prior_results: dict[str, AgentResult] = Field(default_factory=dict)
     tickers: list[str] = Field(default_factory=list)
     guidance: list[str] = Field(default_factory=list, description="Extra system instructions")
+    retrieval_query: str | None = Field(
+        default=None, description="Search the knowledge base with this instead of the query"
+    )
+    user_context: list[str] = Field(
+        default_factory=list,
+        description="Facts Finnie knows about the user, shown with their question",
+    )
     allow_handoff: bool = Field(
         default=True, description="False for an agent that is itself answering a hand-off"
     )
@@ -114,6 +121,18 @@ def format_blocks(blocks: list[ContextBlock]) -> str:
         f"[{b.number}] {b.chunk.chunk.title} > {b.chunk.chunk.section}\n{b.chunk.chunk.text}"
         for b in blocks
     )
+
+
+def _with_context(request: AgentRequest) -> str:
+    """The question, plus facts about the user that the answer should build on.
+
+    Facts sit next to the question rather than in the system prompt, because models give
+    the user's turn more weight.
+    """
+    if not request.user_context:
+        return request.query
+    notes = "\n".join(f"- {fact}" for fact in request.user_context)
+    return f"{request.query}\n\n(Context Finnie has about me:\n{notes})"
 
 
 def source_key(source: Source) -> str:
@@ -257,7 +276,7 @@ class BaseAgent:
             return
         try:
             result = retriever.retrieve(
-                state.request.query,
+                state.request.retrieval_query or state.request.query,
                 categories=list(self.rag_categories) if self.rag_categories else None,
             )
         except Exception:
@@ -281,7 +300,7 @@ class BaseAgent:
         messages: list[BaseMessage] = [
             SystemMessage(content=self.system_prompt(state)),
             *state.request.history[-window:],
-            HumanMessage(content=state.request.query),
+            HumanMessage(content=_with_context(state.request)),
         ]
         for _ in range(self.context.settings.workflow.agent_max_iterations):
             reply = model.invoke(messages)

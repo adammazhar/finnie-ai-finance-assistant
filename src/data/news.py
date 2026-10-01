@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -17,6 +18,87 @@ from src.data.models import NewsArticle
 TAVILY_URL = "https://api.tavily.com/search"
 NAME = "tavily"
 SUMMARY_CHARS = 500
+
+
+# Common English function words, plus headline vocabulary (headlines often drop "the").
+ENGLISH_WORDS = frozenset(
+    [
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "to",
+        "of",
+        "in",
+        "on",
+        "for",
+        "with",
+        "as",
+        "at",
+        "by",
+        "from",
+        "is",
+        "are",
+        "was",
+        "be",
+        "its",
+        "it",
+        "this",
+        "that",
+        "after",
+        "over",
+        "into",
+        "than",
+        "up",
+        "down",
+        "new",
+        "says",
+        "said",
+        "will",
+        "has",
+        "have",
+        "how",
+        "why",
+        "what",
+        "stock",
+        "stocks",
+        "shares",
+        "market",
+        "markets",
+        "rates",
+        "rally",
+        "rise",
+        "rises",
+        "falls",
+        "fall",
+        "earnings",
+        "price",
+        "prices",
+        "holds",
+        "sales",
+        "investors",
+        "report",
+        "beats",
+        "misses",
+        "deal",
+        "growth",
+    ]
+)
+
+
+def is_english(text: str) -> bool:
+    """A cheap check that a headline (plus summary) is in English.
+
+    Most letters must be plain ASCII, and a text of four or more words must contain at
+    least one common English word. Good enough to drop the German, Spanish, or Japanese
+    articles some feeds mix in, without a language-detection dependency.
+    """
+    letters = [c for c in text if c.isalpha()]
+    if not letters or sum(c.isascii() for c in letters) / len(letters) < 0.9:
+        return False
+    words = re.findall(r"[a-z']+", text.lower())
+    return len(words) < 4 or any(w in ENGLISH_WORDS for w in words)
 
 
 class TavilyNewsProvider:

@@ -78,6 +78,32 @@ def test_guidance_for_advice_tickers_and_injection(make_assistant):
     assert INJECTION_NOTE in second
 
 
+def test_advice_questions_get_the_users_own_position(make_assistant):
+    assistant, team = make_assistant([route("market", tickers=["VTI", "TSLA"])])
+    holdings = [VTI, Holding(ticker="BND", shares=30)]  # $3,000 + $2,100 in the fake market
+    assistant.ask("Should I buy more VTI or TSLA?", thread_id="t", portfolio=holdings)
+    request = team["market"].requests[0]
+    assert request.user_context == [
+        "VTI is already 59% of my saved portfolio ($3,000 of $5,100 at current prices). "
+        "My saved portfolio doesn't hold TSLA."
+    ]
+    # knowledge base search looks for the concepts, since the question names none
+    assert request.retrieval_query.startswith("Should I buy more VTI or TSLA? How investors")
+    assert "concentration risk" in request.retrieval_query
+
+
+def test_no_position_facts_without_an_advice_question_or_portfolio(make_assistant):
+    assistant, team = make_assistant([route("market", tickers=["VTI"])] * 3)
+    assistant.ask("How is VTI doing?", thread_id="a", portfolio=[VTI])
+    assistant.ask("Should I buy VTI?", thread_id="b")
+    unpriced = [Holding(ticker="ZZZZ", shares=1)]
+    assistant.ask("Should I buy VTI?", thread_id="c", portfolio=unpriced)
+    first = team["market"].requests[0]
+    assert first.retrieval_query is None
+    for request in team["market"].requests:
+        assert request.user_context == []
+
+
 # ---- multi-agent --------------------------------------------------------------------------
 
 

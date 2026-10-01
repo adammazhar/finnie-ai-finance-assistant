@@ -99,3 +99,36 @@ def test_agent_result_contract():
     with pytest.raises(ValidationError):
         AgentResult(agent="astrology")
     assert set(AGENT_NAMES) == {"finance_qa", "portfolio", "market", "goal_planning", "news", "tax"}
+
+
+def test_news_freshness_label():
+    from datetime import UTC, datetime, timedelta
+
+    from src.core.models import Freshness
+    from src.data.models import NewsFeed
+
+    now = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
+    old = now - timedelta(days=3)
+    feed = NewsFeed(
+        query="TSLA",
+        articles=[],
+        freshness=Freshness(source="yfinance", as_of=old, fetched_at=now - timedelta(minutes=5)),
+    )
+    assert feed.freshness.kind == "news"
+    # no "prices as of ..." for news, even though the newest article is days old
+    assert feed.freshness.label(now) == "News fetched 5 min ago"
+    mock = NewsFeed(
+        query="x", articles=[], freshness=Freshness(source="mock", as_of=now, fetched_at=now)
+    )
+    assert mock.freshness.label(now) == "Demo data: live feed unavailable"
+
+
+def test_news_feed_keeps_news_freshness_as_is():
+    from datetime import UTC, datetime
+
+    from src.core.models import Freshness
+    from src.data.models import NewsFeed
+
+    now = datetime(2026, 10, 1, tzinfo=UTC)
+    tagged = Freshness(source="tavily", as_of=now, fetched_at=now, kind="news")
+    assert NewsFeed(query="x", articles=[], freshness=tagged).freshness is tagged

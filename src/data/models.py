@@ -111,6 +111,13 @@ class NewsFeed(BaseModel):
     articles: list[NewsArticle]
     freshness: Freshness
 
+    @model_validator(mode="after")
+    def _news_freshness(self) -> NewsFeed:
+        """News is labelled "News fetched ..." rather than as market prices."""
+        if self.freshness.kind != "news":
+            self.freshness = self.freshness.model_copy(update={"kind": "news"})
+        return self
+
 
 class BatchQuotes(BaseModel):
     quotes: dict[str, Quote]

@@ -200,3 +200,13 @@ def test_only_failed_prior_results_are_left_out_entirely(make_context):
         AgentRequest(query="q", prior_results={"news": AgentResult(agent="news", error="down")})
     )
     assert "Findings from other Finnie specialists" not in context.llm.calls[0][0].content
+
+
+def test_user_context_and_retrieval_query(make_context):
+    from src.agents.base import AgentRequest, _with_context
+
+    assert _with_context(AgentRequest(query="Buy TSLA?")) == "Buy TSLA?"
+    request = AgentRequest(query="Buy TSLA?", user_context=["TSLA is 36% of my portfolio."])
+    assert _with_context(request) == (
+        "Buy TSLA?\n\n(Context Finnie has about me:\n- TSLA is 36% of my portfolio.)"
+    )

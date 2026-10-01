@@ -27,7 +27,8 @@ from src.core.guardrails import (
     strip_disclaimer,
 )
 from src.core.models import AgentResult, Freshness, Holding, Source, UserProfile
-from src.core.portfolio import portfolio_total
+from src.core.portfolio import holding_values, portfolio_total
+from src.workflow import progress
 from src.workflow.planner import build_plan, plan_handoff
 from src.workflow.router import HOLDINGS, RouteDecision, route_with_llm
 from src.workflow.savings import (
@@ -43,7 +44,7 @@ from src.workflow.savings import (
     stated_savings,
 )
 from src.workflow.state import RESET, AgentTask, FinnieState
-from src.workflow.synthesis import Synthesis, synthesize
+from src.workflow.synthesis import Synthesis, synthesize, tidy_citations
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +145,49 @@ def _team_note(name: str, plan: list[list[str]]) -> str | None:
     )
 
 
+ADVICE_CONCEPTS = (
+    "How investors evaluate adding to or selling one investment: concentration risk, "
+    "diversification, and volatility."
+)
+
+
+def _user_context(state: FinnieState, route: RouteDecision | None, deps: Deps) -> list[str]:
+    """For "should I buy X?": the user's own position, so the answer is about them."""
+    if InputScreen.model_validate(state["screen"]).category != "advice_seeking":
+        return []
+    facts = _holding_facts(state, route, deps)
+    return [facts] if facts else []
+
+
+def _retrieval_query(state: FinnieState) -> str | None:
+    """A "should I buy X?" question names no concepts, so knowledge base search finds
+    nothing to cite. Search for the concepts investors weigh instead."""
+    if InputScreen.model_validate(state["screen"]).category != "advice_seeking":
+        return None
+    return f"{state.get('query') or state['question']} {ADVICE_CONCEPTS}"
+
+
+def _holding_facts(state: FinnieState, route: RouteDecision | None, deps: Deps) -> str | None:
+    """For questions about specific tickers: how much of the saved portfolio each one is."""
+    holdings = [Holding.model_validate(h) for h in state.get("portfolio") or []]
+    if not holdings or route is None or not route.tickers:
+        return None
+    values = holding_values(holdings, deps.context.market, deps.context.catalog)
+    total = sum(values.values())
+    if not total:
+        return None
+    facts = []
+    for ticker in route.tickers:
+        if ticker in values:
+            facts.append(
+                f"{ticker} is already {values[ticker] / total:.0%} of my saved portfolio "
+                f"(${values[ticker]:,.0f} of ${total:,.0f} at current prices)."
+            )
+        else:
+            facts.append(f"My saved portfolio doesn't hold {ticker}.")
+    return " ".join(facts)
+
+
 def _portfolio_value(state: FinnieState, deps: Deps) -> float | None:
     """The portfolio's value: the Portfolio specialist's total from this turn, else quotes."""
     results = state.get("results") or {}
@@ -171,6 +215,7 @@ def _savings_guidance(state: FinnieState, route: RouteDecision | None, deps: Dep
 
 def make_nodes(deps: Deps) -> dict[str, Any]:
     def ingest(state: FinnieState) -> dict[str, Any]:
+        progress.status("Reading your question…")
         question = _latest_question(state)
         screen = screen_input(question)
         logger.info("Turn started", extra={"screen": screen.category})
@@ -216,6 +261,7 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
         }
 
     def router(state: FinnieState) -> dict[str, Any]:
+        progress.status("Choosing the right specialists…")
         workflow = deps.workflow
         decision = route_with_llm(
             deps.context.fast_llm or deps.context.llm,
@@ -304,8 +350,12 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
                     ),
                 ],
                 allow_handoff=task["allow_handoff"],
+                retrieval_query=_retrieval_query(state),
+                user_context=_user_context(state, route, deps),
             )
+            progress.agent_started(name)
             result = _run_with_deadline(agent, request, state["deadline"])
+            progress.agent_finished(name, result.ok)
             return {"results": {name: result.model_dump(mode="json")}}
 
         return run_agent
@@ -340,6 +390,8 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
             if a in (state.get("results") or {})
         ]
         llm = deps.context.llm if sum(r.ok for r in results) > 1 else None
+        if llm is not None:
+            progress.status("Combining the specialists' answers…")
         synthesis = synthesize(results, llm)
         errors: dict[str, str] = {r.agent: r.error for r in results if r.error}
         data: dict[str, Any] = {r.agent: r.data for r in results}
@@ -361,10 +413,12 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
         output = TurnOutput.model_validate(state["output"])
         remembered = output.answer
         if output.status == "answered":
+            progress.status("Checking the answer…")
             guarded = enforce_output(strip_disclaimer(output.answer), deps.context.fast_llm)
             output.guardrail = guarded.action
-            output.answer = finalize(guarded.text, output.freshness)
-            remembered = guarded.text  # history keeps the answer without the disclaimer
+            text, output.sources = tidy_citations(guarded.text, output.sources)
+            output.answer = finalize(text, output.freshness)
+            remembered = text  # history keeps the answer without the disclaimer
         return {
             "output": output.model_dump(mode="json"),
             "messages": [AIMessage(content=remembered)],

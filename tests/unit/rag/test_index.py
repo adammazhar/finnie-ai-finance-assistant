@@ -15,6 +15,10 @@ from src.rag.index import (
     ensure_index,
 )
 
+# Real chunking imports LangChain's text splitters (and with them torch), which takes about
+# 20 s per process. One xdist worker runs all such tests, so only it pays that cost.
+pytestmark = pytest.mark.xdist_group("text_splitters")
+
 
 def test_build_and_score(kb, rag_config, embeddings):
     chunks = build_chunks(rag_config, root=kb)

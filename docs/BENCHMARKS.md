@@ -14,8 +14,9 @@ The course documents ask for "performance considerations" and "performance bench
 | Retrieval latency | p95 < 50 ms | 32.7 ms | measured (below) |
 | LLM routing accuracy | ≥ 90% | 97.0% | `scripts/eval_routing.py` |
 | Keyword fallback routing accuracy (regression floor) | ≥ 75% | 78.8% | `scripts/eval_routing.py`, and a unit test in CI |
-| Single-specialist turn | p50 < 6 s | 5.1 s | reported by `scripts/bench_workflow.py` |
-| Multi-specialist turn | p50 < 15 s | 14.1 s | `scripts/bench_workflow.py` |
+| Single-specialist turn | p50 < 6 s | 5.8 s | reported by `scripts/bench_workflow.py` |
+| Multi-specialist turn | p50 < 15 s | 12.9 s | `scripts/bench_workflow.py` |
+| First visible progress in chat | p95 < 1 s | 17 ms | `scripts/bench_workflow.py` |
 
 ## Retrieval quality (Phase 5)
 
@@ -81,12 +82,30 @@ The LLM router's two misses: "Give me an overview of Costco as a company" (marke
 - live market data and the real index
 - a saved 3-holding portfolio
 
-Goal questions state their savings or list holdings, so none stops to ask how much of the portfolio counts. Measured on 2026-10-01.
+Turns run through `FinnieAssistant.stream`, as the chat does. Goal questions state their savings or list holdings, so none stops to ask how much of the portfolio counts. Measured on 2026-10-01 (Phase 8).
 
 | Turn type | n | Median | Max |
 |---|---|---|---|
-| Single specialist | 6 | 5.1 s | 7.5 s |
-| Several specialists | 4 | 14.1 s | 20.0 s |
+| Single specialist | 6 | 5.8 s | 8.4 s |
+| Several specialists | 4 | 12.9 s | 15.8 s |
 | Savings question (asked before the goal runs) | 2 | 1.5 s | 1.7 s |
+| First progress event ("Reading your question…") | 10 | 7 ms | 17 ms |
 
-The multi-specialist median meets its 15 s target, but with little margin. The two turns where one agent needs another's results take 17–20 s, because the stages run one after another and are followed by a merge call: portfolio before goal planning, and portfolio before tax. Two independent agents running in parallel take 10–11 s. Phase 8 shows progress while specialists run and streams the answer, so users see activity well before these end-to-end times.
+Turn times vary by a few seconds between runs with model and API latency. In the Phase 7 run, the multi-specialist median was 14.1 s with a 20.0 s maximum. The slowest turns are those where one agent needs another's results: portfolio runs before goal planning or tax, and then a merge call follows. Two independent agents running in parallel take 10–12 s.
+
+While a turn runs, the chat shows each step and specialist as it happens. The first update appears in milliseconds, which is well under the 1 s target. The answer streams in once the output guardrail has approved it.
+
+## Test suite run time (Phase 8)
+
+`pytest` runs 809 tests in parallel with pytest-xdist (`-n auto --dist loadgroup`) and coverage. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
+
+| Where | Configuration | Wall time |
+|---|---|---|
+| Local (12 logical CPUs) | serial, before these changes | ~190 s |
+| Local | parallel, before fixing slow imports | 160 s |
+| Local | parallel, after (`pytest`) | ~125 s |
+| Local | unit suite only / UI suite only (as in CI) | 106 s / 49 s |
+| CI (GitHub-hosted, 4 vCPUs) | unit job / UI job / combined coverage job | see the latest run |
+
+Most of the gain came from imports, not parallelism alone. LangChain's text-splitters package imports sentence-transformers, transformers, and torch, which takes about 20 s per process, and each xdist worker paid that during collection. That import is now lazy. Agent and UI tests build their small search indexes directly, and the chunking tests share one worker, so only that worker pays the cost. The remaining long pole is that worker: about 60 s for the chunking, index, and retrieval tests, including the import.
+

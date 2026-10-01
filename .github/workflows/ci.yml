@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  unit:
+    # Lint, types, and every test except the Streamlit UI tests (network blocked).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -25,11 +26,65 @@ jobs:
           ruff format --check .
       - name: Type check
         run: mypy
-      - name: Test (network blocked, coverage gate 90%)
-        run: pytest
+      - name: Test (parallel; coverage is gated after combining with the UI job)
+        env:
+          COVERAGE_FILE: coverage.unit
+        run: pytest --ignore=tests/unit/web_app --cov-fail-under=0
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage-unit
+          path: coverage.unit
+          include-hidden-files: true
+          retention-days: 3
+
+  ui:
+    # Streamlit AppTest suite, in parallel with the unit job.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e . --no-deps
+      - name: Test UI (parallel)
+        env:
+          COVERAGE_FILE: coverage.ui
+        run: pytest tests/unit/web_app --cov-fail-under=0
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage-ui
+          path: coverage.ui
+          include-hidden-files: true
+          retention-days: 3
+
+  coverage:
+    # One gate over both jobs' coverage: fail_under in pyproject.toml.
+    needs: [unit, ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install coverage
+        run: pip install coverage==7.16.2
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+      - name: Combine and enforce the gate
+        run: |
+          coverage combine coverage.unit coverage.ui
+          coverage report --skip-covered
 
   kb-links:
-    # Network-dependent, so it runs separately from the (network-blocked) unit tests.
+    # Network-dependent, so it runs separately from the (network-blocked) tests.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

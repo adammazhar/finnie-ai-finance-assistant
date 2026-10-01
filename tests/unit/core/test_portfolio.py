@@ -15,8 +15,10 @@ from src.core.models import Freshness, Holding
 from src.core.portfolio import (
     PortfolioError,
     analyze_portfolio,
+    backtest,
     correlation_matrix,
     daily_returns,
+    expense_ratio_label,
     fetch_and_analyze,
     herfindahl,
     holdings_from_csv,
@@ -358,7 +360,7 @@ def test_high_fee_unknown_and_missing_price_notes():
         config=CONFIG,
     )
     text = " ".join(result.observations)
-    assert "weighted expense ratio is about 1.08%" in text
+    assert "portfolio expense ratio (funds only) is about 1.20%" in text
     assert "expense ratio for PRCY couldn't be confirmed" in text
     assert "NEWCO isn't in Finnie's reference list" in text
     assert "No price was available for GONE, so it is left out" in text
@@ -620,3 +622,78 @@ def test_portfolio_total_when_quotes_fail():
 
     assert portfolio_total([Holding(ticker="VTI", shares=1)], Down()) is None  # type: ignore[arg-type]
     assert portfolio_total([Holding(ticker="CASH", shares=5)], Down()) == 5.0  # type: ignore[arg-type]
+
+
+# ---- back-test and fee label ----------------------------------------------------------
+
+
+def test_backtest_holds_todays_shares_and_starts_at_100():
+    closes = {"VTI": series([100, 110, 120]), "BND": series([50, 50, 55])}
+    bench = series([200, 220, 180])
+    result = backtest(
+        closes, {"VTI": 1, "BND": 2}, bench, benchmark_ticker="SPY", days=252, coverage=1.0
+    )
+    # values 200, 210, 230 -> 100, 105, 115
+    assert result.portfolio == [100.0, 105.0, 115.0]
+    assert result.benchmark == [100.0, 110.0, 90.0]
+    assert result.dates[0].isoformat() == "2026-01-01"
+    window = backtest(closes, {"VTI": 1}, None, benchmark_ticker="SPY", days=1, coverage=0.5)
+    assert window.portfolio == [100.0, 109.09]  # only the last day's move: 110 -> 120
+    assert window.benchmark is None
+    assert (
+        backtest({"VTI": series([1])}, {"VTI": 1}, None, benchmark_ticker="SPY", days=5, coverage=1)
+        is None
+    )
+
+
+def test_backtest_benchmark_gaps_are_filled_and_bad_benchmarks_dropped():
+    closes = {"VTI": series([100, 110, 120])}
+    gappy = pd.Series([200.0, 210.0], index=series([1, 2]).index[[0, 2 - 1]])
+    filled = backtest(closes, {"VTI": 1}, gappy, benchmark_ticker="SPY", days=10, coverage=1)
+    assert filled.benchmark == [100.0, 105.0, 105.0]  # carried forward
+    zero = series([0, 1, 2])
+    assert (
+        backtest(closes, {"VTI": 1}, zero, benchmark_ticker="SPY", days=10, coverage=1).benchmark
+        is None
+    )
+
+
+def test_analysis_includes_the_backtest():
+    closes = {"VTI": series([100, 101, 102, 103]), "BND": series([50, 50, 51, 51])}
+    result = analyze_portfolio(
+        [Holding(ticker="VTI", shares=1), Holding(ticker="BND", shares=2)],
+        {"VTI": 103, "BND": 51},
+        securities=securities("VTI", "BND"),
+        closes=closes,
+        benchmark_closes=closes["VTI"],
+        config=CONFIG,
+    )
+    assert result.backtest.benchmark_ticker == "SPY"
+    assert result.backtest.portfolio[0] == 100.0 and len(result.backtest.dates) == 4
+
+
+def test_expense_ratio_label_groups_funds_and_mentions_stocks():
+    result = analyze_portfolio(
+        BASE, PRICES, securities=securities("VTI", "BND", "AAPL"), config=CONFIG
+    )
+    label = expense_ratio_label(result)
+    assert label.startswith("Portfolio expense ratio: 0.03% (funds only; ")
+    assert "VTI and BND charge 0.03% each" in label
+    assert label.endswith("individual stocks have no expense ratio).")
+    stocks = analyze_portfolio(
+        [Holding(ticker="AAPL", shares=1)], PRICES, securities=securities("AAPL"), config=CONFIG
+    )
+    assert expense_ratio_label(stocks).startswith("Portfolio expense ratio: none")
+    funds = analyze_portfolio(
+        [Holding(ticker="VTI", shares=1), Holding(ticker="VXUS", shares=1)],
+        {"VTI": 100, "VXUS": 60},
+        securities=securities("VTI", "VXUS"),
+        config=CONFIG,
+    )
+    text = expense_ratio_label(funds)
+    assert "VTI charges 0.03%" in text and "individual stocks" not in text
+    # the headline is the value-weighted average, not the last fund's fee
+    # (regression: the label once showed VXUS's 0.05% for a 0.04% portfolio)
+    weighted = (100 * 0.0003 + 60 * 0.0005) / 160
+    assert text.startswith(f"Portfolio expense ratio: {weighted:.2%} (funds only; ")
+    assert text.endswith("VTI charges 0.03%, VXUS charges 0.05%).")

@@ -21,8 +21,15 @@ from src.agents.context import AgentContext
 from src.core.guardrails import sanitize_untrusted, wrap_untrusted
 from src.core.indicators import build_market_overview, technical_snapshot
 from src.core.models import AGENT_NAMES, Holding, Source
-from src.core.monte_carlo import inputs_for_profile, required_monthly_contribution, simulate
-from src.core.portfolio import fetch_and_analyze
+from src.core.monte_carlo import (
+    LOW_ODDS,
+    chance_text,
+    inputs_for_profile,
+    low_odds_note,
+    required_monthly_contribution,
+    simulate,
+)
+from src.core.portfolio import expense_ratio_label, fetch_and_analyze
 from src.core.tax import compare_accounts, illustrate_capital_gains
 from src.rag.chunking import GLOSSARY_CATEGORY
 from src.rag.knowledge_base import CATEGORIES
@@ -285,7 +292,7 @@ def make_analyze_portfolio(context: AgentContext, state: RunState) -> BaseTool:
             "Holdings: " + ", ".join(f"{h.ticker} {h.weight:.0%}" for h in analysis.holdings),
             f"Diversification score {analysis.diversification_score:.0f}/100; "
             f"risk {analysis.risk_score}/10 ({analysis.risk_level}).",
-            f"Weighted expense ratio {_pct(analysis.weighted_expense_ratio, 3)}.",
+            expense_ratio_label(analysis),
         ]
         m = analysis.risk_metrics
         if m:
@@ -359,12 +366,14 @@ def make_project_goal(context: AgentContext, state: RunState) -> BaseTool:
             f"Projection ({result.dollars} dollars, {profile.label.lower()} assumptions: "
             f"{profile.expected_return:.1%} expected return, {profile.volatility:.0%} "
             f"volatility, {mc.simulations:,} simulated paths): probability of reaching "
-            f"${target_amount:,.0f} in {years} years is {result.success_probability:.0%}. "
+            f"${target_amount:,.0f} in {years} years is "
+            f"{chance_text(result.success_probability)}. "
             f"Ending balance range: P10 ${p[10]:,.0f}, median ${p[50]:,.0f}, P90 ${p[90]:,.0f}. "
             f"With a steady return and no market swings: "
             f"${result.deterministic_final:,.0f}. "
             f"Monthly contribution for a {mc.target_success_probability:.0%} probability: "
             f"${needed:,.2f}. These are hypothetical, not forecasts."
+            + (f" {low_odds_note()}" if result.success_probability < LOW_ODDS else "")
         )
 
     return StructuredTool.from_function(

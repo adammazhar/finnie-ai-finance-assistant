@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 # CPU-only PyTorch comes from the index above, so `pip install -r requirements.txt` just works.
-# Runtime dependencies (pinned). Later phases add UI and MCP packages.
+# Runtime dependencies (pinned). Phase 9 adds the MCP package.
 pydantic==2.13.5
 pydantic-settings==2.15.0
 PyYAML==6.0.3
@@ -27,3 +27,7 @@ torch==2.14.1
 # Workflow
 langgraph==1.2.12
 langgraph-checkpoint==4.2.0
+
+# Web app
+streamlit==1.64.0
+plotly==7.1.0

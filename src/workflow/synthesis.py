@@ -79,11 +79,36 @@ def unify_citations(results: Sequence[AgentResult]) -> Citations:
             return f"[{number_for(by_key[key])}]"
 
         answers[result.agent] = MARKER.sub(rewrite, result.answer)
-        # Market data and other uncited sources still belong in the list.
-        for source in result.sources:
-            if source.kind == "market_data":
-                number_for(source)
+    # Market data isn't listed as a source: the answer's freshness note covers it.
     return Citations(sources=merged, answers=answers)
+
+
+MARKER_GROUP = re.compile(r"(?:\[\d{1,2}\])+")
+
+
+def tidy_citations(text: str, sources: Sequence[Source]) -> tuple[str, list[Source]]:
+    """Keep only cited sources, numbered in order of first use, with no repeated markers.
+
+    "[1][2][1]" becomes "[1][2]", and a source no marker points to is dropped, so the
+    sources list matches the answer exactly (also after the merge or a guardrail rewrite).
+    """
+    order: list[int] = []
+
+    def renumber(match: re.Match[str]) -> str:
+        numbers: list[int] = []
+        for raw in re.findall(r"\d+", match.group(0)):
+            n = int(raw)
+            if not 1 <= n <= len(sources):
+                continue
+            if n not in order:
+                order.append(n)
+            new = order.index(n) + 1
+            if new not in numbers:
+                numbers.append(new)
+        return "".join(f"[{n}]" for n in numbers)
+
+    tidied = MARKER_GROUP.sub(renumber, text)
+    return tidied, [sources[n - 1] for n in order]
 
 
 class Synthesis(BaseModel):
@@ -104,7 +129,8 @@ def synthesize(results: Sequence[AgentResult], llm: Any | None) -> Synthesis | N
     agents = [r.agent for r in ok]
     if len(ok) == 1:
         text = check_citations(citations.answers[ok[0].agent], len(citations.sources)).text
-        return Synthesis(text=text, sources=citations.sources, freshness=freshness, agents=agents)
+        text, sources = tidy_citations(text, citations.sources)
+        return Synthesis(text=text, sources=sources, freshness=freshness, agents=agents)
 
     sections = "\n\n".join(
         f"## {AGENT_LABELS.get(agent, agent)}\n{answer}"
@@ -123,9 +149,10 @@ def synthesize(results: Sequence[AgentResult], llm: Any | None) -> Synthesis | N
         except Exception:
             logger.exception("Merge failed; showing the specialists' answers as sections")
     text = check_citations(text, len(citations.sources)).text  # drop anything invented
+    text, sources = tidy_citations(text, citations.sources)
     return Synthesis(
         text=text,
-        sources=citations.sources,
+        sources=sources,
         freshness=freshness,
         agents=agents,
         merged_by_llm=merged_by_llm,

@@ -12,12 +12,14 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from pydantic import BaseModel, ConfigDict
 
 from src.core.config import RAGConfig
+
+if TYPE_CHECKING:
+    from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from src.rag.knowledge_base import (
     CATEGORIES,
     KB_ROOT,
@@ -58,6 +60,11 @@ class Chunk(BaseModel):
 def _splitters(
     config: RAGConfig,
 ) -> tuple[MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter]:
+    # Imported here: the package's __init__ loads sentence-transformers, transformers, and
+    # torch (about 20 s), which only chunking needs. Importing it lazily keeps the app,
+    # the agents, and test collection fast.
+    from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+
     headers = MarkdownHeaderTextSplitter(
         headers_to_split_on=[("##", "section"), ("###", "subsection")], strip_headers=True
     )

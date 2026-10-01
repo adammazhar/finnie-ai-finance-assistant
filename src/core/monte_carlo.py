@@ -67,6 +67,26 @@ class SimulationResult(BaseModel):
     dollars: Literal["today's", "nominal"]
 
 
+LOW_ODDS = 0.25  # below this, explain what would change the outcome
+
+
+def chance_text(probability: float) -> str:
+    """A probability in words: "under 1%", "64%", "over 99%" (never a misleading 0% or 100%)."""
+    if probability < 0.01:
+        return "under 1%"
+    if probability > 0.99:
+        return "over 99%"
+    return f"{round(probability * 100)}%"
+
+
+def low_odds_note() -> str:
+    return (
+        "The odds are low under these assumptions. Three things change the outcome most: "
+        "more time to save, a higher monthly contribution, or a smaller target. Try adjusting "
+        "them to see how the chance moves."
+    )
+
+
 def monthly_rate(annual_return: float) -> float:
     """Monthly rate that compounds to ``annual_return`` over 12 months."""
     return (1 + annual_return) ** (1 / 12) - 1

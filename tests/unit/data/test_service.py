@@ -393,3 +393,21 @@ def test_treasury_yield_without_yfinance(cache, md_config, clock, sleeps, av):
     solo = make_service(cache, md_config, clock, sleeps, price=[av])
     with pytest.raises(DataUnavailableError, match="no providers configured"):
         solo.get_treasury_bill_yield()
+
+
+def test_news_keeps_english_articles_only(svc, yfp, av):
+    yfp.scripts["get_news"] = [
+        [
+            NewsArticle(title="Tesla-Aktie: Analysten sehen weiteres Potenzial nach Zahlen"),
+            NewsArticle(title="Tesla shares rise after deliveries beat estimates"),
+        ]
+    ]
+    feed = svc.get_news(ticker="TSLA")
+    assert [a.title for a in feed.articles] == ["Tesla shares rise after deliveries beat estimates"]
+    assert feed.freshness.kind == "news"
+
+
+def test_news_with_no_english_articles_tries_the_next_provider(svc, yfp, av):
+    yfp.scripts["get_news"] = [[NewsArticle(title="テスラ株が急騰、納車台数が予想を上回る")]]
+    feed = svc.get_news(ticker="TSLA")
+    assert feed.freshness.source == "alpha_vantage"

@@ -1,9 +1,10 @@
 """End-to-end workflow latency with live models and data: python scripts/bench_workflow.py.
 
 Runs one question per specialist and several multi-specialist questions, each in its own
-conversation with a saved 3-holding portfolio. Questions state their savings (or list
-holdings) so none stops to ask how much of the portfolio counts. Exits non-zero when a
-turn doesn't produce an answer or the multi-specialist median misses its target.
+conversation with a saved 3-holding portfolio, through ``FinnieAssistant.stream`` as the
+chat tab does. Questions state their savings (or list holdings) so none stops to ask how
+much of the portfolio counts. Exits non-zero when a turn doesn't produce an answer, the
+first progress event is slow, or the multi-specialist median misses its target.
 """
 
 import statistics
@@ -12,8 +13,11 @@ import time
 
 from src.core.models import Holding, UserProfile
 from src.workflow.graph import FinnieAssistant
+from src.workflow.nodes import TurnOutput
+from src.workflow.progress import Progress
 
 MULTI_P50_TARGET_S = 15.0  # docs/BENCHMARKS.md
+FIRST_FEEDBACK_P95_TARGET_S = 1.0  # first progress event the chat shows (docs/BENCHMARKS.md)
 SINGLE_P50_TARGET_S = 6.0  # docs/DESIGN.md section 14 (reported, not enforced)
 
 PORTFOLIO = [
@@ -38,19 +42,33 @@ MULTI = [
 ]
 
 
+FIRST_FEEDBACK: list[float] = []
+
+
 def run(assistant: FinnieAssistant, questions: list[str], label: str) -> list[float]:
     times = []
     for i, question in enumerate(questions):
         started = time.perf_counter()
-        out = assistant.ask(
+        first: float | None = None
+        out: TurnOutput | None = None
+        for event in assistant.stream(
             question,
             thread_id=f"bench-{label}-{i}",
             portfolio=PORTFOLIO,
             profile=UserProfile(age=35),
-        )
+        ):
+            if isinstance(event, Progress) and first is None:
+                first = time.perf_counter() - started
+            elif isinstance(event, TurnOutput):
+                out = event
         elapsed = time.perf_counter() - started
         times.append(elapsed)
-        print(f"{elapsed:6.1f}s  {out.status:<11} {','.join(out.agents):<28} {question[:60]}")
+        FIRST_FEEDBACK.append(first if first is not None else elapsed)
+        assert out is not None
+        print(
+            f"{elapsed:6.1f}s  first {FIRST_FEEDBACK[-1] * 1000:5.0f} ms  {out.status:<11} "
+            f"{','.join(out.agents):<28} {question[:50]}"
+        )
         if out.status != "answered":
             print(f"FAILED: expected an answer, got {out.status}")
             sys.exit(1)
@@ -70,7 +88,16 @@ if __name__ == "__main__":
         f"multi specialist:  n={len(multi)} p50 {multi_p50:.1f}s max {max(multi):.1f}s "
         f"(target < {MULTI_P50_TARGET_S:.0f}s)"
     )
-    ok = multi_p50 < MULTI_P50_TARGET_S
-    verdict = "meets" if ok else "is ABOVE"
-    print(f"Multi-specialist p50 {verdict} the {MULTI_P50_TARGET_S:.0f}s target.")
-    sys.exit(0 if ok else 1)
+    ordered = sorted(FIRST_FEEDBACK)
+    first_p95 = ordered[min(len(ordered) - 1, int(0.95 * len(ordered)))]
+    print(
+        f"first progress:    n={len(ordered)} p50 {statistics.median(ordered) * 1000:.0f} ms "
+        f"p95 {first_p95 * 1000:.0f} ms (target p95 < {FIRST_FEEDBACK_P95_TARGET_S:.0f}s)"
+    )
+    checks = [
+        ("Multi-specialist p50", multi_p50 < MULTI_P50_TARGET_S, f"{MULTI_P50_TARGET_S:.0f}s"),
+        ("First progress p95", first_p95 < FIRST_FEEDBACK_P95_TARGET_S, "1s"),
+    ]
+    for name, ok, target in checks:
+        print(f"{name} {'meets' if ok else 'MISSES'} the {target} target.")
+    sys.exit(0 if all(ok for _, ok, _ in checks) else 1)

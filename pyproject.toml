@@ -27,6 +27,9 @@ addopts = [
     "--strict-markers",
     "--allow-hosts=127.0.0.1,::1",
     "-m", "not live and not slow",
+    # parallel; tests that need LangChain's slow-to-import text splitters share one worker
+    "-n", "auto",
+    "--dist", "loadgroup",
     "--cov=src",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
@@ -66,4 +69,4 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 ignore_missing_imports = true
-files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents", "src/workflow"]
+files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents", "src/workflow", "src/web_app"]

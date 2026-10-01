@@ -84,6 +84,7 @@ class Freshness(BaseModel):
     fetched_at: datetime
     is_stale: bool = False
     is_mock: bool = False
+    kind: Literal["market", "news"] = "market"
 
     @model_validator(mode="after")
     def _mock_source_is_mock(self) -> Freshness:
@@ -108,6 +109,8 @@ class Freshness(BaseModel):
         if self.status == "mock":
             return "Demo data: live feed unavailable"
         age = _format_age(self.age_minutes(now))
+        if self.kind == "news":
+            return f"News fetched {age}"
         prefix = {"live": "Live", "cached": "Cached", "stale": "Stale"}[self.status]
         text = f"{prefix} · {age}"
         if self.fetched_at - self.as_of > AS_OF_NOTE_THRESHOLD:

@@ -144,7 +144,7 @@ terms:
     definition: "The original value of an investment for tax purposes, usually the purchase price plus fees, adjusted for events such as reinvested dividends or stock splits. It is subtracted from the sale price to figure a capital gain or loss."
     related: [Capital gain, Capital loss, Wash sale]
   - term: Coupon rate
-    definition: "The annual interest rate a bond pays, stated as a percentage of its face value. A bond with a 5% coupon and a face value of 1,000 dollars pays 50 dollars a year, often in two installments."
+    definition: "The annual interest rate a bond pays, stated as a percentage of its face value. A bond with a 5% coupon and a face value of $1,000 pays $50 a year, often in two installments."
     related: [Bond, Face value, Yield]
   - term: Credit rating
     definition: "A grade from an agency such as Moody's, S&P, or Fitch that reflects its opinion of how likely a bond issuer is to pay on time. Bonds rated BBB- or Baa3 and above are called investment grade, and lower ratings are considered speculative."
@@ -216,7 +216,7 @@ terms:
     definition: "A fund that holds a basket of investments, often tracking an index, and trades on an exchange throughout the day like a stock. ETFs typically have low expense ratios and can be relatively tax-efficient."
     related: [Index fund, Mutual fund, Expense ratio]
   - term: Expense ratio
-    definition: "The yearly cost of owning a mutual fund or ETF, shown as a percentage of the money you have invested. A 0.10% expense ratio costs about 10 cents a year per 100 dollars invested and is deducted automatically from fund assets."
+    definition: "The yearly cost of owning a mutual fund or ETF, shown as a percentage of the money you have invested. A 0.10% expense ratio costs about 10 cents a year per $100 invested and is deducted automatically from fund assets."
     related: [Mutual fund, Exchange-traded fund (ETF), Basis point]
   - term: Face value
     definition: "The amount a bond issuer promises to repay at maturity, also called par value. Interest payments are calculated from it. A bond's market price can be above or below its face value before it matures."
@@ -435,7 +435,7 @@ terms:
     definition: "A profit on an asset held one year or less before it is sold. Short-term gains are taxed as ordinary income, generally at higher rates than long-term gains."
     related: [Capital gain, Long-term capital gain, Holding period, Ordinary income]
   - term: Simple interest
-    definition: "Interest calculated only on the original principal, not on interest already earned. Borrowing 1,000 dollars at 5% simple interest costs 50 dollars a year."
+    definition: "Interest calculated only on the original principal, not on interest already earned. Borrowing $1,000 at 5% simple interest costs $50 a year."
     related: [Compound interest, Principal]
   - term: SIPC protection
     definition: "Coverage from the Securities Investor Protection Corporation that helps restore customers' cash and securities, up to legal limits, if a member brokerage firm fails. It does not protect against investment losses from market declines."

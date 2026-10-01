@@ -187,3 +187,12 @@ def test_performance_default_size():
     start = time.perf_counter()
     simulate(goal(simulations=10_000, years=40))
     assert time.perf_counter() - start < 3  # design target is ~0.2s; generous for CI machines
+
+
+def test_chance_text_never_says_zero_or_certain():
+    from src.core.monte_carlo import chance_text, low_odds_note
+
+    assert chance_text(0.0) == chance_text(0.004) == "under 1%"
+    assert chance_text(0.6432) == "64%"
+    assert chance_text(1.0) == "over 99%"
+    assert "more time to save" in low_odds_note()

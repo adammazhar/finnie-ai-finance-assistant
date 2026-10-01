@@ -39,7 +39,7 @@ from src.data.errors import (
 )
 from src.data.mock_provider import MockMarketDataProvider
 from src.data.models import BatchQuotes, CompanyOverview, NewsArticle, NewsFeed, PriceHistory, Quote
-from src.data.news import TavilyNewsProvider
+from src.data.news import TavilyNewsProvider, is_english
 from src.data.rate_limit import DailyBudget, SlidingWindowRateLimiter
 from src.data.yfinance_client import YFinanceProvider
 from src.utils.clock import Clock, utcnow
@@ -204,8 +204,9 @@ class MarketDataService:
 
         def from_provider(provider: NewsProvider) -> Callable[[], NewsFeed]:
             def call() -> NewsFeed:
-                articles = provider.get_news(ticker=symbol, query=topic, limit=limit)
-                if not articles:
+                found = provider.get_news(ticker=symbol, query=topic, limit=limit)
+                articles = [a for a in found if is_english(f"{a.title} {a.summary or ''}")]
+                if not articles:  # none at all, or none in English: try the next provider
                     raise SymbolNotFoundError(f"{provider.name}: no news for {label}")
                 return self._feed(label, articles, provider.name)
 

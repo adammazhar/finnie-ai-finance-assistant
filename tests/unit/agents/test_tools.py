@@ -227,6 +227,18 @@ def test_project_goal(make_context):
         agent="goal_planning",
     )
     assert "aggressive assumptions" in aggressive and "(nominal dollars" in aggressive
+    assert "The odds are low" not in aggressive
+
+
+def test_project_goal_low_odds_explains_what_changes_the_outcome(make_context):
+    out, _ = run_tool(
+        make_context(),
+        "project_goal",
+        {"target_amount": 5_000_000, "years": 5, "monthly_contribution": 100},
+        agent="goal_planning",
+    )
+    assert "in 5 years is under 1%." in out
+    assert "more time to save, a higher monthly contribution, or a smaller target" in out
 
 
 def test_get_news(make_context):
