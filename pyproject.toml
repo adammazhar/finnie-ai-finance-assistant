@@ -15,6 +15,9 @@ dependencies = []
 [tool.setuptools.packages.find]
 include = ["src*"]
 
+[tool.setuptools.package-data]
+"src.agents" = ["prompts/*.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Network is blocked except loopback; tests must mock every external API.
@@ -62,4 +65,4 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 ignore_missing_imports = true
-files = ["src/core", "src/data", "src/utils", "src/rag"]
+files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents"]

@@ -17,6 +17,7 @@ from src.core.models import Source
 from src.rag.retriever import RetrievedChunk
 
 CITATION = re.compile(r"\[(\d{1,2})\]")
+NEWS_CITATION = re.compile(r"\[N(\d{1,2})\]")
 
 
 class ContextBlock(BaseModel):
@@ -55,6 +56,15 @@ class CitationCheck(BaseModel):
 
 def check_citations(answer: str, block_count: int) -> CitationCheck:
     """Keep valid ``[n]`` citations; strip any number with no matching context block."""
+    return _check_markers(answer, block_count, CITATION)
+
+
+def check_news_citations(answer: str, article_count: int) -> CitationCheck:
+    """Same as ``check_citations`` for news markers ``[N1]``, ``[N2]``, ..."""
+    return _check_markers(answer, article_count, NEWS_CITATION)
+
+
+def _check_markers(answer: str, block_count: int, pattern: re.Pattern[str]) -> CitationCheck:
     cited: list[int] = []
     removed: list[int] = []
 
@@ -67,7 +77,7 @@ def check_citations(answer: str, block_count: int) -> CitationCheck:
         removed.append(number)
         return ""
 
-    text = CITATION.sub(keep_or_drop, answer)
+    text = pattern.sub(keep_or_drop, answer)
     text = re.sub(r"[ \t]+([.,;:!?])", r"\1", text)  # tidy spaces left by removed markers
     text = re.sub(r"[ \t]{2,}", " ", text)
     return CitationCheck(text=text, cited=cited, removed=removed)

@@ -6,8 +6,6 @@ cache (downloaded once by ``python scripts/build_index.py``) and runs offline:
     pytest -m slow --no-cov tests/evals
 """
 
-import os
-
 import pytest
 
 pytestmark = pytest.mark.slow
@@ -17,14 +15,13 @@ TARGET_HIT_RATE = 0.85  # design target (docs/DESIGN.md section 11)
 
 @pytest.fixture(scope="module")
 def retriever(tmp_path_factory):
-    os.environ.setdefault("HF_HUB_OFFLINE", "1")
     from src.core.config import get_settings
-    from src.rag.embeddings import build_embeddings
+    from src.rag.embeddings import EmbeddingModelUnavailableError, build_embeddings
     from src.rag.retriever import build_retriever
 
     try:
-        embeddings = build_embeddings(get_settings().rag)
-    except OSError as exc:  # model not in the local cache
+        embeddings = build_embeddings(get_settings().rag, offline=True)
+    except EmbeddingModelUnavailableError as exc:
         pytest.skip(f"embedding model not available offline: {exc}")
     return build_retriever(embeddings=embeddings, index_dir=tmp_path_factory.mktemp("vs"))
 

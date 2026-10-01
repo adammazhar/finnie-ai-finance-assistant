@@ -173,6 +173,7 @@ class Settings(BaseSettings):
 
     llm_provider: ProviderName = "openai"
     llm_fallback_provider: ProviderName | None = "anthropic"
+    hf_hub_offline: bool = False  # HF_HUB_OFFLINE: load the embedding model from cache only
 
     app: AppConfig = Field(default_factory=AppConfig)
     llm: LLMConfig
