@@ -8,10 +8,9 @@ version = "0.1.0"
 description = "Finnie: a multi-agent AI finance education assistant"
 readme = "README.md"
 requires-python = ">=3.12"
-dynamic = ["dependencies"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+# Dependencies live in requirements.txt (it pins CPU-only PyTorch via an extra index,
+# which setuptools metadata can't express). Install: pip install -r requirements.txt
+dependencies = []
 
 [tool.setuptools.packages.find]
 include = ["src*"]

@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+# CPU-only PyTorch comes from the index above, so `pip install -r requirements.txt` just works.
 # Runtime dependencies (pinned). Later phases add market data, RAG, LangGraph, UI, and MCP packages.
 pydantic==2.13.5
 pydantic-settings==2.15.0
@@ -20,5 +22,4 @@ faiss-cpu==1.15.1
 langchain-text-splitters==1.1.2
 langchain-huggingface==1.2.2
 sentence-transformers==6.1.0
-# CPU-only build: install with --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.14.1
