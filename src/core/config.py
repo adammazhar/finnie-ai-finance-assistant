@@ -87,7 +87,7 @@ class RAGConfig(_Section):
     chunk_overlap: int = Field(default=120, ge=0)
     top_k: int = Field(default=4, gt=0)
     fetch_k: int = Field(default=40, gt=0)
-    score_threshold: float = Field(default=0.35, ge=-1, le=1)
+    score_threshold: float = Field(default=0.40, ge=-1, le=1)
     mmr_lambda: float = Field(default=0.7, ge=0, le=1)
     max_chunks_per_article: int = Field(default=2, gt=0)
 

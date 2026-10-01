@@ -23,7 +23,7 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--allow-hosts=127.0.0.1,::1",
-    "-m", "not live",
+    "-m", "not live and not slow",
     "--cov=src",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",

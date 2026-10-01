@@ -416,17 +416,22 @@ Quality controls:
 
 The expected result is about 700–1,000 chunks. The index is built by `python -m scripts.build_index` into `data/vectorstore/` (gitignored), at Docker build time, and automatically on first run if missing. A content hash in `index_meta.json` triggers a rebuild when articles change.
 
-### 4.3 Retrieval
+### 4.3 Retrieval (implemented in Phase 5: `src/rag/`)
 
-- `langchain_community.vectorstores.FAISS` with `HuggingFaceEmbeddings(all-MiniLM-L6-v2, normalize_embeddings=True)`, so inner product equals cosine similarity.
-- **Category filtering**: `filter={"category": {"$in": agent.rag_categories}}` with `fetch_k=40` over-fetch. If fewer than k results pass the filter, the search widens to all categories and logs that.
-- **Relevance scoring**: minimum cosine threshold (config, default 0.35). **MMR** (`lambda=0.7`) over the survivors picks the final k=4 diverse chunks, with at most 2 chunks per article.
-- **No confident match**: the agent says the knowledge base doesn't cover this and answers conservatively from general knowledge, with that caveat stated.
-- The embedding model and index are loaded once as process singletons (`st.cache_resource` in the UI).
+- **Embeddings:** `HuggingFaceEmbeddings(all-MiniLM-L6-v2, normalize_embeddings=True)` (`embeddings.py`), so inner product equals cosine similarity. Any LangChain `Embeddings` can be swapped in, and tests use a deterministic fake.
+- **Index without pickle** (`index.py`): raw `faiss.IndexFlatIP` plus `chunks.json` and `meta.json` in `data/vectorstore/` (gitignored). LangChain's FAISS wrapper pickles its document store, and `load_local` needs `allow_dangerous_deserialization=True`, a code-execution risk if index files are ever tampered with (for example on a shared volume). `meta.json` records the model, chunk settings, and a hash of every knowledge base file. `ensure_index()` reuses a current index and rebuilds automatically when content or settings change, or when the files are corrupt. `scripts/build_index.py` builds it ahead of time (for example in the Docker image).
+- **Exact search:** with about 1,100 chunks, the query is scored against every chunk (p50 28 ms including the query embedding). That keeps filtering, thresholds, and MMR simple and exact. An approximate index (HNSW or IVF) can be swapped in if the corpus grows by orders of magnitude.
+- **Retrieval steps** (`retriever.py`):
+  1. **Category filter:** glossary terms are included by default. If fewer than k chunks pass, the search widens to all categories and the result is flagged `widened`.
+  2. **Score threshold:** **0.40**, tuned on the evaluation set. Off-topic questions top out at 0.28; the weakest expected hit scores 0.51.
+  3. **MMR** (`lambda=0.7`) over the top `fetch_k=40` picks k=4 chunks, at most 2 per article.
+- **No confident match:** an empty result (`confident=False`). The agent then says the knowledge base doesn't cover the question and answers conservatively, stating that caveat.
+- **Process singletons:** the embedding model, index, and retriever are loaded once per process (`get_retriever()`; `st.cache_resource` in the UI). Cold start is about 21 s, mostly PyTorch and model load.
+- **Quality:** hit@4 is 93.3% unfiltered and 95.6% filtered, MRR about 0.90, and 100% of off-topic questions are rejected. See `docs/BENCHMARKS.md`; `pytest -m slow` enforces it.
 
 ### 4.4 Source attribution
 
-Chunks are passed to the LLM as numbered context blocks `[1]..[k]`, and the prompt requires inline `[n]` citations. The output guardrail then:
+Chunks are passed to the LLM as numbered context blocks `[1]..[k]` (`citations.build_context`), and the prompt requires inline `[n]` citations. The output guardrail then uses `citations.check_citations` and `render_sources` to:
 - strips citation numbers that don't match a provided block, so invented citations are removed,
 - appends a **Sources** list: article title, category, and external reference link.
 

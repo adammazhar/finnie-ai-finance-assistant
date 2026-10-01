@@ -31,7 +31,7 @@ rag:
   chunk_overlap: 120
   top_k: 4
   fetch_k: 40
-  score_threshold: 0.35
+  score_threshold: 0.40          # tuned on tests/evals: off-topic max 0.28, weakest real hit 0.51
   mmr_lambda: 0.7
   max_chunks_per_article: 2
 

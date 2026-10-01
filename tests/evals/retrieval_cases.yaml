@@ -1,0 +1,60 @@
+# Retrieval evaluation set: each question lists the article(s) that should appear in the
+# top-k results. Written independently of the article text (paraphrased, as a user would ask).
+# off_topic questions should return nothing above the relevance threshold.
+
+cases:
+  - {question: "How does compound interest grow my savings over time?", expected: [investing_basics-002]}
+  - {question: "What's the difference between saving money and investing it?", expected: [investing_basics-001]}
+  - {question: "Why do riskier investments tend to have higher returns?", expected: [investing_basics-003]}
+  - {question: "Is it better to invest a fixed amount every month?", expected: [investing_basics-005]}
+  - {question: "How does inflation eat into what my money can buy?", expected: [investing_basics-010, market_economics-006]}
+  - {question: "Index funds versus actively managed funds", expected: [investing_basics-011, funds_etfs-004]}
+  - {question: "What does it mean to own shares of a company?", expected: [stocks-001]}
+  - {question: "How do I read a price to earnings ratio?", expected: [stocks-004]}
+  - {question: "How is dividend yield calculated?", expected: [stocks-005]}
+  - {question: "growth stocks vs value stocks", expected: [stocks-006]}
+  - {question: "What is a limit order and when would I use one?", expected: [stocks-009]}
+  - {question: "Does a stock split make my investment worth more?", expected: [stocks-008]}
+  - {question: "Why do bond prices drop when interest rates go up?", expected: [bonds_fixed_income-002, market_economics-009]}
+  - {question: "What does duration tell me about a bond fund?", expected: [bonds_fixed_income-004]}
+  - {question: "How do I bonds and TIPS protect against inflation?", expected: [bonds_fixed_income-007]}
+  - {question: "Are municipal bonds tax free?", expected: [bonds_fixed_income-008]}
+  - {question: "What is an exchange-traded fund?", expected: [funds_etfs-002]}
+  - {question: "Key differences between ETFs and mutual funds", expected: [funds_etfs-003]}
+  - {question: "How does a target date retirement fund change over time?", expected: [funds_etfs-006]}
+  - {question: "Why should I care about a fund's fees?", expected: [funds_etfs-005, investing_basics-008]}
+  - {question: "Why shouldn't I put all my money in one stock?", expected: [portfolio_management-001, portfolio_management-007]}
+  - {question: "How often should I rebalance my portfolio?", expected: [portfolio_management-003]}
+  - {question: "What is the three-fund portfolio?", expected: [portfolio_management-006]}
+  - {question: "What does the Sharpe ratio tell me?", expected: [portfolio_management-010]}
+  - {question: "How does a company 401k match work?", expected: [retirement_planning-003, retirement_planning-002]}
+  - {question: "Should I choose a Roth or traditional IRA?", expected: [retirement_planning-006, retirement_planning-005, retirement_planning-004]}
+  - {question: "How much can I put in my 401k in 2026?", expected: [retirement_planning-007]}
+  - {question: "What is the 4 percent withdrawal rule?", expected: [retirement_planning-009]}
+  - {question: "At what age do I have to start withdrawing from my IRA?", expected: [retirement_planning-010]}
+  - {question: "When does Social Security let me start claiming?", expected: [retirement_planning-011]}
+  - {question: "How are short-term and long-term capital gains taxed differently?", expected: [taxes-002]}
+  - {question: "Can I sell losing investments to lower my taxes?", expected: [taxes-005]}
+  - {question: "What is the wash sale rule?", expected: [taxes-006]}
+  - {question: "If I move into a higher tax bracket is all my income taxed more?", expected: [taxes-012, taxes-011]}
+  - {question: "Can I invest the money in my HSA?", expected: [taxes-008]}
+  - {question: "How big should my emergency fund be?", expected: [personal_finance-002]}
+  - {question: "avalanche or snowball for paying off debt", expected: [personal_finance-004]}
+  - {question: "What affects my credit score?", expected: [personal_finance-005]}
+  - {question: "How do I spot an investment scam?", expected: [personal_finance-010]}
+  - {question: "What is a bear market?", expected: [market_economics-003]}
+  - {question: "How does the Fed set interest rates?", expected: [market_economics-005]}
+  - {question: "Why do losses feel worse than gains?", expected: [risk_behavioral-002]}
+  - {question: "Is it possible to time the market?", expected: [risk_behavioral-003]}
+  - {question: "How can I save for a down payment on a house?", expected: [financial_planning_goals-002]}
+  - {question: "What does an 80% probability of success mean in a Monte Carlo projection?", expected: [financial_planning_goals-005]}
+
+off_topic:
+  - "What's a good recipe for banana bread?"
+  - "Who won the football game last night?"
+  - "How do I fix a flat bicycle tire?"
+  - "Write me a poem about the ocean"
+  - "What is the capital of Australia?"
+  - "How do I reverse a linked list in Python?"
+  - "What's the weather like in Seattle tomorrow?"
+  - "Recommend a good science fiction movie"
