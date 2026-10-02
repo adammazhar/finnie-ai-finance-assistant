@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
 import streamlit as st
+from langgraph.checkpoint.sqlite import SqliteSaver
 from streamlit.testing.v1 import AppTest
 
 from src.agents.context import AgentContext
@@ -19,6 +21,7 @@ from tests.fakes.llm import FakeChatModel
 from tests.fakes.market_service import FakeMarketService
 from tests.unit.workflow.conftest import ScriptedAgent, result
 
+BROWSER = "b" * 32  # a fixed anonymous browser ID (AppTest has no cookies)
 APP = str(Path(__file__).resolve().parents[3] / "src" / "web_app" / "app.py")
 TIMEOUT_S = 60
 
@@ -56,10 +59,17 @@ def ui(monkeypatch, tmp_path):
         market: Any | None = None,
         with_retriever: bool = True,
         assistant: Any | None = None,
-        page: str = "Chat",
-        onboarded: bool = True,
+        page: str | None = "Chat",
+        onboarded: bool | None = True,
         session: dict[str, Any] | None = None,
+        browser: str | None = BROWSER,
+        persistent: bool = False,
     ) -> tuple[AppTest, dict[str, ScriptedAgent], AgentContext]:
+        """``None`` for page/onboarded/browser leaves them to the app (saved data, cookie).
+
+        ``persistent`` keeps workflow memory in the test's SQLite file, so a second call
+        in the same test behaves like an app restart.
+        """
         context = AgentContext(
             llm=FakeChatModel(responses=["Merged answer."]),
             fast_llm=FakeChatModel(responses=["summary"], structured_responses=list(routes or [])),
@@ -74,16 +84,29 @@ def ui(monkeypatch, tmp_path):
         monkeypatch.setattr(services, "build_context", lambda: context)
         # keep the app from reconfiguring the test session's root logger
         monkeypatch.setattr("src.utils.logging.configure_logging", lambda *a, **k: None)
-        monkeypatch.setattr(
-            services,
-            "build_assistant",
-            lambda ctx: assistant or FinnieAssistant(ctx, agents=team),
-        )
+        monkeypatch.setattr(services, "data_path", lambda: tmp_path / "finnie.sqlite")
+
+        def build(ctx: AgentContext) -> Any:
+            if assistant is not None:
+                return assistant
+            if not persistent:
+                return FinnieAssistant(ctx, agents=team)
+            saver = SqliteSaver(
+                sqlite3.connect(tmp_path / "finnie.sqlite", check_same_thread=False)
+            )
+            saver.setup()
+            return FinnieAssistant(ctx, checkpointer=saver, agents=team)
+
+        monkeypatch.setattr(services, "build_assistant", build)
         st.cache_resource.clear()  # each app start builds its services from these fakes
         st.cache_data.clear()
         app = AppTest.from_file(APP, default_timeout=TIMEOUT_S)
-        app.session_state["finnie_onboarded"] = onboarded
-        app.session_state["finnie_page"] = page
+        if onboarded is not None:
+            app.session_state["finnie_onboarded"] = onboarded
+        if page is not None:
+            app.session_state["finnie_page"] = page
+        if browser is not None:
+            app.session_state["finnie_browser_id"] = browser
         for key, value in (session or {}).items():
             app.session_state[key] = value
         app.run()

@@ -246,7 +246,7 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
             if is_short_reply(reply):
                 return {"savings_prompt": savings_reprompt(value)}  # ask again
             return {"pending_savings": None}  # a new question: move on
-        logger.info("Savings answered", extra={"goal": pending["goal"], "choice": savings.choice})
+        logger.info("Savings answered", extra={"choice": savings.choice})
         return {
             "pending_savings": None,
             "goal_savings": {

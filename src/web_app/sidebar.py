@@ -39,14 +39,88 @@ def _conversations() -> None:
     current = state.thread_id()
     with st.container(key="conversations"):
         for conversation_id, title in recent[:RECENT_SHOWN]:
-            st.button(
-                md(title),
-                key=f"conversation_{conversation_id}",
-                on_click=state.switch_conversation,
-                args=(conversation_id,),
-                type="secondary" if conversation_id == current else "tertiary",
-                width="stretch",
-            )
+            if state.renaming() == conversation_id:
+                _rename_row(conversation_id)
+            elif state.deleting() == conversation_id:
+                _delete_row(conversation_id, title)
+            else:
+                _row(conversation_id, title, conversation_id == current)
+
+
+def _row(conversation_id: str, title: str, current: bool) -> None:
+    name, menu = st.columns([6, 1], gap="small", vertical_alignment="center")
+    name.button(
+        md(title),
+        key=f"conversation_{conversation_id}",
+        on_click=state.switch_conversation,
+        args=(conversation_id,),
+        type="secondary" if current else "tertiary",
+        width="stretch",
+    )
+    with menu.popover("", icon=":material/more_horiz:", help="Rename or delete"):
+        st.button(
+            "Rename",
+            icon=":material/edit:",
+            key=f"rename_start_{conversation_id}",
+            on_click=state.start_rename,
+            args=(conversation_id,),
+            type="tertiary",
+        )
+        st.button(
+            "Delete",
+            icon=":material/delete:",
+            key=f"delete_start_{conversation_id}",
+            on_click=state.ask_delete,
+            args=(conversation_id,),
+            type="tertiary",
+        )
+
+
+def _rename_row(conversation_id: str) -> None:
+    """Edit the name in place; Enter or Save keeps it, Cancel or an empty name doesn't."""
+    st.text_input(
+        "Conversation name",
+        key=f"rename_{conversation_id}",
+        max_chars=80,
+        label_visibility="collapsed",
+        on_change=state.rename_conversation,
+        args=(conversation_id,),
+    )
+    save, cancel = st.columns(2)
+    save.button(
+        "Save",
+        key=f"rename_save_{conversation_id}",
+        on_click=state.rename_conversation,
+        args=(conversation_id,),
+        type="primary",
+        width="stretch",
+    )
+    cancel.button(
+        "Cancel",
+        key=f"rename_cancel_{conversation_id}",
+        on_click=state.cancel_edit,
+        width="stretch",
+    )
+
+
+def _delete_row(conversation_id: str, title: str) -> None:
+    with st.container(border=True):
+        st.markdown(md(f"Delete **{title}**? This can't be undone."))
+        confirm, cancel = st.columns(2)
+        confirm.button(
+            "Delete",
+            key=f"delete_confirm_{conversation_id}",
+            on_click=state.delete_conversation,
+            args=(conversation_id,),
+            type="primary",
+            width="stretch",
+        )
+        cancel.button(
+            "Cancel",
+            key=f"delete_cancel_{conversation_id}",
+            on_click=state.cancel_edit,
+            width="stretch",
+        )
 
 
 def render() -> None:

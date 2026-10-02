@@ -60,7 +60,9 @@ python scripts/bench_workflow.py         # end-to-end latency with live models a
 streamlit run src/web_app/app.py
 ```
 
-Open http://localhost:8501. On a first visit Finnie asks for your knowledge level and risk tolerance; there's a 5-question quiz if you're unsure. The sidebar has **New conversation**, your recent conversations, a **Profile** button to change those answers, and a system status icon. The tabs:
+Open http://localhost:8501. On a first visit Finnie asks for your knowledge level and risk tolerance; there's a 5-question quiz if you're unsure. The sidebar has **New conversation**, your recent conversations (rename or delete one from its **⋯** menu), a **Profile** button to change those answers, and a system status icon.
+
+Finnie remembers you without a login. Your profile, portfolio, and conversations are saved in `data/app/finnie.sqlite`, which is git-ignored, under a random ID stored in a browser cookie. They're still there after a refresh or a restart. **Delete my data** on the Profile page removes everything for this browser. The tabs:
 
 - **Chat**: ask anything in the box pinned at the bottom. You see which specialists are working while they run. The answer then streams in, with the specialists who wrote it, the sources it cites (open any knowledge base article in Knowledge), and charts when relevant. When you ask about a savings goal and have a saved portfolio, Finnie first asks how much of the portfolio counts toward that goal.
 - **Portfolio**: enter holdings in the table, upload a CSV (`ticker,shares,cost_basis`), or load a sample. You get allocation, diversification, risk, the portfolio expense ratio, past-year risk measures, a back-test of today's holdings against SPY, and a comparison with a typical mix for your risk tolerance. Holdings saved here are used in chat too.

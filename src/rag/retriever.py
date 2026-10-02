@@ -89,7 +89,7 @@ class Retriever:
             if candidates.sum() < k and relevant.sum() > candidates.sum():
                 widened = True
                 candidates = relevant
-                logger.info("Widened retrieval beyond %s for %r", wanted, query)
+                logger.info("Widened retrieval beyond %s", wanted)
 
         picked = self._mmr(scores, np.flatnonzero(candidates), k)
         return RetrievalResult(

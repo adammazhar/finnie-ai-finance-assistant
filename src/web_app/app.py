@@ -76,6 +76,26 @@ def _tab_bar() -> None:
     )
 
 
+def _remember_browser() -> None:
+    """Store a new browser's random ID in a cookie, so its data loads on the next visit.
+
+    The ID is 32 hex characters generated here (never user input); the script only sets
+    a first-party cookie on this app's own page.
+    """
+    new_id = state.take_new_cookie()
+    if new_id is None:
+        return
+    max_age = state.COOKIE_DAYS * 24 * 3600
+    st.iframe(
+        "<script>"
+        "const secure = window.parent.location.protocol === 'https:' ? '; Secure' : '';"
+        f"window.parent.document.cookie = '{state.COOKIE}={new_id}; path=/; "
+        f"max-age={max_age}; SameSite=Lax' + secure;"
+        "</script>",
+        height=1,
+    )
+
+
 def main() -> None:
     st.set_page_config(
         page_title="Finnie: financial education assistant",
@@ -84,6 +104,8 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     _configure_logging()
+    state.start()
+    _remember_browser()
     if not state.onboarded():
         theme.apply("Onboarding")
         _safe(lambda: profile_page.render(first_visit=True), "Onboarding")

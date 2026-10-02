@@ -24,6 +24,7 @@ htmlcov/
 
 # Generated data
 data/cache/
+data/app/
 data/vectorstore/
 
 # Course reference materials (not ours to publish)

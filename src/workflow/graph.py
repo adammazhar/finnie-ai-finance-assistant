@@ -163,6 +163,14 @@ class FinnieAssistant:
         logger.info("Conversation titled", extra={"final": final, "written": bool(written)})
         return title
 
+    def lock_title(self, thread_id: str, title: str) -> None:
+        """A name the user chose: automatic titling never replaces it."""
+        self.graph.update_state(self._config(thread_id), {"title": title, "title_final": True})
+
+    def forget(self, thread_id: str) -> None:
+        """Delete a conversation's workflow memory (messages, summary, choices)."""
+        self.graph.checkpointer.delete_thread(thread_id)
+
     def state(self, thread_id: str) -> dict[str, Any]:
         """The saved conversation state (messages, profile, portfolio, summary)."""
         return dict(self.graph.get_state(self._config(thread_id)).values)

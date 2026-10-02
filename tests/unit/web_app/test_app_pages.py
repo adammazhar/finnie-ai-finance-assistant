@@ -7,6 +7,7 @@ from src.data.models import NewsArticle
 from src.rag.retriever import RetrievalResult
 from src.web_app import services
 from src.web_app.services import build_assistant
+from src.web_app.services import data_path as real_data_path
 from src.web_app.tabs.portfolio import EXPLAIN_PROMPT, _rows_to_holdings
 from src.workflow.graph import FinnieAssistant
 from tests.fakes.market_service import FakeMarketService
@@ -285,6 +286,13 @@ def test_a_failing_page_shows_a_message(ui, monkeypatch):
 def test_default_assistant_builder(ui):
     _, _, context = ui()
     assert isinstance(build_assistant(context), FinnieAssistant)  # the unpatched builder
+
+
+def test_saved_data_goes_to_the_configured_git_ignored_file(ui):
+    from src.core.config import PROJECT_ROOT
+
+    ui()
+    assert real_data_path() == PROJECT_ROOT / "data" / "app" / "finnie.sqlite"
 
 
 def test_market_fallbacks_without_index_levels_or_quotes(ui, monkeypatch):

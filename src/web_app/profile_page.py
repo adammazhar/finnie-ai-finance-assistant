@@ -30,6 +30,14 @@ KEYS = {
     "investment_horizon_years": "profile_horizon",
 }
 QUIZ_RESULT = "quiz_result"
+CONFIRM_DELETE = "confirm_delete_my_data"
+STORAGE_NOTE = (
+    "What Finnie stores: your profile, portfolio, and conversations are saved on the server "
+    "running Finnie, so they're here when you come back. They're linked to a random ID kept "
+    "in a cookie in this browser, not to your name or email; there's no login. Clearing "
+    "cookies or using another browser starts fresh. Delete my data on the Profile page "
+    "removes everything."
+)
 
 
 def _load(current: UserProfile) -> None:
@@ -147,7 +155,46 @@ def render(first_visit: bool) -> None:
             buttons[1].button(
                 "Cancel", on_click=state.go, args=("Chat",), key="profile_cancel", width="stretch"
             )
+        st.caption(STORAGE_NOTE)
+        if not first_visit:
+            _delete_my_data()
         st.caption(
             "Finnie provides educational information only, not financial, investment, tax, or "
             "legal advice."
+        )
+
+
+def _ask_delete() -> None:
+    st.session_state[CONFIRM_DELETE] = True
+
+
+def _cancel_delete() -> None:
+    st.session_state.pop(CONFIRM_DELETE, None)
+
+
+def _delete_my_data() -> None:
+    st.divider()
+    if not st.session_state.get(CONFIRM_DELETE):
+        st.button(
+            "Delete my data",
+            icon=":material/delete:",
+            key="delete_my_data",
+            on_click=_ask_delete,
+        )
+        return
+    with st.container(border=True):
+        st.markdown(
+            "Delete your profile, portfolio, and **all conversations** saved for this browser? "
+            "This can't be undone, and Finnie will start fresh."
+        )
+        confirm, cancel = st.columns(2)
+        confirm.button(
+            "Delete everything",
+            type="primary",
+            key="delete_my_data_confirm",
+            on_click=state.delete_my_data,
+            width="stretch",
+        )
+        cancel.button(
+            "Cancel", key="delete_my_data_cancel", on_click=_cancel_delete, width="stretch"
         )

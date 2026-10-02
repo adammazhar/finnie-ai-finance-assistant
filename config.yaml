@@ -6,6 +6,7 @@ app:
   name: Finnie
   log_level: INFO          # DEBUG | INFO | WARNING | ERROR
   log_format: json         # json | text
+  data_path: data/app/finnie.sqlite   # profile, portfolio, conversations per browser (never committed)
   disclaimer: >-
     Finnie provides educational information only, not financial, investment, tax,
     or legal advice. Consult a qualified professional before making financial decisions.

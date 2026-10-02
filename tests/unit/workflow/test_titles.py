@@ -94,3 +94,22 @@ def test_fallback_and_summary():
     messages = [HumanMessage(content="Bonds?"), AIMessage(content="Bonds are loans.")]
     assert write_title(llm, messages, summary="Talked about savings.") == "Bond Funds"
     assert llm.calls[0][1].content.startswith("Earlier: Talked about savings.\nUser: Bonds?")
+
+
+def test_a_name_the_user_chose_is_never_replaced(make_assistant):
+    assistant, _ = titled_assistant(make_assistant, ["Getting Started", "Roth IRA Rules"])
+    assistant.ask("What is your name?", thread_id="t")
+    assistant.update_title("t")
+    assistant.lock_title("t", "My Retirement Plan")
+    for question in ("Q2?", "Q3?"):
+        assistant.ask(question, thread_id="t")
+        assert assistant.update_title("t") == "My Retirement Plan"
+    assert len(title_prompts(assistant)) == 1  # the third-question rewrite never ran
+
+
+def test_forget_deletes_the_workflow_memory(make_assistant):
+    assistant, _ = titled_assistant(make_assistant, ["Title"])
+    assistant.ask("What is an ETF?", thread_id="t")
+    assert assistant.state("t")["messages"]
+    assistant.forget("t")
+    assert assistant.state("t") == {}

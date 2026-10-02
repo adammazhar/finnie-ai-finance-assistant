@@ -73,6 +73,7 @@ class AppConfig(_Section):
     name: str = "Finnie"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "text"] = "json"
+    data_path: Path = Path("data/app/finnie.sqlite")  # per-browser saved data (git-ignored)
     disclaimer: str = (
         "Finnie provides educational information only, not financial, investment, tax, "
         "or legal advice. Consult a qualified professional before making financial decisions."

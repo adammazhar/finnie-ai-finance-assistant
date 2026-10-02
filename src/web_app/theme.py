@@ -49,6 +49,10 @@ h1, h2, h3, h4 {{ color: {NAVY}; letter-spacing: -0.01em; }}
 
 /* sidebar */
 .st-key-brand h2 {{ margin: 0; font-size: 1.45rem; }}
+.st-key-conversations [data-testid="stHorizontalBlock"] {{ gap: 0.15rem; }}
+.st-key-conversations [data-testid="stPopoverButton"] {{
+  border: none; background: transparent; padding: 0.2rem; min-height: 0; color: {MUTED};
+}}
 .st-key-conversations button {{
   justify-content: flex-start; text-align: left; border: none;
   color: #1B2433; font-weight: 400; padding: 0.35rem 0.6rem; min-height: 0;
@@ -62,7 +66,7 @@ h1, h2, h3, h4 {{ color: {NAVY}; letter-spacing: -0.01em; }}
   justify-content: flex-start;
 }}
 .st-key-conversations button:hover {{ background: #EDF1F7; }}
-.st-key-conversations button[kind="secondary"] {{
+.st-key-conversations [data-testid="stButton"] button[kind="secondary"] {{
   background: #E3EAF4; color: {NAVY}; font-weight: 600;
   box-shadow: inset 3px 0 0 {GREEN};
 }}

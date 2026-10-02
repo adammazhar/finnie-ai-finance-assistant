@@ -7,13 +7,17 @@ with fakes before the app runs.
 from __future__ import annotations
 
 import logging
+import sqlite3
+from pathlib import Path
 from typing import Any
 
 import streamlit as st
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 from src.agents.context import AgentContext, build_agent_context
 from src.core.indicators import MarketOverview, build_market_overview
 from src.rag.knowledge_base import Article, Glossary, load_articles, load_glossary
+from src.web_app.storage import AppStore
 from src.workflow.graph import FinnieAssistant
 
 logger = logging.getLogger(__name__)
@@ -21,8 +25,24 @@ logger = logging.getLogger(__name__)
 build_context = build_agent_context
 
 
+def data_path() -> Path:
+    """The SQLite file for per-browser data and workflow memory (git-ignored)."""
+    settings = context().settings
+    return settings.resolve_path(settings.app.data_path)
+
+
 def build_assistant(context: AgentContext) -> FinnieAssistant:
-    return FinnieAssistant(context)
+    """Workflow memory in SQLite, so conversations continue after an app restart."""
+    path = data_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    saver = SqliteSaver(sqlite3.connect(path, check_same_thread=False))
+    saver.setup()
+    return FinnieAssistant(context, checkpointer=saver)
+
+
+@st.cache_resource(show_spinner=False)
+def store() -> AppStore:
+    return AppStore(data_path())
 
 
 @st.cache_resource(show_spinner="Starting Finnie…")

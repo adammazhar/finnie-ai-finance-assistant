@@ -250,7 +250,7 @@ sequenceDiagram
 
 ### 2.5 Memory and context preservation
 
-- **Checkpointer.** `MemorySaver` by default, keyed by `thread_id` = Streamlit session id. `SqliteSaver` can be enabled in config for persistence across restarts.
+- **Checkpointer.** LangGraph's `SqliteSaver`, keyed by `thread_id` (one per conversation), in the per-browser data file (§2.8). Workflow memory survives an app restart. Tests use `InMemorySaver`.
 - **Windowing.** The last 20 messages go into prompts. When history exceeds 30 messages, a summarization step folds older turns into `conversation_summary`, so context survives long chats without blowing the token budget.
 - **Cross-tab context.** A portfolio entered in the Portfolio tab and a profile set in the sidebar are written into graph state, so chat questions like *"how diversified am I?"* work without repeating holdings.
 - **Portfolio from chat.** Portfolio Analysis extracts holdings from free text via structured output (*"I have 10 AAPL and 5 VOO"*) and persists them to state.
@@ -293,6 +293,23 @@ Where the build differs from, or adds to, §2.1–2.6:
 - **Turn time budget.** `workflow.turn_timeout_s` (120 s) sets a deadline in `ingest`. An agent still running at the deadline becomes an error result, and the turn answers with what the other agents found.
 - **Router call** uses function-calling structured output, because OpenAI's strict JSON-schema mode rejects the free-form `depends_on` mapping.
 - **Routing eval.** `tests/evals/routing_cases.yaml` has 66 labelled questions: every specialist, multi-agent questions, out-of-scope questions, and follow-ups with history. `python scripts/eval_routing.py` reports accuracy and compares it with the keyword router; see `docs/BENCHMARKS.md`.
+
+### 2.8 Saved data per browser (no login)
+
+The course documents ask for session-based identification only. Finnie also keeps a returning visitor's data without a login:
+
+- **Identity.** On a first visit the app generates a random 128-bit ID and stores it in a first-party cookie (`finnie_id`, 400 days, `SameSite=Lax`, `Secure` over HTTPS). It is set by a one-line script, because Streamlit can read cookies (`st.context.cookies`) but not set them. There's no name, email, or account.
+- **Storage.** `src/web_app/storage.py` keeps a SQLite file at `app.data_path` (`data/app/finnie.sqlite`, git-ignored), with tables for browsers, profiles, portfolios, and conversations (title, title source, chat history). Every query is scoped to one browser ID. The workflow's checkpoints (messages, summaries, per-goal savings choices) live in the same file.
+- **Loading and saving.** Session state is the working copy. It loads once when a session starts and writes through on every change, so a refresh or restart returns the same profile, portfolio, conversation list, and open conversation. If a page closed before an automatic title was saved, the title is recovered from the workflow's state on the next load.
+- **Conversation management.** The sidebar's "⋯" menu renames a conversation inline or deletes it after a confirmation. A name the user chose is stored as `title_source = "user"` and also locks the workflow's title, so the third-question retitle never replaces it. Deleting removes the conversation and its checkpoints.
+- **Delete my data** (Profile page) removes the profile, portfolio, all conversations, and their checkpoints for this browser, then shows onboarding again.
+- **Privacy.** The app says what it stores, on the onboarding and Profile pages. Message content is kept out of logs, and a test asserts it. On a shared server, the data file should sit on an encrypted disk.
+- **Future option for a public deployment: login with `st.login` and Auth0.** Not built. Streamlit's OIDC login (`st.login`, `st.user`, `st.logout`, which needs `Authlib`) with an `[auth]` section in `.streamlit/secrets.toml` pointing at the Auth0 tenant (`server_metadata_url = https://<tenant>/.well-known/openid-configuration`, plus client ID and secret, a cookie secret, and redirect `https://<domain>/oauth2callback`).
+  - The store's browser ID would become the Auth0 user ID (`st.user.sub`), so data follows the person across devices.
+  - Guest mode (today's behavior) would stay the default when `[auth]` isn't configured, so local evaluation needs no Auth0 setup.
+  - On EC2, Caddy already provides the HTTPS the redirect needs. Public sign-ups should be disabled or allow-listed in Auth0 so strangers can't spend API credits.
+  - On ECS Fargate, the SQLite file would move to Postgres with LangGraph's Postgres checkpointer.
+  - Estimated at about two days.
 
 ## 3. The Six Agents
 
@@ -785,7 +802,8 @@ flowchart LR
 - **Caddy.** A three-line `Caddyfile` (`{$DOMAIN} { reverse_proxy finnie-web:8501 }`) provides automatic HTTPS certificates and renewal. Caddy proxies WebSockets natively, which Streamlit needs.
 - **Security group.** Inbound 80/443 from anywhere and 22 from the owner's IP only. Port 8501 is never exposed publicly.
 - **Secrets.** `.env` is copied to the instance with `scp`, set to `chmod 600`, and never committed. Optionally, secrets can be pulled from SSM Parameter Store at boot via an instance role.
-- **Access control for demos.** Optional HTTP basic auth in Caddy (the `basic_auth` directive), so strangers who find the public URL can't spend API credits.
+- **Access control for demos.** Optional HTTP basic auth in Caddy (the `basic_auth` directive), so strangers who find the public URL can't spend API credits. Login with `st.login` is the planned replacement (§2.8).
+- **Saved data.** `data/app/` (per-browser profiles, portfolios, conversations, and workflow memory) goes on a named volume next to `data/cache`, on an encrypted EBS disk, with a periodic SQLite `.backup` copy to S3.
 - **Operations.** All services use `restart: unless-stopped`. `deploy/deploy.sh` runs `git pull && docker compose up -d --build`. Logs are read with `docker compose logs`. The guide includes a pre-interview checklist: health endpoint, one test query per agent, and the market data freshness badge.
 - **Cost.** A t3.medium costs roughly $30–35/month on demand. The guide covers stopping the instance between interviews; the Elastic IP is kept, so the domain stays valid.
 
@@ -925,3 +943,4 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 26 | *(Phase 8 review)* **Tests run in parallel** (`pytest -n auto --dist loadgroup`). CI runs the unit and UI suites as separate jobs and enforces one coverage gate on their combined data. LangChain's text splitters import torch (about 20 s per process), so they're imported lazily, the agent and UI tests build their small indexes directly, and the chunking tests share one xdist worker. |
 | 27 | *(Phase 8 UI fixes)* **Market-aware quote caching**: 60 seconds while the market is open; while it's closed, never a quote from before the last close (`src/core/market_hours.py`, NYSE calendar verified 2026-10-02). This replaces the flat 30-minute quote TTL, which could show a mid-session price after the close. |
 | 28 | *(Phase 8 UI fixes)* **Conversation titles by the fast model**, written after the first answer and rewritten once after the third question; never the raw message. |
+| 29 | *(before Phase 9)* **Saved data per browser without login**: an anonymous cookie ID, with profile, portfolio, conversations, and LangGraph checkpoints in `data/app/finnie.sqlite` (git-ignored), plus rename, delete, and "Delete my data". Login with `st.login` and Auth0 is recorded as a future option for a public deployment (§2.8). |

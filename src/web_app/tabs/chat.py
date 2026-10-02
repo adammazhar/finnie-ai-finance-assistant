@@ -229,7 +229,7 @@ def _answer(prompt: str, scroll: bool) -> None:
     state.add_chat("assistant", output.answer, payload)
     thread = state.thread_id()
     try:
-        state.set_title(thread, services.assistant().update_title(thread))
+        state.set_title(thread, services.assistant().update_title(thread) or state.UNTITLED)
     except Exception:  # a title is cosmetic; never lose the answer over it
         logger.exception("Titling the conversation failed")
     if scroll:
