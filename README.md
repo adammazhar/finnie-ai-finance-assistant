@@ -71,3 +71,16 @@ Finnie remembers you without a login. Your profile, portfolio, and conversations
 - **Markets**: index and sector moves today, plus a lookup for any ticker with its price trend, moving averages, RSI, company facts, and recent English-language news.
 - **Goals**: a Monte Carlo projection for one goal, with the chance of reaching it. Tick **Include saved portfolio** and edit the amount to count some or all of your portfolio.
 - **Knowledge**: search the knowledge base, browse articles by category, and look up glossary terms.
+
+### 6. Use Finnie from Claude (MCP server)
+
+Finnie's tools are also an MCP server, so Claude Desktop or Claude Code can use its market data, portfolio analytics, goal projections, and knowledge base. Full steps are in [docs/MCP.md](docs/MCP.md).
+
+- **Claude Desktop (stdio):** add the `finnie` entry from docs/MCP.md to `claude_desktop_config.json` (**Settings → Developer → Edit Config**), fully quit Claude Desktop from the system tray, and start it again.
+- **HTTP on localhost (Claude Code, scripts):** set `MCP_API_TOKEN` in `.env`, then:
+
+  ```bash
+  python -m src.mcp_server --http          # http://127.0.0.1:8765/mcp; requests without the token get 401
+  python scripts/mcp_client_demo.py        # shows the 401s, then lists tools and calls one with the token
+  claude mcp add --transport http --scope local finnie http://127.0.0.1:8765/mcp --header "Authorization: Bearer <token>"
+  ```

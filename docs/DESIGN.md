@@ -16,7 +16,7 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | LangGraph Workflow (10) | Flawless orchestration, advanced state management | §2: typed state with reducers, parallel fan-out via `Send`, checkpointed memory, follow-up query rewriting, layered fallbacks |
 | RAG (8) | Intelligent retrieval + source attribution | §4: FAISS + MiniLM, header-aware chunking, category filters, score thresholds, MMR, inline citations |
 | Real-time Data (7) | Robust integration, comprehensive error handling | §5: per-lookup provider chains (yfinance ⇄ Alpha Vantage) → stale cache → mock, 30-min TTL, backoff, rate-limit detection, freshness badges |
-| MCP Server (5) | Claude Desktop integration | §9: FastMCP stdio server with 6 tools and KB resources, plus a Claude Desktop config |
+| MCP Server (5) | Claude Desktop integration | §9: MCP server (spec 2026-07-28, SDK `MCPServer`) with 6 tools, KB resources, and a prompt; stdio for Claude Desktop and token-protected Streamable HTTP for Claude Code and scripts; step-by-step setup in `docs/MCP.md` |
 | Streamlit App (10) | Multi-tab, intuitive, responsive | §7: 5 tabs, shared session context, beginner-friendly UX |
 | Conversational Flow (8) | Perfect context preservation | §2.5: checkpointer per session, follow-up rewriting, profile and portfolio carried in state |
 | Data Visualization (7) | Professional charts | §7.3: Plotly charts (allocation, performance, sectors, Monte Carlo fan, gauges) |
@@ -39,6 +39,7 @@ flowchart LR
     subgraph Clients
         UI["Streamlit UI<br/>Chat · Portfolio · Markets · Goals · Knowledge"]
         CD["Claude Desktop"]
+        CC["Claude Code / scripts"]
     end
 
     subgraph App["Finnie application (src/)"]
@@ -69,6 +70,7 @@ flowchart LR
 
     UI --> WF
     CD -- stdio --> MCP
+    CC -- "HTTP + bearer token<br/>(127.0.0.1)" --> MCP
     WF --> GR
     WF --> AG
     AG --> LLMF
@@ -695,24 +697,99 @@ These notes describe what was built. Where they differ from §7.1–7.2, the not
 
 ## 9. MCP Server (`src/mcp_server/`) — 5%
 
-The server is built with the official `mcp` Python SDK (`FastMCP`) using **stdio** transport.
+Built with the official Python SDK (`mcp==2.2.0`, `MCPServer`) against MCP specification **2026-07-28**: stateless requests, protocol version and client capabilities carried in each request's `_meta`, and Streamable HTTP as a single POST endpoint. The SDK still answers the older `initialize` handshake, so clients on the 2025 revisions connect too. Setup and verification steps are in `docs/MCP.md`.
+
+### 9.1 Tools, resources, prompt
 
 | Type | Name | Wraps |
 |---|---|---|
-| tool | `get_stock_quote(ticker)` | `MarketDataService.get_quote` (with freshness) |
-| tool | `get_market_overview()` | indices + sectors + mood |
-| tool | `analyze_portfolio(holdings)` | `core.portfolio.analyze` |
-| tool | `project_financial_goal(...)` | `core.monte_carlo.simulate` |
-| tool | `search_financial_knowledge(query, category?)` | RAG retriever (returns chunks + sources) |
-| tool | `explain_tax_account(account_type)` | `core.tax.reference` |
-| resource | `finnie://articles/{id}`, `finnie://glossary` | KB content |
-| prompt | `explain_like_beginner(topic)` | reusable prompt template |
+| tool | `get_stock_quote(ticker)` | `MarketDataService.get_quote`, plus `price_time_label` (exact time, live/delayed/last close, market open or closed) |
+| tool | `get_market_overview()` | `build_market_overview`: index levels with tracking ETFs, sectors, mood |
+| tool | `analyze_portfolio(holdings, risk_tolerance?)` | `core.portfolio.fetch_and_analyze` |
+| tool | `project_financial_goal(...)` | `core.monte_carlo.simulate` and `required_monthly_contribution` (fixed seed, so answers repeat) |
+| tool | `search_financial_knowledge(query, category?, limit?)` | RAG retriever: passages, sources, and a resource link per article |
+| tool | `explain_tax_account(account_type)` | `core.tax.compare_accounts` (IRS figures with source URLs) |
+| resource | `finnie://articles/{article_id}`, `finnie://glossary` | KB content in markdown, with sources |
+| prompt | `explain_like_beginner(topic)` | a plain-language explanation that must use the KB search and cite it |
 
-- Every tool response includes the disclaimer and freshness metadata.
-- Errors return structured MCP errors, never stack traces.
-- The MCP server does not call Finnie's LLM. Claude Desktop is the reasoning engine and Finnie supplies tools and data, which avoids spending tokens twice.
-- `docs/MCP.md` has a `claude_desktop_config.json` snippet (Windows and macOS paths) pointing at `.venv/Scripts/python -m src.mcp_server`, how to run the MCP Inspector (`mcp dev`), and screenshots.
-- Tests call tools directly and through an in-memory client session.
+- Each tool returns a pydantic model, so clients get an output schema and structured content. Every result carries the disclaimer, and market data carries its freshness.
+- Errors are MCP tool errors with a plain message (`ToolError`), or `ResourceNotFoundError` for an unknown article; never stack traces. The SDK's own INFO log of failed tool calls includes their arguments, so the `mcp` loggers are set to WARNING.
+- The server doesn't call Finnie's LLM. The client is the reasoning engine and Finnie supplies tools and data, which avoids paying for two models per question.
+- The tools reuse the same `src/core`, `src/data`, and `src/rag` functions as the agents. The knowledge base index loads on the first search, so starting the server is fast.
+
+### 9.2 Transports
+
+`python -m src.mcp_server` (`__main__.py`) changes to the project folder first, so `config.yaml`, `.env`, and `data/` are found however the client starts it.
+
+- **stdio** (default), for Claude Desktop. The client starts the process; stdout carries the protocol and logs go to stderr. No authentication is needed: only the user who started the process can talk to it.
+- **Streamable HTTP** (`--http`), for Claude Code, the demo script `scripts/mcp_client_demo.py`, and other HTTP clients. `http.py` wraps the SDK's app (`streamable_http_app(stateless_http=True, json_response=True)`) and is served by uvicorn at `http://127.0.0.1:8765/mcp` (`mcp` section of `config.yaml`).
+
+### 9.3 HTTP security (built)
+
+Following the specification's transport security rules:
+
+- **Bearer token.** Every request needs `Authorization: Bearer <MCP_API_TOKEN>`, with the token kept in `.env`. A pure ASGI middleware checks it before anything else, in constant time (`hmac.compare_digest`), with a case-insensitive scheme (RFC 6750).
+  - No header gets **401** with `WWW-Authenticate: Bearer realm="finnie"`.
+  - A wrong token or another scheme gets **401** with `error="invalid_token"`.
+  - Rejections are logged without the token.
+- **Startup check.** The server refuses to start if the token is missing or shorter than 32 characters (`mcp.min_token_length`).
+- **Localhost only.** The server binds to 127.0.0.1. The SDK's DNS-rebinding protection rejects a `Host` that isn't localhost (**421**) and an `Origin` that isn't a localhost page (**403**), so a web page open in the user's browser can't drive the server.
+- **POST only.** `GET` and `DELETE` get **405**. The server is stateless and sends no server-initiated messages, so there's no stream to open and no session to end. (Without this, the SDK keeps a `GET` stream open indefinitely.)
+- **No secrets in the repo.** The token is only in `.env`. Claude Code stores its copy in the user's local MCP settings (`--scope local`), outside the repository. The repo-hygiene test now also checks `.env` values ending in `_TOKEN`.
+
+### 9.4 Production authorization: OAuth 2.1 with Auth0 (designed, not built)
+
+A static token is right for one person on one machine. It isn't right for a server other people reach over a network: the token can't be scoped, can't expire on its own, and can't be revoked per user. MCP's authorization specification makes a remote HTTP server an **OAuth 2.1 resource server** that accepts access tokens from a separate authorization server. Finnie would use the Auth0 tenant already planned for `st.login` (§2.8).
+
+**Auth0 setup**
+
+- An Auth0 **API** whose identifier is the MCP server's public URL (e.g. `https://finnie.example.com/mcp`). That identifier is the token audience and the RFC 8707 resource indicator.
+- Signing with RS256.
+- Scopes: `finnie:read` for market data and the knowledge base; `finnie:analyze` for portfolio and goal tools.
+- Client registration: MCP clients register themselves, either with a Client ID Metadata Document or with Dynamic Client Registration (Auth0's *OIDC Dynamic Application Registration*, enabled with sign-ups restricted). Alternatively, known clients are pre-registered.
+- Users: an allow-list, or a connection with sign-ups disabled, so strangers can't use the tools.
+
+**Server changes**
+
+- Build `MCPServer(..., token_verifier=Auth0Verifier(), auth=AuthSettings(...))`:
+  - `issuer_url = https://<tenant>.auth0.com/`
+  - `resource_server_url = https://finnie.example.com/mcp`
+  - `required_scopes = ["finnie:read"]`
+  - `validate_token_resource = True`
+- The SDK then serves the RFC 9728 **Protected Resource Metadata** at `/.well-known/oauth-protected-resource`, which tells clients to use Auth0 as the authorization server. Its 401 responses include `WWW-Authenticate: Bearer resource_metadata="…"`, so clients can find the login flow on their own. The SDK's bearer middleware also returns 403 `insufficient_scope` when a scope is missing.
+- `Auth0Verifier.verify_token`, about 40 lines:
+  - Verify the JWT with PyJWT's `PyJWKClient`, using the keys at `https://<tenant>.auth0.com/.well-known/jwks.json` (cached, refreshed when a key rotates).
+  - Check `iss`, `aud` (must be the resource URL), `exp`/`nbf`, and the algorithm (RS256 only).
+  - Return an `AccessToken` with the `scope` claim split into a list, `resource` set to the audience, and `subject` set to `sub`.
+  - Per-tool scope checks: the portfolio and goal tools require `finnie:analyze`.
+- The middleware from §9.3 is removed. Host and Origin checks stay, adjusted for the public hostname.
+
+**Deployment**
+
+- Behind Caddy with HTTPS. OAuth requires HTTPS except on localhost.
+- The server never sees passwords, and the client never sends Finnie's own token anywhere. Tokens are short-lived (for example one hour), and Auth0 handles refresh-token rotation.
+- Per-user rate limits can key on `sub`.
+
+**Testing**
+
+- Tokens signed by a local RSA key, with the verifier pointed at a fake JWKS.
+- Cases: expired token, wrong audience, wrong issuer, missing scope, `alg: none`.
+- A manual check with Claude Code's OAuth flow against the tenant.
+
+**Estimate:** about two days, shared with the `st.login` work.
+
+### 9.5 Tests
+
+`tests/unit/mcp_server/`:
+
+- Every tool, resource, and the prompt through an in-memory client, including error results and that failed tool arguments stay out of logs.
+- stdio in a real subprocess started from another folder, as Claude Desktop does it.
+- HTTP on a real uvicorn server on loopback:
+  - 401 with no token, wrong tokens, and the wrong scheme
+  - 405 for `GET` and `DELETE`, 403 for a foreign `Origin`, 421 for a foreign `Host`
+  - the older `initialize` handshake
+  - a real MCP client with and without the token
+- The launcher, including refusing to start without a token.
 
 ---
 
@@ -754,7 +831,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 | Unit: agents | each agent with fake LLM + fake tools | tool raises, LLM returns junk, handoff requests, beginner vs advanced prompt |
 | Unit: workflow | router (LLM + keyword fallback), plan builder, dispatcher, reducers, synthesizer pass-through | malformed/empty/emoji queries, >3 agents, dependency cycles, all agents fail |
 | Unit: guardrails | advice detection, rewrite, disclaimer, injection | adversarial prompt set |
-| Integration | full compiled graph end-to-end with fakes; multi-turn memory; MCP in-memory session | 5-turn conversation with pronoun follow-ups; parallel stage ordering |
+| Integration | full compiled graph end-to-end with fakes; multi-turn memory; MCP over in-memory, stdio (subprocess), and HTTP (uvicorn on loopback, including 401) | 5-turn conversation with pronoun follow-ups; parallel stage ordering |
 | UI | `AppTest` smoke test per tab and chart builder unit tests | no API key banner, empty portfolio, mock-data badges |
 | Content | KB validator as a test (≥100 articles, schema, unique ids) | — |
 | Live (opt-in) | `pytest -m live`: real APIs, skipped by default and in CI | — |
@@ -781,7 +858,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 - `docker-compose.yml` services:
   - `finnie-web` (Streamlit), with `env_file: .env` and a named volume for `data/cache`
   - `caddy` (reverse proxy with automatic HTTPS), the only service publishing ports 80/443
-  - an optional `finnie-mcp` profile for testing the streamable-HTTP transport
+  - an optional `finnie-mcp` profile for the Streamable HTTP transport, with `MCP_API_TOKEN` from `.env` and the port published on 127.0.0.1 only (OAuth with Auth0 before it's ever exposed publicly, §9.4)
 - `.dockerignore` excludes `.env`, `.venv`, `.git`, `docs/ik`, and caches. **Secrets are never baked into the image.**
 
 ### 12.2 Primary deployment: single EC2 instance + docker compose + Caddy
@@ -851,7 +928,7 @@ finnie-ai-finance-assistant/
 │   ├── web_app/                # app.py, tabs/, charts.py, state.py, components.py
 │   ├── utils/                  # logging, retry helpers, formatting, validation
 │   ├── workflow/               # state.py, router.py, planner.py, nodes.py, graph.py
-│   └── mcp_server/             # server.py, __main__.py
+│   └── mcp_server/             # server.py (tools), http.py (HTTP + token), __main__.py
 ├── data/                       # data files (not code)
 │   ├── knowledge_base/<category>/*.md   glossary.yaml
 │   ├── sample_portfolios/*.csv
@@ -910,7 +987,7 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | **6. Agents + guardrails** | BaseAgent, tool registry, 6 agents, prompts, guardrails | per-agent tests with fake LLM; adversarial guardrail suite | `feat: six specialist agents and education guardrails` |
 | **7. Workflow** | state, router + keyword fallback, planner, dispatcher, synthesizer, memory, fallback node | multi-agent and multi-turn integration tests; routing eval ≥ 90% | `feat: LangGraph orchestration with routing, memory, and fallbacks` |
 | **8. Streamlit UI** | 5 tabs, sidebar, charts, streaming chat | chart builder tests, `AppTest` per tab; manual smoke run with real keys | `feat: Streamlit multi-tab interface` |
-| **9. MCP server** | FastMCP server, tools/resources/prompt, `docs/MCP.md` | direct and in-memory client tests; manual Claude Desktop verification | `feat: MCP server for Claude Desktop` |
+| **9. MCP server** | `MCPServer` with tools/resources/prompt; stdio and token-protected Streamable HTTP; `docs/MCP.md`; `scripts/mcp_client_demo.py` | in-memory, stdio, and HTTP transport tests (including 401); manual Claude Desktop and Claude Code verification | `feat: MCP server with stdio and token-protected HTTP` |
 | **10. Ship** | Dockerfile, compose + Caddy, `docs/DEPLOYMENT.md` (EC2 primary, ECS scale-out), benchmarks, README (architecture, setup, API docs, usage, troubleshooting), demo script for the video | `docker compose up` works locally; EC2 runbook written; full suite ≥ 90%; benchmarks published | `docs: deployment, benchmarks, and README` |
 
 ## 16. Decisions Log
@@ -946,3 +1023,4 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 27 | *(Phase 8 UI fixes)* **Market-aware quote caching**: 60 seconds while the market is open; while it's closed, never a quote from before the last close (`src/core/market_hours.py`, NYSE calendar verified 2026-10-02). This replaces the flat 30-minute quote TTL, which could show a mid-session price after the close. |
 | 28 | *(Phase 8 UI fixes)* **Conversation titles by the fast model**, written after the first answer and rewritten once after the third question; never the raw message. |
 | 29 | *(before Phase 9)* **Saved data per browser without login**: an anonymous cookie ID, with profile, portfolio, conversations, and LangGraph checkpoints in `data/app/finnie.sqlite` (git-ignored), plus rename, delete, and "Delete my data". Login with `st.login` and Auth0 is recorded as a future option for a public deployment (§2.8). |
+| 30 | *(Phase 9)* **MCP server with two transports**: stdio for Claude Desktop, and Streamable HTTP on 127.0.0.1 protected by a static bearer token (`MCP_API_TOKEN` in `.env`; 401 without it), built on SDK `mcp==2.2.0` against spec 2026-07-28. The token is checked in our own ASGI middleware because the SDK's `AuthSettings` expects an OAuth authorization server. OAuth 2.1 with Auth0 is the documented production path (§9.4), not built. |

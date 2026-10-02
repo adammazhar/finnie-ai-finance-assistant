@@ -77,3 +77,9 @@ analytics:
     t_degrees_of_freedom: 5      # fatter tails than a normal distribution
     inflation: 0.025
     target_success_probability: 0.80
+
+mcp:
+  host: 127.0.0.1          # Streamable HTTP binds to localhost only
+  port: 8765
+  path: /mcp
+  min_token_length: 32     # MCP_API_TOKEN (in .env) must be at least this long

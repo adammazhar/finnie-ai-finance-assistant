@@ -36,7 +36,7 @@ def real_secret_values() -> list[str]:
     for line in env.read_text(encoding="utf-8", errors="ignore").splitlines():
         name, sep, value = line.partition("=")
         value = value.strip().strip("'\"")
-        if sep and name.strip().endswith("_KEY") and len(value) >= MIN_SECRET_LEN:
+        if sep and name.strip().endswith(("_KEY", "_TOKEN")) and len(value) >= MIN_SECRET_LEN:
             values.append(value)
     return values
 

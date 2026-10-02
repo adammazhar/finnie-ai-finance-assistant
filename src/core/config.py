@@ -155,7 +155,16 @@ class AnalyticsConfig(_Section):
     monte_carlo: MonteCarloConfig = Field(default_factory=MonteCarloConfig)
 
 
-YAML_SECTIONS = frozenset({"app", "llm", "rag", "market_data", "workflow", "analytics"})
+class MCPConfig(_Section):
+    """The MCP server's Streamable HTTP transport (stdio needs no settings)."""
+
+    host: str = "127.0.0.1"  # localhost only; never 0.0.0.0 without real authorization
+    port: int = Field(default=8765, gt=0, lt=65536)
+    path: str = "/mcp"
+    min_token_length: int = Field(default=32, ge=16)
+
+
+YAML_SECTIONS = frozenset({"app", "llm", "rag", "market_data", "workflow", "analytics", "mcp"})
 
 
 class Settings(BaseSettings):
@@ -172,6 +181,7 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     alpha_vantage_api_key: SecretStr | None = None
     tavily_api_key: SecretStr | None = None
+    mcp_api_token: SecretStr | None = None  # MCP_API_TOKEN: bearer token for the HTTP transport
 
     llm_provider: ProviderName = "openai"
     llm_fallback_provider: ProviderName | None = "anthropic"
@@ -183,6 +193,7 @@ class Settings(BaseSettings):
     market_data: MarketDataConfig = Field(default_factory=MarketDataConfig)
     workflow: WorkflowConfig = Field(default_factory=WorkflowConfig)
     analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
+    mcp: MCPConfig = Field(default_factory=MCPConfig)
 
     @classmethod
     def settings_customise_sources(
