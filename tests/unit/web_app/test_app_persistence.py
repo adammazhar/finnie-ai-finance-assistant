@@ -147,6 +147,11 @@ def test_delete_my_data_starts_fresh(ui):
     assert (saved.profile, saved.portfolio, saved.conversations) == (None, [], [])
     assert services.assistant().state(thread) == {}
     assert not conversation_buttons(app)
+    # a new random browser ID, stored in the cookie, so nothing links back to the old one
+    new_id = app.session_state["finnie_browser_id"]
+    assert new_id != BROWSER and len(new_id) == 32
+    cookies = [e.proto.srcdoc for e in app.get("iframe") if "finnie_id=" in e.proto.srcdoc]
+    assert len(cookies) == 1 and f"finnie_id={new_id};" in cookies[0]
 
 
 def test_message_content_never_reaches_the_logs(ui, caplog):

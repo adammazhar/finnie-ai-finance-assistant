@@ -220,3 +220,31 @@ def test_quiz_needs_every_answer():
     assert len(QUESTIONS) == 5
     with pytest.raises(ValueError, match="Expected 5 answers"):
         tolerance_from_scores([3, 3])
+
+
+def test_palettes_meet_wcag_aa_for_text():
+    from src.web_app.theme import PALETTES
+
+    def luminance(color):
+        channels = [int(color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+        linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    def ratio(a, b):
+        high, low = sorted([luminance(a), luminance(b)], reverse=True)
+        return (high + 0.05) / (low + 0.05)
+
+    for name, c in PALETTES.items():
+        for text in ("text", "muted", "heading"):
+            for surface in ("page", "subtle", "sidebar", "hover", "bubble"):
+                assert ratio(c[text], c[surface]) >= 4.5, (name, text, surface)
+        assert ratio(c["selected_text"], c["selected"]) >= 4.5, name
+        assert ratio(c["muted"], c["selected"]) >= 4.5, name
+        for button in ("primary", "primary_hover"):
+            assert ratio(c["on_primary"], c[button]) >= 4.5, (name, button)
+
+
+def test_theme_type_defaults_to_light_outside_a_session():
+    from src.web_app.theme import theme_type
+
+    assert theme_type() == "light"

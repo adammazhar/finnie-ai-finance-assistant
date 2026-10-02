@@ -57,8 +57,10 @@ python scripts/bench_workflow.py         # end-to-end latency with live models a
 ### 5. Run the app
 
 ```bash
-streamlit run src/web_app/app.py
+python -m src.web_app          # or: streamlit run src/web_app/app.py, from the project root
 ```
+
+Start it from the project root (the launcher above does that for you): Streamlit reads the theme in `.streamlit/config.toml` from the folder it's started in.
 
 Open http://localhost:8501. On a first visit Finnie asks for your knowledge level and risk tolerance; there's a 5-question quiz if you're unsure. The sidebar has **New conversation**, your recent conversations (rename or delete one from its **⋯** menu), a **Profile** button to change those answers, and a system status icon.
 

@@ -118,9 +118,11 @@ def delete_my_data() -> None:
     threads.add(thread_id())
     for thread in threads:
         services.assistant().forget(thread)
-    keep = {BROWSER, STARTED}
-    for key in [k for k in st.session_state if k not in keep]:
+    for key in [k for k in st.session_state if k != STARTED]:
         del st.session_state[key]
+    # A new random ID, so nothing links this browser to what was deleted
+    st.session_state[BROWSER] = uuid.uuid4().hex
+    st.session_state[NEW_COOKIE] = True
     logger.info("Browser data deleted", extra={"conversations": len(threads)})
 
 
