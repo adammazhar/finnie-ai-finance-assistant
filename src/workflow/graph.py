@@ -30,6 +30,7 @@ from src.core.models import Holding, UserProfile
 from src.workflow.nodes import Deps, TurnOutput, after_ingest, fan_out, make_nodes
 from src.workflow.progress import Progress
 from src.workflow.state import FinnieState
+from src.workflow.titles import FINAL_TITLE_AFTER, fallback_title, write_title
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,35 @@ class FinnieAssistant:
         for event in self.graph.stream(update, config, stream_mode="custom"):
             yield Progress.model_validate(event)
         yield self._finished(self.state(thread_id), started)
+
+    def update_title(self, thread_id: str) -> str | None:
+        """Write the conversation's title after an answer, at the right moments.
+
+        After the first question: from the question and answer. After the third: once
+        more, from the conversation so far, and then never again. Returns the title.
+        """
+        values = self.state(thread_id)
+        messages = values.get("messages", [])
+        asked = sum(isinstance(m, HumanMessage) for m in messages)
+        title, final = values.get("title"), bool(values.get("title_final"))
+        if final or not asked:
+            return title
+        if asked >= FINAL_TITLE_AFTER:
+            final = True
+            source = messages[-8:]
+        elif title:
+            return title  # wait for the third question
+        else:
+            source = messages[:2]
+        llm = self.context.fast_llm or self.context.llm
+        written = write_title(llm, source, values.get("summary") if final else None)
+        agents = (values.get("output") or {}).get("agents") or []
+        title = written or title or fallback_title(agents)
+        self.graph.update_state(
+            self._config(thread_id), {"title": title, "title_final": final and bool(written)}
+        )
+        logger.info("Conversation titled", extra={"final": final, "written": bool(written)})
+        return title
 
     def state(self, thread_id: str) -> dict[str, Any]:
         """The saved conversation state (messages, profile, portfolio, summary)."""

@@ -196,3 +196,61 @@ def test_chance_text_never_says_zero_or_certain():
     assert chance_text(0.6432) == "64%"
     assert chance_text(1.0) == "over 99%"
     assert "more time to save" in low_odds_note()
+
+
+# ---- sanity properties of the chance of success ----------------------------------------
+
+SANITY = settings(max_examples=40, deadline=None, suppress_health_check=[HealthCheck.too_slow])
+
+
+def sanity_goal(current, monthly, years, target, seed=7):
+    return GoalInputs(
+        current_balance=current,
+        monthly_contribution=monthly,
+        years=years,
+        target_amount=target,
+        expected_return=0.06,
+        volatility=0.15,
+        simulations=1_000,
+        seed=seed,
+    )
+
+
+def test_poor_markets_far_above_the_target_reads_over_99_percent():
+    """A $500K goal whose poor-markets (P10) outcome is millions must read "over 99%"."""
+    from src.core.monte_carlo import chance_text
+
+    result = simulate(sanity_goal(current=2_000_000, monthly=1_000, years=25, target=500_000))
+    assert result.final_percentiles[10] > 3 * result.inputs.target_amount
+    assert result.success_probability >= 0.99
+    assert chance_text(result.success_probability) == "over 99%"
+
+
+@SANITY
+@given(
+    current=st.floats(0, 2_000_000),
+    monthly=st.floats(0, 10_000),
+    years=st.integers(1, 40),
+    target=st.floats(10_000, 3_000_000),
+)
+def test_p10_above_target_means_at_least_90_percent(current, monthly, years, target):
+    result = simulate(sanity_goal(current, monthly, years, target))
+    if result.final_percentiles[10] > target:
+        assert result.success_probability >= 0.9
+    if result.final_percentiles[50] > target:  # a median above the target: at least even odds
+        assert result.success_probability >= 0.5
+
+
+@SANITY
+@given(
+    current=st.floats(0, 500_000),
+    years=st.integers(1, 40),
+    target=st.floats(10_000, 3_000_000),
+    contributions=st.lists(st.floats(0, 10_000), min_size=2, max_size=5),
+)
+def test_more_contributions_never_lower_the_odds(current, years, target, contributions):
+    odds = [
+        simulate(sanity_goal(current, monthly, years, target)).success_probability
+        for monthly in sorted(contributions)
+    ]
+    assert odds == sorted(odds)

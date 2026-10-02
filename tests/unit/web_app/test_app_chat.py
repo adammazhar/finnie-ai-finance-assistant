@@ -259,14 +259,19 @@ def test_failed_turn_shows_an_apology(ui):
 
 
 def test_conversations_are_listed_and_can_be_reopened(ui):
-    app, _, _ = ui(routes=[route("finance_qa"), route("tax")])
+    app, _, context = ui(routes=[route("finance_qa"), route("tax")])
+    context.fast_llm.responses = ["ETFs vs Mutual Funds", "Capital Gains Taxes"]
     ask(app, "What is an ETF and how is it different from a mutual fund exactly?")
     first = app.session_state["finnie_thread_id"]
     ok(app.sidebar.button(key="new_conversation").click().run())
     assert not app.chat_message
     ask(app, "How are gains taxed?")
     titles = [b.label for b in app.sidebar.button if b.key.startswith("conversation_")]
-    assert titles == ["How are gains taxed?", "What is an ETF and how is it different fr…"]
+    assert titles == ["Capital Gains Taxes", "ETFs vs Mutual Funds"]  # written by the model
+    current = app.sidebar.button(key=f"conversation_{app.session_state['finnie_thread_id']}")
+    assert current.proto.type == "secondary"  # the open conversation is highlighted
+    assert app.sidebar.button(key=f"conversation_{first}").proto.type == "tertiary"
+    assert "Recent conversations" in texts(app.sidebar.caption)
     ok(app.sidebar.button(key=f"conversation_{first}").click().run())
     assert app.session_state["finnie_thread_id"] == first
     assert app.chat_message[0].markdown[0].value.startswith("What is an ETF")

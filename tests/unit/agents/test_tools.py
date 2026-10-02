@@ -89,7 +89,9 @@ def test_get_quotes_with_no_results_at_all(make_context):
 
 def test_get_market_overview(make_context):
     out, state = run_tool(make_context(), "get_market_overview")
-    assert "Indices:" in out and "S&P 500 (SPY)" in out and "Mood:" in out
+    assert "Indices:" in out and "Mood:" in out
+    assert "- S&P 500: ^GSPC at 6,745.12 (+1.01%), tracked by SPY ETF $600.00 (+1.01%)" in out
+    assert set(state.data["market_overview"]["levels"]) == {"SPY", "QQQ", "DIA", "IWM"}
     assert len(state.data["market_overview"]["sectors"]) == 11
     assert len(state.freshness) == 15 and state.sources[0].title.startswith("Market overview")
 
@@ -98,6 +100,15 @@ def test_get_market_overview_partial(make_context, market):
     market.fail = {"get_daily_history"}
     out, _ = run_tool(make_context(), "get_market_overview")
     assert "Unavailable: SPY history" in out
+
+
+def test_get_market_overview_without_index_levels(make_context, market, monkeypatch):
+    from tests.fakes import market_service
+
+    for index in ("^GSPC", "^NDX", "^DJI", "^RUT"):
+        monkeypatch.delitem(market_service.PRICES, index)
+    out, _ = run_tool(make_context(), "get_market_overview")
+    assert "- S&P 500: SPY ETF $600.00 (+1.01%)" in out
 
 
 def test_get_market_overview_with_nothing_available(make_context):

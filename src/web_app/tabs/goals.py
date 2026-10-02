@@ -26,6 +26,11 @@ from src.web_app.formatting import md, money, percent
 GOAL_TYPES = ["Retirement", "House down payment", "College", "Emergency fund", "Other"]
 RISKS: list[str] = list(get_args(RiskTolerance))
 RESULT = "goal_result"
+ODDS_NOTE = (
+    "How to read the chance: a median (typical) outcome above the target means roughly even "
+    "odds. Odds near 99% need even the poor-markets (P10) outcome, which only 1 in 10 "
+    "simulated paths falls below, to clear the target."
+)
 
 
 def _portfolio_amount() -> float:
@@ -141,6 +146,7 @@ def _results(saved: dict[str, Any]) -> None:
         )
     )
     st.markdown(f"#### Chance of reaching this goal: {chance_text(result.success_probability)}")
+    st.caption(ODDS_NOTE)
     if result.success_probability < LOW_ODDS:
         st.info(low_odds_note(), icon=":material/lightbulb:")
     left, right = st.columns([1, 2])

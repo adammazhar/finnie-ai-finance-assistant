@@ -39,6 +39,10 @@ PRICES = {
     "XLU": 80.0,
     "XLRE": 42.0,
     "XLC": 100.0,
+    "^GSPC": 6745.12,
+    "^NDX": 24510.4,
+    "^DJI": 46520.3,
+    "^RUT": 2455.7,
 }
 
 
@@ -81,6 +85,19 @@ class FakeMarketService:
         self.calls.append((name, args))
         if name in self.fail:
             raise DataUnavailableError(f"{name} unavailable")
+
+    def get_quote(self, ticker):
+        self._check("get_quote", ticker)
+        ticker = ticker.upper()
+        if ticker not in PRICES:
+            raise SymbolNotFoundError(ticker)
+        return Quote(
+            ticker=ticker,
+            price=PRICES[ticker],
+            previous_close=PRICES[ticker] * 0.99,
+            change_percent=1.01,
+            freshness=fresh(mock=self.mock),
+        )
 
     def get_quotes(self, tickers):
         tickers = [t.upper() for t in tickers]

@@ -114,7 +114,8 @@ class BackoffConfig(_Section):
 
 class MarketDataConfig(_Section):
     cache_path: Path = Path("data/cache/market.sqlite")
-    quote_ttl_minutes: int = Field(default=30, gt=0)
+    quote_ttl_minutes: int = Field(default=30, gt=0)  # while the market is closed
+    quote_live_ttl_seconds: int = Field(default=60, gt=0)  # while it's open
     news_ttl_minutes: int = Field(default=30, gt=0)
     history_ttl_hours: int = Field(default=12, gt=0)
     request_timeout_s: float = Field(default=10, gt=0)

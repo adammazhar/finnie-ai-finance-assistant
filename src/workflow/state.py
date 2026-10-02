@@ -30,6 +30,8 @@ class FinnieState(TypedDict, total=False):
     profile: dict[str, Any]  # UserProfile
     portfolio: list[dict[str, Any]] | None  # list[Holding]
     summary: str | None  # rolling summary of older turns
+    title: str | None  # short conversation title for the sidebar
+    title_final: bool  # rewritten after the third question; fixed from then on
     goal_savings: dict[str, dict[str, Any]]  # goal label -> GoalSavings
     pending_savings: dict[str, Any] | None  # the goal question waiting on the savings answer
 

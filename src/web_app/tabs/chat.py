@@ -42,6 +42,9 @@ STARTERS = {
 }
 ERROR_REPLY = "Sorry, something went wrong on my side. Please try again in a moment."
 LOGGED_FEEDBACK = "chat_feedback_logged"
+ANCHOR = "finnie-answer-"
+SCROLL_AFTER_RERUN = "finnie_scroll_after_rerun"
+DRAWN = "finnie_question_drawn"
 
 
 def _run_turn(prompt: str) -> TurnOutput:
@@ -154,9 +157,37 @@ def _extras(output: TurnOutput, index: int) -> None:
         _feedback(index)
 
 
+def _anchor(index: int) -> None:
+    """Marks where an answer starts, so the page can scroll to it."""
+    st.markdown(f'<div id="{ANCHOR}{index}"></div>', unsafe_allow_html=True)
+
+
+def _scroll_to(index: int) -> None:
+    """Scroll so the answer's first line sits just under the tab bar.
+
+    Retries for a moment, because the page is still laying out when the script runs.
+    """
+    # A fixed script with only an integer filled in: no user or model text goes in here.
+    st.iframe(
+        "<script>"
+        f"const target = {ANCHOR!r} + {index};"
+        "let tries = 8;"
+        "function go() {"
+        "  const el = window.parent.document.getElementById(target);"
+        "  if (el) el.scrollIntoView({block: 'start'});"
+        "  if (--tries > 0) setTimeout(go, 150);"
+        "}"
+        "setTimeout(go, 100);"
+        "</script>",
+        height=1,
+    )
+
+
 def _history() -> None:
     for index, entry in enumerate(state.chat()):
         with st.chat_message(entry["role"]):
+            if entry["role"] == "assistant":
+                _anchor(index)
             st.markdown(md(entry["content"]))
             if entry.get("output"):
                 _extras(TurnOutput.model_validate(entry["output"]), index)
@@ -182,24 +213,49 @@ def _intro() -> None:
             )
 
 
-def _answer(prompt: str) -> None:
+def _answer(prompt: str, scroll: bool) -> None:
     state.add_chat("user", prompt)
     with st.chat_message("user"):
         st.markdown(md(prompt))
     with st.chat_message("assistant"):
+        index = len(state.chat())
+        _anchor(index)
+        if scroll:
+            _scroll_to(index)
         output = _run_turn(prompt)
         st.write_stream(stream_words(md(output.answer)))
-        index = len(state.chat())
         _extras(output, index)
     payload: dict[str, Any] = output.model_dump(mode="json")
     state.add_chat("assistant", output.answer, payload)
-    st.rerun()  # redraw once so the sidebar lists this conversation
+    thread = state.thread_id()
+    try:
+        state.set_title(thread, services.assistant().update_title(thread))
+    except Exception:  # a title is cosmetic; never lose the answer over it
+        logger.exception("Titling the conversation failed")
+    if scroll:
+        st.session_state[SCROLL_AFTER_RERUN] = index
+    st.rerun()  # redraw once so the sidebar lists this conversation with its title
 
 
 def render() -> None:
-    prompt = st.chat_input("Message Finnie…", key="chat_input") or state.take_prompt()
+    typed = st.chat_input("Message Finnie…", key="chat_input")
+    waiting = None if typed else state.peek_prompt()
+    if waiting and not st.session_state.pop(DRAWN, False):
+        # A button sent this question from another page. Draw the chat with the question
+        # first, so the previous page doesn't linger (faded) while the answer is written.
+        _history()
+        with st.chat_message("user"):
+            st.markdown(md(waiting))
+        st.session_state[DRAWN] = True
+        st.rerun()
+    queued = None if typed else state.take_prompt()
+    scroll = state.take_scroll()
+    prompt = typed or queued
     if not state.chat() and not prompt:
         _intro()
     _history()
+    after_rerun = st.session_state.pop(SCROLL_AFTER_RERUN, None)
+    if after_rerun is not None:
+        _scroll_to(after_rerun)
     if prompt:
-        _answer(prompt)
+        _answer(prompt, scroll=bool(queued) and scroll)

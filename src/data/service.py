@@ -26,6 +26,7 @@ from typing import Any, Protocol, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from src.core.config import MarketDataConfig, Settings, get_settings
+from src.core.market_hours import quote_max_age
 from src.core.models import Freshness, normalize_ticker
 from src.data.alpha_vantage import AlphaVantageProvider
 from src.data.cache import TTLCache
@@ -100,6 +101,7 @@ class MarketDataService:
         self._clock = clock
         self._sleep = sleep
         self._quote_ttl = timedelta(minutes=config.quote_ttl_minutes)
+        self._quote_live_ttl = timedelta(seconds=config.quote_live_ttl_seconds)
         self._news_ttl = timedelta(minutes=config.news_ttl_minutes)
         self._history_ttl = timedelta(hours=config.history_ttl_hours)
 
@@ -110,10 +112,14 @@ class MarketDataService:
         return self._fetch(
             Quote,
             f"quote:{symbol}",
-            self._quote_ttl,
+            self._quote_max_age(),
             [(p.name, _bind(p.get_quote, symbol)) for p in self._price],
             mock=lambda m: m.get_quote(symbol),
         )
+
+    def _quote_max_age(self) -> timedelta:
+        """Market-aware: a minute while trading, never older than the last close."""
+        return quote_max_age(self._clock(), self._quote_live_ttl, self._quote_ttl)
 
     def get_treasury_bill_yield(self) -> Quote:
         """13-week T-bill yield (``price`` is percent), cached for the daily-data TTL.
@@ -147,7 +153,7 @@ class MarketDataService:
         quotes: dict[str, Quote] = {}
         misses = []
         for symbol in dict.fromkeys(symbols):
-            entry = self._cache.get_fresh(f"quote:{symbol}", self._quote_ttl)
+            entry = self._cache.get_fresh(f"quote:{symbol}", self._quote_max_age())
             cached = self._from_cache(Quote, entry, stale=False) if entry else None
             if cached:
                 quotes[symbol] = cached

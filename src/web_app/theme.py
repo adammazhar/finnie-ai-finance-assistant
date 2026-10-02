@@ -27,8 +27,15 @@ h1, h2, h3, h4 {{ color: {NAVY}; letter-spacing: -0.01em; }}
 [data-testid="stMetricLabel"] p {{ color: {MUTED}; font-size: 0.85rem; font-weight: 500; }}
 [data-testid="stMetricValue"] {{ color: {NAVY}; }}
 
-/* tab bar: a segmented control styled as underlined tabs */
-.st-key-nav {{ border-bottom: 1px solid {LINE}; margin-bottom: 0.6rem; }}
+/* tab bar: a segmented control styled as underlined tabs, pinned while scrolling */
+.st-key-nav {{
+  position: sticky; top: 3.75rem; z-index: 999; width: 100% !important;
+  background: #FFFFFF; border-bottom: 1px solid {LINE}; margin-bottom: 0.6rem;
+}}
+/* the header strip above the tab bar is transparent by default; content scrolling
+   under it would show above the pinned tabs */
+[data-testid="stHeader"] {{ background: #FFFFFF; }}
+[id^="finnie-answer-"] {{ scroll-margin-top: 7.5rem; }}
 .st-key-nav [data-testid="stButtonGroup"] {{ gap: 0.25rem; flex-wrap: wrap; }}
 .st-key-nav button {{
   background: transparent !important; border: none !important; border-radius: 0 !important;
@@ -55,6 +62,10 @@ h1, h2, h3, h4 {{ color: {NAVY}; letter-spacing: -0.01em; }}
   justify-content: flex-start;
 }}
 .st-key-conversations button:hover {{ background: #EDF1F7; }}
+.st-key-conversations button[kind="secondary"] {{
+  background: #E3EAF4; color: {NAVY}; font-weight: 600;
+  box-shadow: inset 3px 0 0 {GREEN};
+}}
 .st-key-conversations button[kind="secondary"] p {{
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }}

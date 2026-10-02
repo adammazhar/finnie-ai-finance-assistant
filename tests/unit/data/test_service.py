@@ -76,20 +76,34 @@ def test_overview_chain_defaults_to_price_chain(cache, md_config, clock, sleeps,
     assert solo.get_company_overview("AAPL").freshness.source == "alpha_vantage"
 
 
-def test_primary_success_is_cached_for_ttl(svc, av, yfp, clock):
+def test_quotes_are_cached_briefly_while_the_market_is_open(svc, av, yfp, clock):
+    # clock starts Wed Sep 30, 2026, 2:00 PM ET: the market is open
     q = svc.get_quote("aapl")
     assert q.ticker == "AAPL" and q.freshness.status == "live"
     assert q.freshness.source == "yfinance"
 
-    clock.advance(minutes=29)
+    clock.advance(seconds=50)
     cached = svc.get_quote("AAPL")
     assert cached.freshness.status == "cached" and cached.freshness.origin == "yfinance"
     assert cached.freshness.fetched_at == q.freshness.fetched_at
     assert yfp.calls_to("get_quote") == 1 and av.calls_to("get_quote") == 0
 
-    clock.advance(minutes=2)  # past the 30-minute TTL
+    clock.advance(seconds=20)  # past the 60-second live TTL
     assert svc.get_quote("AAPL").freshness.status == "live"
     assert yfp.calls_to("get_quote") == 2
+
+
+def test_a_quote_from_before_the_close_is_refreshed_after_it(svc, yfp, clock):
+    svc.get_quote("AAPL")  # 2:00 PM ET, market open
+    clock.advance(hours=2, minutes=20)  # 4:20 PM ET: closed, and past the close + 15 min
+    assert svc.get_quote("AAPL").freshness.status == "live"  # pre-close price is out of date
+    assert yfp.calls_to("get_quote") == 2
+    clock.advance(minutes=29)  # still closed: the post-close quote is current
+    assert svc.get_quote("AAPL").freshness.status == "cached"
+    assert svc.get_quotes(["AAPL"]).quotes["AAPL"].freshness.status == "cached"
+    clock.advance(minutes=2)  # 30-minute cap while closed (for assets that trade 24/7)
+    assert svc.get_quote("AAPL").freshness.status == "live"
+    assert yfp.calls_to("get_quote") == 3
 
 
 def test_transient_errors_retry_with_backoff(svc, yfp, sleeps):

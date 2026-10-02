@@ -6,7 +6,8 @@ from typing import Any
 
 import streamlit as st
 
-from src.core.indicators import technical_snapshot
+from src.core.indicators import MoverSummary, technical_snapshot
+from src.core.market_hours import market_status, price_time_label
 from src.core.models import normalize_ticker
 from src.data.errors import MarketDataError
 from src.web_app import charts, services
@@ -36,10 +37,10 @@ def _overview() -> None:
         st.error(f"Market data is unavailable right now ({exc}).")
         return
     if overview.indices:
+        st.caption(price_time_label(overview.indices[0].freshness.as_of))
         columns = st.columns(len(overview.indices))
-        for column, index in zip(columns, overview.indices, strict=True):
-            delta = f"{index.change_percent:+.2f}%" if index.change_percent is not None else None
-            column.metric(f"{index.name} ({index.ticker})", money(index.price, cents=True), delta)
+        for column, etf in zip(columns, overview.indices, strict=True):
+            _index_card(column, etf, overview.levels.get(etf.ticker))
     if overview.mood.summary:
         st.info(md(" ".join(overview.mood.summary)))
     if overview.sectors:
@@ -50,7 +51,23 @@ def _overview() -> None:
         )
     caption = freshness_caption([m.freshness for m in [*overview.indices, *overview.sectors]])
     if caption:
-        st.caption(caption + ". Index levels are shown through ETFs that track them.")
+        st.caption(caption + ". Sector moves are shown through the sector ETFs.")
+
+
+def _change(mover: MoverSummary) -> str | None:
+    return f"{mover.change_percent:+.2f}%" if mover.change_percent is not None else None
+
+
+def _index_card(column: Any, etf: MoverSummary, level: MoverSummary | None) -> None:
+    """The index level (e.g. S&P 500 at 6,745), with the ETF that tracks it underneath."""
+    with column:
+        if level is None:  # the index quote is unavailable: show the ETF alone
+            st.metric(f"{etf.name} via {etf.ticker}", money(etf.price, cents=True), _change(etf))
+            return
+        st.metric(f"{etf.name} ({level.ticker})", f"{level.price:,.2f}", _change(level))
+        st.caption(
+            md(f"Tracked by {etf.ticker}: {money(etf.price, cents=True)} {_change(etf) or ''}")
+        )
 
 
 def _news(ticker: str) -> None:
@@ -92,7 +109,16 @@ def _lookup() -> None:
         st.warning(md(f"Couldn't load price history for {ticker}: {exc}"))
         return
     cols = st.columns(4)
-    cols[0].metric("Last close", money(snapshot.price, cents=True))
+    try:
+        quote = market.get_quote(ticker)
+    except MarketDataError:  # no quote: fall back to the last daily close
+        cols[0].metric("Last close", money(snapshot.price, cents=True))
+        when = f"{snapshot.as_of:%b} {snapshot.as_of.day}, {snapshot.as_of.year}"
+        st.caption(f"Last close · {when} · {market_status().label}")
+    else:
+        change = f"{quote.change_percent:+.2f}%" if quote.change_percent is not None else None
+        cols[0].metric("Price", money(quote.price, cents=True), change)
+        st.caption(price_time_label(quote.freshness.as_of))
     cols[1].metric("52-week range", f"{money(snapshot.low_52w)} to {money(snapshot.high_52w)}")
     cols[2].metric("Trend", TRENDS.get(snapshot.trend, snapshot.trend))
     cols[3].metric(

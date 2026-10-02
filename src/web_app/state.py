@@ -26,8 +26,9 @@ PORTFOLIO = "finnie_portfolio"
 CHAT = "finnie_chat"
 CONVERSATIONS = "finnie_conversations"
 PENDING = "finnie_pending_prompt"
+SCROLL = "finnie_scroll_to_answer"
 ACTIVITY = "finnie_activity"  # increases with every message; orders the conversation list
-TITLE_CHARS = 42
+UNTITLED = "New conversation"
 
 
 # ---- pages --------------------------------------------------------------------------------
@@ -120,10 +121,17 @@ def add_chat(role: str, content: str, output: dict[str, Any] | None = None) -> N
     entries.append({"role": role, "content": content, "output": output})
     st.session_state[CHAT] = entries
     store = _store()
-    first = next((e["content"] for e in entries if e["role"] == "user"), "New conversation")
-    title = first if len(first) <= TITLE_CHARS else first[: TITLE_CHARS - 1].rstrip() + "…"
+    saved = store.get(thread_id(), {})
     st.session_state[ACTIVITY] = st.session_state.get(ACTIVITY, 0) + 1
-    store[thread_id()] = {"title": title, "chat": entries, "order": st.session_state[ACTIVITY]}
+    store[thread_id()] = {
+        "title": saved.get("title", UNTITLED),  # the model writes the real one (set_title)
+        "chat": entries,
+        "order": st.session_state[ACTIVITY],
+    }
+
+
+def set_title(conversation_id: str, title: str | None) -> None:
+    _store()[conversation_id]["title"] = title or UNTITLED
 
 
 def conversations() -> list[tuple[str, str]]:
@@ -149,9 +157,22 @@ def switch_conversation(conversation_id: str) -> None:
 
 
 def queue_prompt(text: str) -> None:
-    """Ask a question in the chat from another page (a callback; answered on the rerun)."""
+    """Ask a question in the chat from a button (a callback; answered on the rerun).
+
+    The chat then scrolls to the start of the new answer, not the bottom of the page.
+    """
     st.session_state[PENDING] = text
+    st.session_state[SCROLL] = True
     go("Chat")
+
+
+def take_scroll() -> bool:
+    return bool(st.session_state.pop(SCROLL, False))
+
+
+def peek_prompt() -> str | None:
+    value = st.session_state.get(PENDING)
+    return str(value) if value else None
 
 
 def take_prompt() -> str | None:

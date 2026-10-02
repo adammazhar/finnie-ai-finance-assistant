@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from src.agents.base import RunState, format_blocks
 from src.agents.context import AgentContext
 from src.core.guardrails import sanitize_untrusted, wrap_untrusted
-from src.core.indicators import build_market_overview, technical_snapshot
+from src.core.indicators import MoverSummary, build_market_overview, technical_snapshot
 from src.core.models import AGENT_NAMES, Holding, Source
 from src.core.monte_carlo import (
     LOW_ODDS,
@@ -154,6 +154,10 @@ def make_get_quotes(context: AgentContext, state: RunState) -> BaseTool:
     )
 
 
+def _change(mover: MoverSummary) -> str:
+    return f" ({mover.change_percent:+.2f}%)" if mover.change_percent is not None else ""
+
+
 @_register
 def make_get_market_overview(context: AgentContext, state: RunState) -> BaseTool:
     def get_market_overview() -> str:
@@ -162,11 +166,14 @@ def make_get_market_overview(context: AgentContext, state: RunState) -> BaseTool
         movers = overview.indices + overview.sectors
         state.freshness.extend(m.freshness for m in movers)
         lines = ["Indices:"]
-        lines += [
-            f"- {m.name} ({m.ticker}): {m.change_percent:+.2f}%"
-            for m in overview.indices
-            if m.change_percent is not None
-        ]
+        for m in overview.indices:
+            level = overview.levels.get(m.ticker)
+            index = (
+                f"{level.ticker} at {level.price:,.2f}{_change(level)}, tracked by "
+                if level
+                else ""
+            )
+            lines.append(f"- {m.name}: {index}{m.ticker} ETF ${m.price:,.2f}{_change(m)}")
         lines.append(f"Mood: {overview.mood.label}; volatility {overview.mood.volatility_regime}.")
         lines += overview.mood.summary
         if overview.benchmark:

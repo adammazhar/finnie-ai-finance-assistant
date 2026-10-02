@@ -37,7 +37,8 @@ rag:
 
 market_data:
   cache_path: data/cache/market.sqlite
-  quote_ttl_minutes: 30
+  quote_ttl_minutes: 30        # cached quote lifetime while the market is closed (never older than the last close)
+  quote_live_ttl_seconds: 60   # while the market is open
   news_ttl_minutes: 30
   history_ttl_hours: 12
   request_timeout_s: 10

@@ -123,7 +123,13 @@ def test_market_overview_and_ticker_lookup(ui):
     plain = NewsArticle(title="Plain headline")
     app, _, _ = page(ui, "Markets", market=DescribedMarket(news=[plain]))
     labels = [m.label for m in app.metric]
-    assert "S&P 500 (SPY)" in labels and "Last close" in labels and "52-week range" in labels
+    assert "S&P 500 (^GSPC)" in labels and "Price" in labels and "52-week range" in labels
+    sp500 = next(m for m in app.metric if m.label == "S&P 500 (^GSPC)")
+    assert sp500.value == "6,745.12"
+    assert r"Tracked by SPY: \$600.00 +1.01%" in texts(app.caption)
+    # the price's time, whether it's live or delayed, and whether the market is open
+    timing = [c for c in texts(app.caption) if " ET · Market " in c]
+    assert len(timing) == 2  # under "Markets today" and on the lookup result
     assert {c.key for c in app.get("plotly_chart")} == {"mk_sectors", "mk_price", "mk_rsi"}
     captions = texts(app.caption)
     assert any(c.startswith("Market data: ") for c in captions)
@@ -166,6 +172,7 @@ def test_goal_projection_states_the_chance_in_words(ui):
     markdown = texts(app.markdown)
     assert r"### Retirement: \$5,000,000 in 5 years" in markdown
     assert "#### Chance of reaching this goal: under 1%" in markdown
+    assert any(c.startswith("How to read the chance: a median") for c in texts(app.caption))
     assert any("more time to save, a higher monthly contribution" in t for t in texts(app.info))
     assert {c.key for c in app.get("plotly_chart")} == {"goal_gauge", "goal_fan"}
     assert [m.label for m in app.metric][:3] == [
@@ -278,3 +285,33 @@ def test_a_failing_page_shows_a_message(ui, monkeypatch):
 def test_default_assistant_builder(ui):
     _, _, context = ui()
     assert isinstance(build_assistant(context), FinnieAssistant)  # the unpatched builder
+
+
+def test_market_fallbacks_without_index_levels_or_quotes(ui, monkeypatch):
+    from tests.fakes import market_service
+
+    for index in ("^GSPC", "^NDX", "^DJI", "^RUT"):
+        monkeypatch.delitem(market_service.PRICES, index)
+    app, _, _ = page(ui, "Markets", market=FakeMarketService(fail={"get_quote"}))
+    labels = [m.label for m in app.metric]
+    assert "S&P 500 via SPY" in labels  # the ETF alone when the index quote is missing
+    assert "Last close" in labels  # the daily close when the live quote fails
+    assert any(c.startswith("Last close · ") for c in texts(app.caption))
+
+
+def scroll_scripts(app):
+    return [e.proto.srcdoc for e in app.get("iframe") if "finnie-answer-" in e.proto.srcdoc]
+
+
+def test_buttons_that_ask_in_chat_scroll_to_the_start_of_the_answer(ui):
+    app, _, _ = page(
+        ui, "Portfolio", routes=[route("portfolio")], session={"finnie_portfolio": [VTI]}
+    )
+    ok(app.button(key="pf_explain").click().run())
+    # after the answer, the page scrolls to where it starts (not the bottom)
+    [script] = scroll_scripts(app)
+    assert "'finnie-answer-' + 1" in script and "scrollIntoView({block: 'start'})" in script
+    assert '<div id="finnie-answer-1"></div>' in texts(app.markdown)
+    # typing in the chat box doesn't jump anywhere, and the scroll happens once
+    app.chat_input(key="chat_input").set_value("And bonds?").run()
+    assert not scroll_scripts(app)

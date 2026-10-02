@@ -652,6 +652,13 @@ These notes describe what was built. Where they differ from §7.1–7.2, the not
 - **Answers.**
   - Claims the passages don't cover stay general (policy rule 3), for example "about 500 large U.S. companies chosen by a committee".
   - "Should I buy X?" answers stay educational but start from the user's data. The user's position ("TSLA is already 36% of my saved portfolio …") is attached to their question as context, and knowledge base search looks for the concepts investors weigh (concentration, diversification, volatility), so the answer has passages to cite.
+- **Phase 8 UI fixes (2026-10-02).**
+  - The tab bar is sticky: pinned under the (now white) header on every page.
+  - The sidebar heading is "Recent conversations", and the open conversation is highlighted.
+  - Titles come from the fast model (`src/workflow/titles.py`): written after the first answer, from the question and answer, then rewritten once after the third question, from the conversation so far, and fixed after that. If the model fails, a topic label from the specialist stands in, never the raw message.
+  - Buttons that ask a question in chat ("Explain my portfolio", starter questions) first draw the chat with the question, so the previous page doesn't linger while the answer is written. Then they scroll to the start of the new answer, not the bottom of the page.
+- **Markets prices and times.** Index levels (^GSPC, ^NDX, ^DJI, ^RUT) are shown with the ETFs that track them. Under "Markets today" and on every lookup, a line gives the price's exact time in ET; whether it's live, delayed, or the last close; and whether the market is open, pre-market, after hours, a weekend, or a holiday. The calendar is NYSE's, in `data/reference/market_calendar.yaml`.
+- **Quote freshness.** While the market is open, a cached quote lasts 60 seconds. While it's closed, a quote fetched before the last close is never served as current, and post-close quotes refresh every 30 minutes, for assets that trade around the clock. The lookup's price comes from a quote, not from the daily-history cache.
 - **Not built:** feedback storage beyond logging. Thumbs up and down are logged with the thread id and turn.
 - **Operations.**
   - `streamlit run` puts `src/web_app` first on `sys.path`. A module named `profile.py` there shadowed Python's `profile` and broke torch's imports, so the app removes that folder from `sys.path` and the module is named `profile_page.py`.
@@ -916,3 +923,5 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 24 | *(Phase 8 review)* **Sources list only what the answer cites**, renumbered by first use, with repeated markers removed. Market data appears in the freshness note instead. Knowledge base sources show the article (openable in Knowledge) and the original source separately. |
 | 25 | *(Phase 8 review)* **Escape `$` in all markdown-rendered text** (`formatting.md`), and use `$` in knowledge base text again instead of writing "dollars". |
 | 26 | *(Phase 8 review)* **Tests run in parallel** (`pytest -n auto --dist loadgroup`). CI runs the unit and UI suites as separate jobs and enforces one coverage gate on their combined data. LangChain's text splitters import torch (about 20 s per process), so they're imported lazily, the agent and UI tests build their small indexes directly, and the chunking tests share one xdist worker. |
+| 27 | *(Phase 8 UI fixes)* **Market-aware quote caching**: 60 seconds while the market is open; while it's closed, never a quote from before the last close (`src/core/market_hours.py`, NYSE calendar verified 2026-10-02). This replaces the flat 30-minute quote TTL, which could show a mid-session price after the close. |
+| 28 | *(Phase 8 UI fixes)* **Conversation titles by the fast model**, written after the first answer and rewritten once after the third question; never the raw message. |

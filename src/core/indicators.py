@@ -25,6 +25,8 @@ INDEX_PROXIES: dict[str, str] = {
     "DIA": "Dow Jones Industrial Average",
     "IWM": "Russell 2000 (small companies)",
 }
+# The index itself, shown next to the ETF that tracks it (indexes can't be bought).
+INDEX_LEVELS: dict[str, str] = {"SPY": "^GSPC", "QQQ": "^NDX", "DIA": "^DJI", "IWM": "^RUT"}
 SECTOR_ETFS: dict[str, str] = {
     "XLK": "Technology",
     "XLF": "Financials",
@@ -210,6 +212,7 @@ class MarketMood(BaseModel):
 
 class MarketOverview(BaseModel):
     indices: list[MoverSummary]
+    levels: dict[str, MoverSummary] = {}  # ETF ticker -> the index it tracks (e.g. ^GSPC)
     sectors: list[MoverSummary]
     benchmark: TechnicalSnapshot | None
     mood: MarketMood
@@ -277,7 +280,7 @@ class MarketData(Protocol):
 def build_market_overview(market: MarketData, history_days: int = TRADING_DAYS) -> MarketOverview:
     """Index and sector snapshot plus an S&P 500 technical read, from one batch of quotes."""
     names = INDEX_PROXIES | SECTOR_ETFS
-    batch = market.get_quotes(list(names))
+    batch = market.get_quotes([*names, *INDEX_LEVELS.values()])
 
     def summarize(tickers: dict[str, str]) -> list[MoverSummary]:
         return [
@@ -299,8 +302,14 @@ def build_market_overview(market: MarketData, history_days: int = TRADING_DAYS) 
         benchmark = None
         errors["SPY history"] = str(exc)
     sectors = summarize(SECTOR_ETFS)
+    levels = {
+        etf: summary
+        for etf, index in INDEX_LEVELS.items()
+        for summary in summarize({index: INDEX_PROXIES[etf]})
+    }
     return MarketOverview(
         indices=summarize(INDEX_PROXIES),
+        levels=levels,
         sectors=sorted(sectors, key=lambda s: s.change_percent or 0.0, reverse=True),
         benchmark=benchmark,
         mood=market_mood(sectors, benchmark),

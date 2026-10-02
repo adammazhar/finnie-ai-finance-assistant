@@ -22,7 +22,7 @@ def _status() -> tuple[str, list[str]]:
         else "none"
     )
     lines = [f"**AI model:** {model}", f"**Backup model:** {backup}"]
-    providers = services.market_status()
+    providers = services.provider_status()
     for provider in providers:
         lines.append(
             f"**{provider.name}:** {'on' if provider.enabled else 'off'} ({md(provider.detail)})"
@@ -35,7 +35,7 @@ def _conversations() -> None:
     recent = state.conversations()
     if not recent:
         return
-    st.caption("Recent")
+    st.caption("Recent conversations")
     current = state.thread_id()
     with st.container(key="conversations"):
         for conversation_id, title in recent[:RECENT_SHOWN]:

@@ -45,12 +45,12 @@ def glossary() -> Glossary:
     return load_glossary()
 
 
-@st.cache_data(ttl=300, show_spinner="Loading market data…")
+@st.cache_data(ttl=60, show_spinner="Loading market data…")
 def market_overview() -> MarketOverview:
     """Indices, sectors, and the S&P 500 read. The market service caches each quote too."""
     return build_market_overview(context().market)
 
 
-def market_status() -> list[Any]:
+def provider_status() -> list[Any]:
     status = getattr(context().market, "provider_status", None)
     return list(status()) if callable(status) else []

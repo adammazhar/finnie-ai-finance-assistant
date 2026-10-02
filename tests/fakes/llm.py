@@ -29,6 +29,7 @@ class FakeChatModel(BaseChatModel):
     bound_tools: list[Any] = Field(default_factory=list)
     structured_schemas: list[Any] = Field(default_factory=list)
     structured_calls: int = 0
+    generate_calls: int = 0
     name: str = "fake"
 
     @property
@@ -50,9 +51,9 @@ class FakeChatModel(BaseChatModel):
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> ChatResult:
-        index = len(self.calls)
         self.calls.append(list(messages))
-        item = self._next(self.responses, index)
+        item = self._next(self.responses, self.generate_calls)
+        self.generate_calls += 1
         message = item if isinstance(item, AIMessage) else AIMessage(content=str(item))
         return ChatResult(generations=[ChatGeneration(message=message)])
 
