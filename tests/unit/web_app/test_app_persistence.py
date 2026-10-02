@@ -88,6 +88,9 @@ def test_rename_cancel_and_empty_name_keep_the_title(ui):
     ask(app, "What is an ETF?")
     thread = app.session_state["finnie_thread_id"]
     app.sidebar.button(key=f"rename_start_{thread}").click().run()
+    # both action buttons use the navy primary style
+    assert app.sidebar.button(key=f"rename_save_{thread}").proto.type == "primary"
+    assert app.sidebar.button(key=f"rename_cancel_{thread}").proto.type == "primary"
     ok(app.sidebar.button(key=f"rename_cancel_{thread}").click().run())
     assert conversation_buttons(app)[0].label == "Auto Title"
     app.sidebar.button(key=f"rename_start_{thread}").click().run()
@@ -109,6 +112,8 @@ def test_delete_a_conversation_with_confirmation(ui):
 
     ok(app.sidebar.button(key=f"delete_start_{second}").click().run())
     assert any("Delete **Second Chat**?" in t for t in texts(app.sidebar.markdown))
+    assert app.sidebar.button(key=f"delete_confirm_{second}").proto.type == "primary"
+    assert app.sidebar.button(key=f"delete_cancel_{second}").proto.type == "primary"
     ok(app.sidebar.button(key=f"delete_cancel_{second}").click().run())
     assert len(conversation_buttons(app)) == 2  # cancel keeps it
 

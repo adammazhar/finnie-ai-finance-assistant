@@ -128,32 +128,39 @@ button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p {{
   color: {c["heading"]} !important; border-bottom-color: {c["accent"]} !important;
 }}
 
-/* sidebar: conversation rows, their "..." menus, and the bottom profile/status area */
+/* sidebar: conversation rows, their "..." menus, and the bottom profile/status area.
+   Row styles are scoped to the row buttons (key "conversation_<id>"), so the Save, Delete,
+   and Cancel buttons of an inline rename or delete keep the navy primary style. */
 .st-key-brand h2 {{ margin: 0; font-size: 1.45rem; }}
 .st-key-conversations [data-testid="stHorizontalBlock"] {{ gap: 0.15rem; }}
-.st-key-conversations button,
+.st-key-conversations [class*="st-key-conversation_"] button,
 .st-key-conversations [data-testid="stPopoverButton"],
 .st-key-sidebar_bottom [data-testid="stPopoverButton"] {{
   background: {c["sidebar"]} !important; color: {c["text"]} !important;
   border: none !important; box-shadow: none !important;
 }}
-.st-key-conversations button {{
+.st-key-conversations [class*="st-key-conversation_"] button {{
   justify-content: flex-start; text-align: left;
   font-weight: 400; padding: 0.35rem 0.6rem; min-height: 0;
 }}
 .st-key-conversations [data-testid="stPopoverButton"] {{ padding: 0.2rem 0.35rem; }}
-.st-key-conversations button > div {{ justify-content: flex-start; width: 100%; }}
-.st-key-conversations button p {{ text-align: left; color: inherit; }}
-.st-key-conversations button:hover, .st-key-conversations button:focus-visible,
+.st-key-conversations [class*="st-key-conversation_"] button > div {{
+  justify-content: flex-start; width: 100%;
+}}
+.st-key-conversations [class*="st-key-conversation_"] button p {{
+  text-align: left; color: inherit;
+}}
+.st-key-conversations [class*="st-key-conversation_"] button:hover,
+.st-key-conversations [class*="st-key-conversation_"] button:focus-visible,
 .st-key-conversations [data-testid="stPopoverButton"]:hover,
 .st-key-sidebar_bottom [data-testid="stPopoverButton"]:hover {{
   background: {c["hover"]} !important; color: {c["text"]} !important;
 }}
-.st-key-conversations [data-testid="stButton"] button[kind="secondary"] {{
+.st-key-conversations [class*="st-key-conversation_"] button[kind="secondary"] {{
   background: {c["selected"]} !important; color: {c["selected_text"]} !important;
   font-weight: 600; box-shadow: inset 3px 0 0 {c["accent"]} !important;
 }}
-.st-key-conversations button[kind="secondary"] p {{
+.st-key-conversations [class*="st-key-conversation_"] button[kind="secondary"] p {{
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }}
 .st-key-sidebar_bottom button {{ justify-content: flex-start; }}

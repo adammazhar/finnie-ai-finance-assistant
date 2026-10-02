@@ -244,6 +244,20 @@ def test_palettes_meet_wcag_aa_for_text():
             assert ratio(c["on_primary"], c[button]) >= 4.5, (name, button)
 
 
+def test_conversation_row_styles_leave_action_buttons_alone():
+    """Regression: a rule on every button in the conversation list painted the inline
+    Save/Delete buttons white on white. Row styles must target the row buttons only."""
+    import re
+
+    from src.web_app.theme import PALETTES, base_css
+
+    css = base_css(PALETTES["light"])
+    selectors = re.findall(r"\.st-key-conversations[^{,]*button[^{,]*", css)
+    assert selectors
+    for selector in selectors:
+        assert '[class*="st-key-conversation_"] button' in selector, selector
+
+
 def test_theme_type_defaults_to_light_outside_a_session():
     from src.web_app.theme import theme_type
 

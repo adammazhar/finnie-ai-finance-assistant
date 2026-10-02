@@ -99,6 +99,7 @@ def _rename_row(conversation_id: str) -> None:
         "Cancel",
         key=f"rename_cancel_{conversation_id}",
         on_click=state.cancel_edit,
+        type="primary",
         width="stretch",
     )
 
@@ -119,6 +120,7 @@ def _delete_row(conversation_id: str, title: str) -> None:
             "Cancel",
             key=f"delete_cancel_{conversation_id}",
             on_click=state.cancel_edit,
+            type="primary",
             width="stretch",
         )
 
