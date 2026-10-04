@@ -1,15 +1,21 @@
 # Run Finnie locally with one command:
 #
-#   docker compose up --build              # the app at http://localhost:8501
-#   docker compose --profile mcp up --build   # also the MCP server at http://localhost:8765/mcp
+#   docker compose up                      # pulls the published image; app at http://localhost:8501
+#   docker compose up --build              # builds the image from this checkout instead
+#   docker compose pull                    # updates to the newest published image
+#   docker compose --profile mcp up        # also the MCP server at http://localhost:8765/mcp
+#
+# The image is published by CI on every push to main (ghcr.io, tags latest and the commit
+# SHA). While the repository is private, pulling it needs `docker login ghcr.io`.
 #
 # API keys come from .env (copy .env.example). Without a key the app still starts and
 # says which key is missing. Ports are published on 127.0.0.1 only.
 
 services:
   finnie:
+    image: ghcr.io/adammazhar/finnie-ai-finance-assistant:latest
+    pull_policy: missing     # pull when there's no local copy; `--build` builds instead
     build: .
-    image: finnie:latest
     ports:
       - "127.0.0.1:8501:8501"
     env_file:
@@ -23,7 +29,8 @@ services:
   finnie-mcp:
     # Optional: the MCP server over Streamable HTTP. Needs MCP_API_TOKEN in .env.
     profiles: ["mcp"]
-    image: finnie:latest
+    image: ghcr.io/adammazhar/finnie-ai-finance-assistant:latest
+    pull_policy: missing
     build: .
     command: ["python", "-m", "src.mcp_server", "--http", "--host", "0.0.0.0"]
     ports:

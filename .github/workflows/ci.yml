@@ -114,7 +114,10 @@ jobs:
         with:
           context: .
           load: true
-          tags: finnie:latest
+          # the second tag is the name docker-compose.yml uses, so compose runs this build
+          tags: |
+            finnie:latest
+            ghcr.io/adammazhar/finnie-ai-finance-assistant:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Image facts
@@ -171,3 +174,57 @@ jobs:
       - name: Logs on failure
         if: failure()
         run: docker compose --profile mcp logs --no-color
+
+  publish:
+    # Pushes to main only, after the image passed the docker job and the tests passed the
+    # coverage gate: publish to GitHub Container Registry as :latest and :<commit SHA>.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [docker, coverage]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/adammazhar/finnie-ai-finance-assistant
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push (layers come from the docker job's cache)
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          # links the package to this repository, so it shares the repo's visibility
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=Finnie
+            org.opencontainers.image.description=Finnie, an AI finance education assistant
+          cache-from: type=gha
+      - name: docker compose up pulls the published image
+        run: |
+          docker image rm -f "$IMAGE:latest" 2>/dev/null || true
+          docker compose up -d finnie 2>&1 | tee up.log
+          grep -qi "pull" up.log                                   # pulled ...
+          if grep -qi "building" up.log; then echo "built instead of pulling"; exit 1; fi
+          id=$(docker compose images -q finnie)
+          echo "running image $id, pushed digest ${{ steps.push.outputs.digest }}"
+          for i in $(seq 1 60); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q finnie)")
+            echo "health: $status"; [ "$status" = healthy ] && break; sleep 5
+          done
+          [ "$status" = healthy ]
+          docker image inspect "$IMAGE:latest" --format 'revision: {{index .Config.Labels "org.opencontainers.image.revision"}}' | tee rev.txt
+          grep -q "${{ github.sha }}" rev.txt
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color

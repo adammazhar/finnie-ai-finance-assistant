@@ -858,6 +858,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
   - with networking switched off (`--network none`), the knowledge base search works, the app shows the setup page without a key, and it renders onboarding with a placeholder key
   - `docker compose up` becomes healthy with no `.env`, as on a fresh clone
   - the `mcp` profile rejects a request without the token (401) and serves one with it
+- `publish` (pushes to `main` only): after `docker` and `coverage` pass, publishes the image to GitHub Container Registry and checks that `docker compose up` pulls and runs it (§12.1).
 
 ---
 
@@ -865,7 +866,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 
 ### 12.1 Docker (built and tested)
 
-`docker compose up --build` runs the app at http://localhost:8501. It's one command after creating `.env`.
+`docker compose up` runs the app at http://localhost:8501. It's one command after creating `.env`. By default it pulls the published image (below); `docker compose up --build` builds from the checkout instead.
 
 - **`Dockerfile`**
   - A single stage on `python:3.12-slim`; dependencies install before the code is copied, so code changes don't reinstall them.
@@ -879,6 +880,11 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
   - `finnie-mcp` (profile `mcp`) runs the MCP server over HTTP on `127.0.0.1:8765`, with `MCP_API_TOKEN` from `.env`.
 - **`.dockerignore`** keeps out `.env`, `.git`, `.venv`, `docs/ik`, `tests`, `docs`, and local data. **Secrets are never in the image.**
 - **Testing.** The image is built and exercised by the `docker` CI job (§11), on GitHub's Linux runners. The development PC has no Docker installed.
+- **Publishing.** The `publish` CI job runs on pushes to `main` only, after the `docker` job and the coverage gate pass. It pushes the image to GitHub Container Registry as `ghcr.io/adammazhar/finnie-ai-finance-assistant`, tagged `latest` and with the commit SHA.
+  - The layers come from the `docker` job's build cache.
+  - The `org.opencontainers.image.source` label links the package to the repository, so the image has the repository's visibility: private now, public when the repository is.
+  - The job then removes any local copy, runs `docker compose up`, checks that compose pulled rather than built, waits for the container to be healthy, and confirms the image's revision label matches the commit.
+  - Compose names this image for both services, with `pull_policy: missing`. Without a local copy it pulls; `--build` always builds locally and tags the result with the same name.
 - **Caddy** (HTTPS) belongs to the server deployment below, not to the local compose file.
 
 ### 12.2 Primary deployment: single EC2 instance + docker compose + Caddy
@@ -1050,3 +1056,4 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 31 | *(Phase 10)* **One-command Docker with an offline image**: the embedding model and FAISS index are built into the image, which runs as non-root and holds no secrets. Compose publishes on 127.0.0.1 and starts without `.env`. The image is tested in a CI job on GitHub's runners, because the development PC has no Docker. AWS stays designed, not deployed (§12). |
 | 32 | *(Phase 10)* **A setup page instead of a stack trace when no API key is set.** Found by the Docker job: a fresh start without `.env` crashed. The agent context now builds the models before the slow knowledge-base load, so a missing key is reported in milliseconds. |
 | 33 | *(Phase 10)* **The MCP server warms the knowledge base at startup** in a background thread. The first search was measured at 34 s cold, long enough to risk a client's tool timeout. |
+| 34 | *(after Phase 10)* **Publish the image to GitHub Container Registry** on every push to `main`, tagged `latest` and with the commit SHA, once the image and tests pass. `docker compose up` pulls it by default, and `--build` builds locally. The package follows the repository's visibility. |

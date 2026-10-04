@@ -28,13 +28,21 @@ git clone https://github.com/adammazhar/finnie-ai-finance-assistant.git
 cd finnie-ai-finance-assistant
 cp .env.example .env          # Windows: copy .env.example .env
 # edit .env: set OPENAI_API_KEY (or ANTHROPIC_API_KEY and LLM_PROVIDER=anthropic)
-docker compose up --build
+docker compose up
 ```
 
 Open http://localhost:8501.
-- **First build:** takes a few minutes. The image includes CPU-only PyTorch, the embedding model, and the prebuilt search index, so the container never downloads a model.
-- **Saved data:** your profile, portfolio, and conversations live in a Docker volume, so they're kept across restarts.
-- **Stop:** press Ctrl+C, or run `docker compose down`. `docker compose down -v` also deletes the saved data.
+
+**Where the image comes from:**
+- **Published image (the default):** `docker compose up` pulls the ready-made image `ghcr.io/adammazhar/finnie-ai-finance-assistant`. CI publishes it on every push to `main`, after the image and the tests pass, tagged `latest` and with the commit SHA. Run `docker compose pull` to update to the newest one.
+- **Build it yourself:** `docker compose up --build` builds the image from your checkout instead, which takes a few minutes. Use this after changing the code.
+- **Visibility:** the image has the same visibility as this GitHub repository. While the repository is private, pulling needs `docker login ghcr.io` with a GitHub token that has `read:packages`, or use `--build`. The image becomes public when the repository is made public.
+
+**What's in the image:** CPU-only PyTorch, the embedding model, and the prebuilt search index, so the container never downloads a model. It holds no secrets; your keys come from `.env` when it starts.
+
+**Saved data:** your profile, portfolio, and conversations live in a Docker volume, so they're kept across restarts.
+
+**Stop:** press Ctrl+C, or run `docker compose down`. `docker compose down -v` also deletes the saved data.
 
 ## Quick start with Python
 
@@ -176,12 +184,13 @@ python scripts/bench_workflow.py         # end-to-end latency with live models a
 python scripts/bench_mcp.py              # MCP tool latency over HTTP
 ```
 
-GitHub Actions runs five jobs on every push:
+GitHub Actions runs these jobs on every push:
 - lint, type checks, and tests
 - the Streamlit UI tests
 - the combined coverage gate (90%)
 - the knowledge base link check
 - a Docker job: it builds the image, starts it with `docker compose`, checks that search and the app work with networking switched off, and checks the MCP server's token protection
+- on `main` only, a publish job: after the Docker job and the coverage gate pass, it pushes the image to GitHub Container Registry and checks that `docker compose up` pulls and runs it
 
 ## MCP server (Claude Desktop and Claude Code)
 
@@ -285,6 +294,7 @@ docs/           DESIGN.md, MCP.md, BENCHMARKS.md, images/
 | `Activate.ps1 cannot be loaded` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again. |
 | Market data says "mock" or "stale" | A provider is down or rate-limited. Finnie labels the data and keeps working. The sidebar's **System status** shows each provider. |
 | Port 8501 is busy | `python -m src.web_app --server.port 8502` (Docker: change the first number in `docker-compose.yml` → `ports`). |
+| `docker compose up` says `denied` or `unauthorized` when pulling | The repository (and so the image) is private: run `docker login ghcr.io` with a GitHub token that has `read:packages`, or build locally with `docker compose up --build`. |
 | `docker compose` complains about `env_file` | Update to Docker Compose 2.24 or later, or create `.env` from `.env.example`. |
 | MCP: Claude Desktop doesn't list finnie | See the checklist in [docs/MCP.md](docs/MCP.md#1-claude-desktop-stdio-windows). |
 
