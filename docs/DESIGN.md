@@ -24,11 +24,11 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | Portfolio Analysis (7) | Multiple meaningful metrics | §3.2: 12+ metrics (HHI, sector/asset mix, expense drag, vol, Sharpe, drawdown, beta, correlation) |
 | Market Intelligence (5) | Thoughtful interpretation | §3.3: indices, sectors, locally computed indicators, and a plain-English "market mood" read |
 | Code Organization (5) | Perfect modularity | §13: prescribed layout; domain logic separated from agents, UI, and MCP |
-| Documentation (5) | Diagrams + detailed guides | This doc, README (setup/API/usage/troubleshooting), `docs/MCP.md`, `docs/DEPLOYMENT.md`, `docs/BENCHMARKS.md` |
-| Testing (5) | **90%+ coverage incl. edge cases** | §11: coverage gate at 90%, network blocked in tests, fakes for every external service |
-| Bonus (≤10) | Beyond requirements | Monte Carlo goal planning, LLM provider fallback, routing evals, Docker + AWS, prompt-injection-aware guardrails |
+| Documentation (5) | Diagrams + detailed guides | This doc (architecture and workflow diagrams, decisions log), README (Docker and Python quick starts, configuration, usage with screenshots, tests, MCP, architecture, troubleshooting), `docs/MCP.md`, `docs/BENCHMARKS.md` |
+| Testing (5) | **90%+ coverage incl. edge cases** | §11: 922 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
+| Bonus (≤10) | Beyond requirements | Monte Carlo goal planning, LLM provider fallback, routing evals, one-command Docker with an offline image (AWS designed), MCP over stdio and token-protected HTTP, saved data per browser, prompt-injection-aware guardrails |
 
-The problem statement also requires a demo video, performance benchmarks, sample data, and environment files. These are covered in Phase 10 (§15).
+The problem statement also requires a demo video, performance benchmarks, sample data, and environment files. The benchmarks are in `docs/BENCHMARKS.md`, sample portfolios in `data/sample_portfolios/`, and the environment template in `.env.example`. The demo video is recorded separately.
 
 ---
 
@@ -366,7 +366,7 @@ Output is framed as **educational observations**, e.g. *"TSLA is 62% of this por
 
 SPY, QQQ, DIA, and IWM serve as index proxies. The 11 SPDR sector ETFs cover sector performance. Indicators are **computed locally** from daily history to save API quota: SMA 50/200, RSI 14, 30-day realized volatility, 52-week range position, and golden/death-cross detection. A rule-based `market_mood` summary (breadth, trend, volatility) goes to the LLM, which interprets it in plain English.
 
-### 3.5 Agent implementation (Phase 6)
+### 3.4 Agent implementation (Phase 6)
 
 - **Contract** (`src/agents/base.py`): an agent receives an `AgentRequest` (standalone query, profile, saved portfolio, recent history, results from earlier specialists this turn, and extra guidance such as the advice-reframe instruction). It returns an `AgentResult`.
 - **What `BaseAgent.run` does:**
@@ -390,7 +390,7 @@ SPY, QQQ, DIA, and IWM serve as index proxies. The 11 SPDR sector ETFs cover sec
   - **Every answer** gets the disclaimer and, when relevant, a delayed/demo-data note. A suite of about 40 adversarial and benign prompts is in `tests/unit/core/test_guardrails.py`.
 - **Live check (2026-09-30, gpt-4o, real market data and index):** all six agents called the right tools with no errors, in 3.8-5.6 s each. Tax math matched the 2026 brackets by hand. The Sharpe ratio was reported with the live T-bill rate and its date. "Should I buy Tesla?" got an education-only answer, and output guardrail violations were zero.
 
-### 3.4 Implementation notes (Phase 3)
+### 3.5 Implementation notes (Phase 3)
 
 - **Pure analytics, thin orchestration.** `analyze_portfolio()` takes holdings, prices, classifications, and optional histories and does no I/O, so every metric is tested against hand-computed values. `fetch_and_analyze()` gathers those inputs from the market data service. A missing price drops that holding (and says so), missing history skips risk metrics, and an unknown ticker is classified from its company overview with `known=False`.
 - **Diversification score (0–100)** has three parts:
@@ -715,14 +715,14 @@ Built with the official Python SDK (`mcp==2.2.0`, `MCPServer`) against MCP speci
 - Each tool returns a pydantic model, so clients get an output schema and structured content. Every result carries the disclaimer, and market data carries its freshness.
 - Errors are MCP tool errors with a plain message (`ToolError`), or `ResourceNotFoundError` for an unknown article; never stack traces. The SDK's own INFO log of failed tool calls includes their arguments, so the `mcp` loggers are set to WARNING.
 - The server doesn't call Finnie's LLM. The client is the reasoning engine and Finnie supplies tools and data, which avoids paying for two models per question.
-- The tools reuse the same `src/core`, `src/data`, and `src/rag` functions as the agents. The knowledge base index loads on the first search, so starting the server is fast.
+- The tools reuse the same `src/core`, `src/data`, and `src/rag` functions as the agents. The knowledge base (embedding model and index) starts loading in a background thread when the server starts. A cold load can take 20–35 s, so a first search arriving immediately would otherwise risk a client's tool timeout. The server answers `tools/list` right away, and a search that arrives during the load waits for it.
 
 ### 9.2 Transports
 
 `python -m src.mcp_server` (`__main__.py`) changes to the project folder first, so `config.yaml`, `.env`, and `data/` are found however the client starts it.
 
 - **stdio** (default), for Claude Desktop. The client starts the process; stdout carries the protocol and logs go to stderr. No authentication is needed: only the user who started the process can talk to it.
-- **Streamable HTTP** (`--http`), for Claude Code, the demo script `scripts/mcp_client_demo.py`, and other HTTP clients. `http.py` wraps the SDK's app (`streamable_http_app(stateless_http=True, json_response=True)`) and is served by uvicorn at `http://127.0.0.1:8765/mcp` (`mcp` section of `config.yaml`).
+- **Streamable HTTP** (`--http`), for Claude Code, the demo script `scripts/mcp_client_demo.py`, and other HTTP clients. `http.py` wraps the SDK's app (`streamable_http_app(stateless_http=True, json_response=True)`) and is served by uvicorn at `http://127.0.0.1:8765/mcp` (`mcp` section of `config.yaml`). `--host` overrides the address. The Docker `mcp` profile uses `0.0.0.0` inside the container and publishes the port on the host's 127.0.0.1 only.
 
 ### 9.3 HTTP security (built)
 
@@ -815,7 +815,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 
 ## 11. Testing Strategy (target ≥ 90% coverage)
 
-**Tooling:** `pytest`, `pytest-cov`, `pytest-mock`, `responses` (HTTP mocking for Alpha Vantage), `pytest-socket` (**network disabled by default**, so no test can reach a real API by accident), `hypothesis` (property tests for math), `freezegun`/injectable clock (TTL, freshness), and `streamlit.testing.v1.AppTest` (UI).
+**Tooling:** `pytest`, `pytest-cov`, `pytest-mock`, `responses` (HTTP mocking for Alpha Vantage), `pytest-socket` (**network disabled by default**, so no test can reach a real API by accident), `hypothesis` (property tests for math), an injectable clock (TTL, freshness, market hours), `pytest-xdist` (parallel runs), and `streamlit.testing.v1.AppTest` (UI).
 
 **Test doubles** in `tests/fakes/`:
 - `FakeChatModel`: scripted responses supporting `invoke`, streaming, `bind_tools` (emits scripted tool calls), and `with_structured_output` (returns scripted pydantic objects).
@@ -832,7 +832,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 | Unit: workflow | router (LLM + keyword fallback), plan builder, dispatcher, reducers, synthesizer pass-through | malformed/empty/emoji queries, >3 agents, dependency cycles, all agents fail |
 | Unit: guardrails | advice detection, rewrite, disclaimer, injection | adversarial prompt set |
 | Integration | full compiled graph end-to-end with fakes; multi-turn memory; MCP over in-memory, stdio (subprocess), and HTTP (uvicorn on loopback, including 401) | 5-turn conversation with pronoun follow-ups; parallel stage ordering |
-| UI | `AppTest` smoke test per tab and chart builder unit tests | no API key banner, empty portfolio, mock-data badges |
+| UI | `AppTest` for every tab, the sidebar, onboarding, and saved data; chart builder and palette contrast tests | missing API key (setup page), empty portfolio, mock-data badges, restart persistence, rename/delete |
 | Content | KB validator as a test (≥100 articles, schema, unique ids) | — |
 | Live (opt-in) | `pytest -m live`: real APIs, skipped by default and in CI | — |
 
@@ -843,33 +843,53 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 - Retrieval hit@4 on about 40 question→article pairs (target ≥ 85%)
 - Latency benchmarks: cache hit vs. miss, retrieval, single-agent vs. multi-agent turn (p50/p95)
 
-**Tooling hygiene:** `ruff` (lint and format), `mypy` on `src/core` and `src/data`.
+**Tooling hygiene:** `ruff` (lint and format) and `mypy` over all of `src/`.
 
-**CI (GitHub Actions, `.github/workflows/ci.yml`):** on push and PR, it runs `ruff check`, `ruff format --check`, and `pytest` with the 90% coverage gate on Python 3.12. A separate `kb-links` job runs `scripts/check_kb_links.py` with network access once the knowledge base exists. CI never needs real API keys.
+**Result at the end of Phase 10:** 922 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
+
+**CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on every push and PR, on Python 3.12. CI never needs real API keys.
+
+- `unit`: lint, types, and every test except the UI suite.
+- `ui`: the Streamlit `AppTest` suite.
+- `coverage`: combines both coverage files and enforces the 90% gate.
+- `kb-links`: validates the knowledge base and checks every source link, with network access.
+- `docker`: builds the image and checks:
+  - it runs as non-root, has no `.env` inside, and uses CPU-only torch
+  - with networking switched off (`--network none`), the knowledge base search works, the app shows the setup page without a key, and it renders onboarding with a placeholder key
+  - `docker compose up` becomes healthy with no `.env`, as on a fresh clone
+  - the `mcp` profile rejects a request without the token (401) and serves one with it
 
 ---
 
 ## 12. Docker and AWS Deployment
 
-### 12.1 Docker
+### 12.1 Docker (built and tested)
 
-- A multi-stage `Dockerfile` on `python:3.12-slim`. The builder stage installs dependencies, **pre-downloads MiniLM, and builds the FAISS index**, so cold start avoids network and model downloads.
-- Runs as a non-root user. `HEALTHCHECK` hits `/_stcore/health`. Port 8501 is exposed on the internal Docker network only.
-- `docker-compose.yml` services:
-  - `finnie-web` (Streamlit), with `env_file: .env` and a named volume for `data/cache`
-  - `caddy` (reverse proxy with automatic HTTPS), the only service publishing ports 80/443
-  - an optional `finnie-mcp` profile for the Streamable HTTP transport, with `MCP_API_TOKEN` from `.env` and the port published on 127.0.0.1 only (OAuth with Auth0 before it's ever exposed publicly, §9.4)
-- `.dockerignore` excludes `.env`, `.venv`, `.git`, `docs/ik`, and caches. **Secrets are never baked into the image.**
+`docker compose up --build` runs the app at http://localhost:8501. It's one command after creating `.env`.
+
+- **`Dockerfile`**
+  - A single stage on `python:3.12-slim`; dependencies install before the code is copied, so code changes don't reinstall them.
+  - The build downloads MiniLM into the image (`HF_HOME=/opt/huggingface`) and builds the FAISS index. It then sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1`, so the container never downloads a model. It reaches the network only for the LLM and market data APIs, and degrades to stale or mock data without them.
+  - It runs as a non-root user (uid 1000). `HEALTHCHECK` calls `/_stcore/health`.
+  - CPU-only PyTorch comes from the extra index in `requirements.txt`, and CI confirms `torch 2.14.1+cpu`. The image is about 2.3 GB, mostly PyTorch.
+  - A multi-stage build wouldn't shrink it, because the runtime needs the same packages.
+- **`docker-compose.yml`**
+  - `finnie` publishes `127.0.0.1:8501`. It reads `.env` with `env_file: {path: .env, required: false}`, so it starts without one and shows the setup page.
+  - Named volumes keep `data/app` (saved conversations) and `data/cache` (market data).
+  - `finnie-mcp` (profile `mcp`) runs the MCP server over HTTP on `127.0.0.1:8765`, with `MCP_API_TOKEN` from `.env`.
+- **`.dockerignore`** keeps out `.env`, `.git`, `.venv`, `docs/ik`, `tests`, `docs`, and local data. **Secrets are never in the image.**
+- **Testing.** The image is built and exercised by the `docker` CI job (§11), on GitHub's Linux runners. The development PC has no Docker installed.
+- **Caddy** (HTTPS) belongs to the server deployment below, not to the local compose file.
 
 ### 12.2 Primary deployment: single EC2 instance + docker compose + Caddy
 
-This is the documented path for live interview demos (`docs/DEPLOYMENT.md`).
+Designed and documented here as the optional path for live demos, **not deployed**. A step-by-step runbook (`docs/DEPLOYMENT.md`) and a `deploy/` folder would come with the actual deployment.
 
 ```mermaid
 flowchart LR
     U[Browser] -- "HTTPS :443" --> CADDY["Caddy<br/>auto TLS (Let's Encrypt)<br/>WebSocket proxy"]
     subgraph EC2["EC2 t3.medium · Ubuntu 24.04 · Elastic IP"]
-        CADDY -- ":8501 (internal)" --> WEB["finnie-web<br/>Streamlit container"]
+        CADDY -- ":8501 (internal)" --> WEB["finnie<br/>Streamlit container"]
         WEB --> VOL[("docker volume<br/>data/cache")]
         ENV[".env (chmod 600, not in git)"] -.-> WEB
     end
@@ -877,14 +897,14 @@ flowchart LR
     WEB --> APIs["OpenAI · Anthropic · Alpha Vantage · Tavily"]
 ```
 
-- **Instance.** A `t3.medium` (2 vCPU / 4 GB) fits MiniLM, FAISS, and Streamlit with headroom. A `t3.small` works but is tight during the index build. The instance has an Elastic IP and a DNS A record, because Let's Encrypt needs a domain.
-- **Caddy.** A three-line `Caddyfile` (`{$DOMAIN} { reverse_proxy finnie-web:8501 }`) provides automatic HTTPS certificates and renewal. Caddy proxies WebSockets natively, which Streamlit needs.
+- **Instance.** A `t3.medium` (2 vCPU / 4 GB) fits MiniLM, FAISS, and Streamlit with headroom. The model and index come prebuilt in the image, so nothing heavy is built on the instance. The instance has an Elastic IP and a DNS A record, because Let's Encrypt needs a domain.
+- **Caddy.** A three-line `Caddyfile` (`{$DOMAIN} { reverse_proxy finnie:8501 }`), added to the compose file on the server, provides automatic HTTPS certificates and renewal. Caddy proxies WebSockets natively, which Streamlit needs.
 - **Security group.** Inbound 80/443 from anywhere and 22 from the owner's IP only. Port 8501 is never exposed publicly.
 - **Secrets.** `.env` is copied to the instance with `scp`, set to `chmod 600`, and never committed. Optionally, secrets can be pulled from SSM Parameter Store at boot via an instance role.
 - **Access control for demos.** Optional HTTP basic auth in Caddy (the `basic_auth` directive), so strangers who find the public URL can't spend API credits. Login with `st.login` is the planned replacement (§2.8).
 - **Saved data.** `data/app/` (per-browser profiles, portfolios, conversations, and workflow memory) goes on a named volume next to `data/cache`, on an encrypted EBS disk, with a periodic SQLite `.backup` copy to S3.
-- **Operations.** All services use `restart: unless-stopped`. `deploy/deploy.sh` runs `git pull && docker compose up -d --build`. Logs are read with `docker compose logs`. The guide includes a pre-interview checklist: health endpoint, one test query per agent, and the market data freshness badge.
-- **Cost.** A t3.medium costs roughly $30–35/month on demand. The guide covers stopping the instance between interviews; the Elastic IP is kept, so the domain stays valid.
+- **Operations.** All services use `restart: unless-stopped`. Deploying is `git pull && docker compose up -d --build` (a planned `deploy/deploy.sh`). Logs are read with `docker compose logs`. The runbook would include a pre-interview checklist: health endpoint, one test query per agent, and the market data freshness badge.
+- **Cost.** A t3.medium costs roughly $30–35/month on demand. Stopping the instance between interviews saves most of that; the Elastic IP is kept, so the domain stays valid.
 
 ### 12.3 Scale-out option: ECS Fargate + ALB
 
@@ -893,16 +913,16 @@ This option is documented for when multiple instances or zero-downtime deploys a
 ```mermaid
 flowchart LR
     U[User] --> ALB["Application Load Balancer<br/>HTTPS (ACM), WebSocket, sticky sessions"]
-    ALB --> ECS["ECS Fargate service<br/>finnie-web tasks (1 vCPU / 2 GB)"]
+    ALB --> ECS["ECS Fargate service<br/>finnie tasks (1 vCPU / 2 GB)"]
     ECR[(ECR image)] --> ECS
     SM[(Secrets Manager<br/>API keys)] --> ECS
     ECS --> CW[CloudWatch Logs]
     ECS --> EFS[("EFS (optional)<br/>shared data/cache")]
 ```
 
-- Streamlit needs WebSockets and sticky sessions, which ALB supports. Session state lives in memory per task, so stickiness is required once there is more than one task.
+- Streamlit needs WebSockets and sticky sessions, which ALB supports. Session state lives in memory per task, so stickiness is required once there is more than one task. Saved data would move from SQLite to Postgres (LangGraph's Postgres checkpointer), shared by all tasks (§2.8).
 - Secrets come from Secrets Manager and are injected as task environment variables. The task role grants least privilege.
-- The guide covers pushing to ECR, a task definition JSON template, service creation, and a cost comparison with the EC2 path.
+- The runbook would cover pushing to ECR, a task definition template, service creation, and a cost comparison with the EC2 path.
 
 ---
 
@@ -913,39 +933,42 @@ This follows the layout prescribed in the problem statement. `mcp_server/` and `
 ```
 finnie-ai-finance-assistant/
 ├── src/
-│   ├── __init__.py
-│   ├── agents/                 # BaseAgent, 6 agents, tool registry, prompts/
-│   │   ├── base.py  finance_qa.py  portfolio.py  market.py
-│   │   ├── goal_planning.py  news.py  tax.py  tools.py
+│   ├── agents/                 # BaseAgent, the 6 agents, tools, registry, context, prompts/
+│   │   ├── base.py  context.py  registry.py  tools.py
+│   │   ├── finance_qa.py  portfolio.py  market.py  goal_planning.py  news.py  tax.py
 │   │   └── prompts/*.md
-│   ├── core/                   # config/settings, LLM factory, guardrails, domain logic
-│   │   ├── config.py  llm.py  guardrails.py  models.py (shared pydantic types)
-│   │   ├── portfolio.py  monte_carlo.py  indicators.py  tax.py
+│   ├── core/                   # settings, LLM factory, guardrails, domain logic (no LLM)
+│   │   ├── config.py  llm.py  guardrails.py  models.py  reference.py  rates.py
+│   │   └── portfolio.py  monte_carlo.py  indicators.py  tax.py  market_hours.py
 │   ├── data/                   # market data access (code, not files)
-│   │   ├── cache.py  alpha_vantage.py  yfinance_client.py  mock_provider.py
-│   │   ├── news.py  service.py (provider chain)  rate_limit.py
-│   ├── rag/                    # loader, chunker, index builder, retriever, citations
-│   ├── web_app/                # app.py, tabs/, charts.py, state.py, components.py
-│   ├── utils/                  # logging, retry helpers, formatting, validation
-│   ├── workflow/               # state.py, router.py, planner.py, nodes.py, graph.py
-│   └── mcp_server/             # server.py (tools), http.py (HTTP + token), __main__.py
+│   │   ├── service.py (provider chain)  cache.py  rate_limit.py  http.py  errors.py  models.py
+│   │   └── yfinance_client.py  alpha_vantage.py  news.py  mock_provider.py
+│   ├── rag/                    # knowledge base loader, chunking, embeddings, index, retriever,
+│   │                           #   citations, link check, retrieval evaluation
+│   ├── workflow/               # graph.py, state.py, router.py, planner.py, nodes.py, synthesis.py,
+│   │                           #   savings.py, progress.py, titles.py, evaluation.py, prompts/
+│   ├── web_app/                # app.py, __main__.py (launcher), tabs/, sidebar.py, profile_page.py,
+│   │                           #   quiz.py, charts.py, theme.py, formatting.py, state.py,
+│   │                           #   storage.py (per-browser SQLite), services.py
+│   ├── mcp_server/             # server.py (tools), http.py (HTTP + token), __main__.py
+│   └── utils/                  # logging (secret redaction), retry, clock
 ├── data/                       # data files (not code)
-│   ├── knowledge_base/<category>/*.md   glossary.yaml
+│   ├── knowledge_base/<category>/*.md   glossary.yaml   link_allowlist.yaml
+│   ├── reference/              # securities, tax_2026, risk_profiles, market_calendar, mock_market
 │   ├── sample_portfolios/*.csv
-│   ├── reference/  securities.yaml  tax_2026.yaml  mock_market.json  risk_profiles.yaml
-│   ├── cache/                  # gitignored
-│   └── vectorstore/            # gitignored
-├── scripts/                    # build_index.py, validate_kb.py, check_kb_links.py, run_benchmarks.py
-├── tests/                      # mirrors src/: unit/, integration/, evals/, fakes/, fixtures/
-├── docs/                       # DESIGN.md, MCP.md, DEPLOYMENT.md, BENCHMARKS.md, images/
+│   ├── app/  cache/  vectorstore/          # generated, git-ignored
+├── scripts/                    # build_index, validate_kb, check_kb_links, eval_retrieval,
+│                               #   eval_routing, bench_workflow, bench_mcp, mcp_client_demo
+├── tests/                      # unit/ (mirrors src/), evals/, fakes/, fixtures/, repo hygiene
+├── docs/                       # DESIGN.md, MCP.md, BENCHMARKS.md, images/ (README screenshots)
+├── .streamlit/config.toml      # theme; no file watcher
 ├── config.yaml                 # all non-secret settings
-├── .env.example                # key names only; .env is gitignored
-├── requirements.txt            # pinned runtime deps
-├── requirements-dev.txt        # test/lint deps
-├── pyproject.toml              # package metadata (editable install), pytest/coverage/ruff config
-├── Dockerfile  docker-compose.yml  Caddyfile  .dockerignore
-├── deploy/                     # deploy.sh, ECS task definition template
-├── .github/workflows/ci.yml
+├── .env.example                # key names only; .env is git-ignored
+├── requirements.txt            # pinned runtime deps (CPU-only torch index)
+├── requirements-dev.txt        # test, lint, and type-check tools
+├── pyproject.toml              # package metadata, pytest/coverage/ruff/mypy config
+├── Dockerfile  docker-compose.yml  .dockerignore
+├── .github/workflows/ci.yml    # unit, ui, coverage, kb-links, docker
 └── README.md
 ```
 
@@ -953,7 +976,7 @@ finnie-ai-finance-assistant/
 
 **Imports.** `src` is an installable package (`pip install -e .`), so `from src.core.llm import get_llm` works the same from pytest, Streamlit, and the MCP server.
 
-**Secrets.** `.env` is already gitignored and verified. `.env.example` contains key names only (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `ALPHA_VANTAGE_API_KEY`, `TAVILY_API_KEY`, `LLM_PROVIDER`, `LLM_FALLBACK_PROVIDER`). A test scans tracked files for key-shaped strings (`sk-`, `sk-ant-`) as a last line of defense.
+**Secrets.** `.env` is already gitignored and verified. `.env.example` contains key names only (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `ALPHA_VANTAGE_API_KEY`, `TAVILY_API_KEY`, `LLM_PROVIDER`, `LLM_FALLBACK_PROVIDER`, `MCP_API_TOKEN`, `HF_HUB_OFFLINE`). A test scans every committable file for key-shaped strings (`sk-`, `sk-ant-`, `tvly-`) and for any value from the real `.env`, as a last line of defense.
 
 ---
 
@@ -965,11 +988,11 @@ finnie-ai-finance-assistant/
 | Feedback while waiting | progress events streamed from the graph nodes; status box shown when the question is sent | first visible progress p95 < 1 s (enforced by `scripts/bench_workflow.py`) |
 | Routing | fast-model structured output; keyword fallback | LLM router ≥ 90% and keyword fallback ≥ 75% on the labelled set (enforced by `scripts/eval_routing.py`; the keyword floor also runs in CI) |
 | Market API quota | 30-min cache, batch fetches, local indicators, daily AV budget | cached quote < 20 ms |
-| Embedding/index load | loaded once per process; index prebuilt in Docker image | retrieval < 50 ms |
+| Embedding/index load | loaded once per process; model and index prebuilt in the Docker image; the MCP server warms it in the background at startup | retrieval < 50 ms |
 | Token cost | k=4 chunks, ≤2 per article, 20-message window + summary | < 4k input tokens per agent call |
 | Monte Carlo | numpy vectorization | 10k × 480 months < 200 ms |
 
-Actual numbers are measured by the scripts named in `docs/BENCHMARKS.md` (`eval_retrieval.py`, `eval_routing.py`, `bench_workflow.py`) and published there. The course documents ask for "performance considerations" and "performance benchmarks" but set no numeric response-time requirement. Their one number, a 30-minute TTL for cached market data, is what Finnie uses for quotes and news.
+Actual numbers are measured by the scripts named in `docs/BENCHMARKS.md` (`eval_retrieval.py`, `eval_routing.py`, `bench_workflow.py`, `bench_mcp.py`) and published there. The course documents ask for "performance considerations" and "performance benchmarks" but set no numeric response-time requirement. Their one number, a 30-minute TTL for cached market data, is what Finnie uses for quotes and news.
 
 ---
 
@@ -988,7 +1011,7 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | **7. Workflow** | state, router + keyword fallback, planner, dispatcher, synthesizer, memory, fallback node | multi-agent and multi-turn integration tests; routing eval ≥ 90% | `feat: LangGraph orchestration with routing, memory, and fallbacks` |
 | **8. Streamlit UI** | 5 tabs, sidebar, charts, streaming chat | chart builder tests, `AppTest` per tab; manual smoke run with real keys | `feat: Streamlit multi-tab interface` |
 | **9. MCP server** | `MCPServer` with tools/resources/prompt; stdio and token-protected Streamable HTTP; `docs/MCP.md`; `scripts/mcp_client_demo.py` | in-memory, stdio, and HTTP transport tests (including 401); manual Claude Desktop and Claude Code verification | `feat: MCP server with stdio and token-protected HTTP` |
-| **10. Ship** | Dockerfile, compose + Caddy, `docs/DEPLOYMENT.md` (EC2 primary, ECS scale-out), benchmarks, README (architecture, setup, API docs, usage, troubleshooting), demo script for the video | `docker compose up` works locally; EC2 runbook written; full suite ≥ 90%; benchmarks published | `docs: deployment, benchmarks, and README` |
+| **10. Ship** | Fresh-clone test following only the README; Dockerfile and compose with the model baked in; README (quick starts, configuration, usage with screenshots, tests, MCP, architecture, troubleshooting); final DESIGN and BENCHMARKS. AWS stays designed (§12.2–12.3), not deployed. | fresh clone installs, builds the index, passes the tests, and runs; the `docker` CI job builds and tests the image; full suite ≥ 90% | `feat: one-command Docker, evaluator-ready README, final docs` |
 
 ## 16. Decisions Log
 
@@ -1024,3 +1047,6 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 28 | *(Phase 8 UI fixes)* **Conversation titles by the fast model**, written after the first answer and rewritten once after the third question; never the raw message. |
 | 29 | *(before Phase 9)* **Saved data per browser without login**: an anonymous cookie ID, with profile, portfolio, conversations, and LangGraph checkpoints in `data/app/finnie.sqlite` (git-ignored), plus rename, delete, and "Delete my data". Login with `st.login` and Auth0 is recorded as a future option for a public deployment (§2.8). |
 | 30 | *(Phase 9)* **MCP server with two transports**: stdio for Claude Desktop, and Streamable HTTP on 127.0.0.1 protected by a static bearer token (`MCP_API_TOKEN` in `.env`; 401 without it), built on SDK `mcp==2.2.0` against spec 2026-07-28. The token is checked in our own ASGI middleware because the SDK's `AuthSettings` expects an OAuth authorization server. OAuth 2.1 with Auth0 is the documented production path (§9.4), not built. |
+| 31 | *(Phase 10)* **One-command Docker with an offline image**: the embedding model and FAISS index are built into the image, which runs as non-root and holds no secrets. Compose publishes on 127.0.0.1 and starts without `.env`. The image is tested in a CI job on GitHub's runners, because the development PC has no Docker. AWS stays designed, not deployed (§12). |
+| 32 | *(Phase 10)* **A setup page instead of a stack trace when no API key is set.** Found by the Docker job: a fresh start without `.env` crashed. The agent context now builds the models before the slow knowledge-base load, so a missing key is reported in milliseconds. |
+| 33 | *(Phase 10)* **The MCP server warms the knowledge base at startup** in a background thread. The first search was measured at 34 s cold, long enough to risk a client's tool timeout. |

@@ -104,3 +104,19 @@ def test_portfolio_with_nothing_notable(ui, monkeypatch):
     )
     ok(app)
     assert "**What stands out**" not in texts(app.markdown)
+
+
+def test_missing_api_key_shows_setup_steps_not_a_stack_trace(monkeypatch):
+    """A fresh clone (or a Docker run) without .env: the real wiring, no keys set."""
+    import streamlit as st
+
+    from tests.unit.web_app.conftest import APP
+
+    monkeypatch.setattr("src.utils.logging.configure_logging", lambda *a, **k: None)
+    st.cache_resource.clear()
+    app = AppTest.from_file(APP, default_timeout=60).run()
+    assert not app.exception, [e.value for e in app.exception]
+    assert "## Finnie needs an API key to start" in texts(app.markdown)
+    assert "OPENAI_API_KEY is not set" in app.error[0].value
+    assert any("docker compose up" in t for t in texts(app.markdown))
+    assert not app.sidebar.button  # nothing else renders

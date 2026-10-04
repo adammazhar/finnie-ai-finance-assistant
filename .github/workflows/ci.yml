@@ -102,3 +102,72 @@ jobs:
         run: python scripts/validate_kb.py
       - name: Check every source link
         run: python scripts/check_kb_links.py --no-report
+
+  docker:
+    # Build the image and run it the way the README says, then check that it works offline.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: finnie:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Image facts
+        run: |
+          docker image ls finnie:latest --format 'size: {{.Size}}'
+          docker run --rm finnie:latest python -c "import torch; print('torch', torch.__version__)"
+          test "$(docker run --rm finnie:latest id -u)" = "1000"            # non-root
+          docker run --rm finnie:latest sh -c 'test ! -e /app/.env'          # no secrets inside
+      - name: Offline (no network at all) the model loads, search works, and the app renders
+        run: |
+          docker run --rm --network none finnie:latest python -c "
+          from src.rag.retriever import get_retriever
+          hits = get_retriever().retrieve('What is an expense ratio?', k=2).chunks
+          assert hits, 'no results'
+          print('offline search ok:', hits[0].chunk.title)
+          from streamlit.testing.v1 import AppTest
+          app = AppTest.from_file('src/web_app/app.py', default_timeout=120).run()
+          assert not app.exception, app.exception
+          assert any('needs an API key' in m.value for m in app.markdown), 'setup page missing'
+          print('no key: setup page ok')
+          "
+          # a placeholder key: onboarding renders (it makes no model call), still offline
+          docker run --rm --network none -e OPENAI_API_KEY=placeholder-not-a-real-key finnie:latest python -c "
+          from streamlit.testing.v1 import AppTest
+          app = AppTest.from_file('src/web_app/app.py', default_timeout=120).run()
+          assert not app.exception, app.exception
+          assert any('Welcome to Finnie' in m.value for m in app.markdown), 'onboarding missing'
+          print('offline app render ok')
+          "
+      - name: docker compose up (no .env, as on a fresh clone)
+        run: |
+          docker compose up -d --no-build finnie
+          for i in $(seq 1 60); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose ps -q finnie)")
+            echo "health: $status"; [ "$status" = healthy ] && break; sleep 5
+          done
+          [ "$status" = healthy ]
+          curl -fsS http://127.0.0.1:8501/_stcore/health
+          curl -fsS http://127.0.0.1:8501/ | grep -q '<title>'
+      - name: MCP server profile (bearer token)
+        run: |
+          echo "MCP_API_TOKEN=$(openssl rand -hex 24)" > .env    # throwaway, this runner only
+          token=$(cut -d= -f2 .env)
+          docker compose --profile mcp up -d --no-build finnie-mcp
+          url=http://127.0.0.1:8765/mcp
+          body='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+          for i in $(seq 1 30); do curl -s -o /dev/null "$url" && break; sleep 2; done
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url" -d "$body")
+          echo "without token: $code"; [ "$code" = 401 ]
+          curl -fsS -X POST "$url" -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+            -d "$body" | grep -q '"name":"Finnie"'
+          echo "with token: ok"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --profile mcp logs --no-color

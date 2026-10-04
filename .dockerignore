@@ -1,0 +1,27 @@
+# Secrets: never in the image (docker compose passes .env at run time)
+.env
+.env.*
+!.env.example
+
+# Course materials
+docs/ik/
+
+# Local environments, caches, and generated data (the image builds its own index)
+.venv/
+.git/
+**/__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage*
+coverage.*
+htmlcov/
+data/app/
+data/cache/
+data/vectorstore/
+
+# Not needed to run the app
+tests/
+docs/
+.github/

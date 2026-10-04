@@ -34,14 +34,18 @@ def build_agent_context(settings: Settings | None = None) -> AgentContext:
     from src.rag.retriever import get_retriever
 
     settings = settings or get_settings()
+    # Models first: a missing API key should fail in milliseconds, not after the
+    # knowledge base's slow load.
+    llm = get_llm("main", settings=settings)
+    fast_llm = get_llm("fast", settings=settings)
     try:
         retriever: Retriever | None = get_retriever()
     except Exception:
         logger.exception("Knowledge base unavailable; agents will answer without it")
         retriever = None
     return AgentContext(
-        llm=get_llm("main", settings=settings),
-        fast_llm=get_llm("fast", settings=settings),
+        llm=llm,
+        fast_llm=fast_llm,
         market=get_market_data_service(),
         retriever=retriever,
         settings=settings,

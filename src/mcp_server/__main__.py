@@ -26,6 +26,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m src.mcp_server", description=__doc__)
     parser.add_argument("--http", action="store_true", help="Streamable HTTP instead of stdio")
     parser.add_argument("--port", type=int, help="HTTP port (default: mcp.port in config.yaml)")
+    parser.add_argument(
+        "--host",
+        help="HTTP address (default: mcp.host, 127.0.0.1). The Docker image uses 0.0.0.0 "
+        "inside the container and publishes the port on the host's 127.0.0.1 only.",
+    )
     args = parser.parse_args(argv)
 
     # Claude Desktop starts the server from its own folder; paths are relative to the project.
@@ -42,20 +47,23 @@ def main(argv: list[str] | None = None) -> int:
     if not args.http:
         build_server().run("stdio")
         return 0
-    return serve_http(build_server, settings, port=args.port)
+    return serve_http(build_server, settings, port=args.port, host=args.host)
 
 
 def serve_http(
-    build_server: Callable[[], MCPServer], settings: Settings, *, port: int | None = None
+    build_server: Callable[[], MCPServer],
+    settings: Settings,
+    *,
+    port: int | None = None,
+    host: str | None = None,
 ) -> int:
     import uvicorn
 
     from src.mcp_server.http import TokenError, build_http_app
 
-    if port is not None:
-        settings = settings.model_copy(
-            update={"mcp": settings.mcp.model_copy(update={"port": port})}
-        )
+    overrides = {k: v for k, v in {"port": port, "host": host}.items() if v is not None}
+    if overrides:
+        settings = settings.model_copy(update={"mcp": settings.mcp.model_copy(update=overrides)})
     try:
         app = build_http_app(build_server(), settings)
     except TokenError as exc:

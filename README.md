@@ -1,82 +1,201 @@
 # Finnie: AI Finance Assistant
 
-Finnie is a multi-agent assistant that teaches beginners about investing. Six specialist agents are orchestrated with LangGraph. Answers are grounded in a 112-article knowledge base through RAG and combined with live market data. **Finnie provides education, not financial advice.**
+Finnie is a multi-agent assistant that teaches beginners about investing. Six specialist agents, orchestrated with LangGraph, answer questions about financial concepts, portfolios, markets, goals, news, and taxes. Answers are grounded in a 112-article knowledge base with sources, and combined with live market data.
 
-> This README is a work in progress. The full version (architecture, usage, API reference, troubleshooting) arrives with the final phase. The design is in [docs/DESIGN.md](docs/DESIGN.md), and measured results are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+**Finnie provides educational information only, not financial, investment, tax, or legal advice.**
 
-## Setup
+![Finnie answering a question about a saved portfolio](docs/images/chat.png)
 
-**Requirements:** Python 3.12, about 2 GB of free disk (CPU-only PyTorch plus the embedding model), and an OpenAI or Anthropic API key.
+## Contents
 
-### 1. Create the environment and install
+- [Quick start with Docker](#quick-start-with-docker)
+- [Quick start with Python](#quick-start-with-python)
+- [Configuration](#configuration)
+- [Using Finnie](#using-finnie)
+- [Tests and evaluations](#tests-and-evaluations)
+- [MCP server (Claude Desktop and Claude Code)](#mcp-server-claude-desktop-and-claude-code)
+- [Architecture](#architecture)
+- [Project structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Further documentation](#further-documentation)
+
+## Quick start with Docker
+
+You need [Docker](https://docs.docker.com/get-docker/) with Compose 2.24 or later, and an OpenAI or Anthropic API key.
 
 ```bash
-python -m venv .venv
-# macOS/Linux: source .venv/bin/activate      Windows PowerShell: .venv\Scripts\Activate.ps1
+git clone https://github.com/adammazhar/finnie-ai-finance-assistant.git
+cd finnie-ai-finance-assistant
+cp .env.example .env          # Windows: copy .env.example .env
+# edit .env: set OPENAI_API_KEY (or ANTHROPIC_API_KEY and LLM_PROVIDER=anthropic)
+docker compose up --build
+```
+
+Open http://localhost:8501.
+- **First build:** takes a few minutes. The image includes CPU-only PyTorch, the embedding model, and the prebuilt search index, so the container never downloads a model.
+- **Saved data:** your profile, portfolio, and conversations live in a Docker volume, so they're kept across restarts.
+- **Stop:** press Ctrl+C, or run `docker compose down`. `docker compose down -v` also deletes the saved data.
+
+## Quick start with Python
+
+You need **Python 3.12**, about 2 GB of free disk (CPU-only PyTorch plus the embedding model), and an OpenAI or Anthropic API key.
+
+### 1. Install
+
+macOS / Linux:
+
+```bash
+git clone https://github.com/adammazhar/finnie-ai-finance-assistant.git
+cd finnie-ai-finance-assistant
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements-dev.txt   # runtime + test tools; CPU-only PyTorch comes from the index in requirements.txt
 pip install -e . --no-deps            # makes the `src` package importable
 ```
 
+Windows (PowerShell):
+
+```powershell
+git clone https://github.com/adammazhar/finnie-ai-finance-assistant.git
+cd finnie-ai-finance-assistant
+py -3.12 -m venv .venv                # or: python -m venv .venv, if `python --version` says 3.12
+.venv\Scripts\Activate.ps1            # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pip install -r requirements-dev.txt
+pip install -e . --no-deps
+```
+
 For runtime only, `pip install -r requirements.txt` is enough.
 
-### 2. Configure secrets
+### 2. Add your API key
 
 ```bash
 cp .env.example .env    # Windows: copy .env.example .env
 ```
 
-Fill in `OPENAI_API_KEY` (the default provider) and optionally `ANTHROPIC_API_KEY`, which is used as an automatic fallback. Alpha Vantage and Tavily keys are optional: without them, Finnie uses yfinance for market data and news. Never commit `.env`; it is git-ignored. Non-secret settings are in `config.yaml`.
+Set `OPENAI_API_KEY` in `.env` (see [Configuration](#configuration) for the other settings). `.env` is git-ignored; never commit it.
 
 ### 3. Download the embedding model and build the search index (one time)
 
-`.env.example` sets `HF_HUB_OFFLINE=1`, so Finnie loads the embedding model (`all-MiniLM-L6-v2`, about 90 MB) only from the local Hugging Face cache and never contacts the Hub at startup. The first time, while the cache is empty, allow the download once:
+`.env.example` sets `HF_HUB_OFFLINE=1`, so Finnie only loads the embedding model (`all-MiniLM-L6-v2`, about 90 MB) from the local Hugging Face cache and never contacts the Hub. The first time, allow the download once:
 
 ```bash
-# macOS/Linux
-HF_HUB_OFFLINE=0 python scripts/build_index.py
+HF_HUB_OFFLINE=0 python scripts/build_index.py                                           # macOS/Linux
 ```
 
 ```powershell
-# Windows PowerShell
-$env:HF_HUB_OFFLINE = "0"; python scripts/build_index.py; Remove-Item Env:HF_HUB_OFFLINE
+$env:HF_HUB_OFFLINE = "0"; python scripts/build_index.py; Remove-Item Env:HF_HUB_OFFLINE   # Windows
 ```
 
-This downloads the model into the Hugging Face cache (`~/.cache/huggingface` by default) and builds the FAISS index in `data/vectorstore/`. After that, everything runs offline. The index rebuilds automatically whenever knowledge base articles change. If the model is missing while `HF_HUB_OFFLINE=1`, Finnie stops with a message showing this command.
+This builds the FAISS index in `data/vectorstore/` (about a minute). After that, everything except the LLM and market data APIs runs offline. The index rebuilds itself when knowledge base articles change.
 
-### 4. Check the installation
+### 4. Run the app
 
 ```bash
-pytest                                   # all tests, in parallel; the network is blocked, so no API calls
-python scripts/validate_kb.py            # knowledge base rules
-python scripts/check_kb_links.py         # every source link (needs internet)
-python scripts/eval_retrieval.py         # retrieval quality on the evaluation set
-python scripts/eval_routing.py           # routing accuracy (calls the fast model once per case)
+python -m src.web_app
+```
+
+Open http://localhost:8501. The launcher starts Streamlit from the project root, where `.streamlit/config.toml` (the theme) lives. `streamlit run src/web_app/app.py` also works if you run it from the project root.
+
+## Configuration
+
+Secrets and the provider choice go in **`.env`**. Every other setting is in **`config.yaml`**.
+
+| `.env` variable | Needed? | What it does |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes, for the default provider | Models `gpt-4o` (answers) and `gpt-4o-mini` (routing, checks, titles) |
+| `ANTHROPIC_API_KEY` | Optional | Automatic fallback when OpenAI fails, or the primary provider with `LLM_PROVIDER=anthropic` |
+| `LLM_PROVIDER` | Optional (`openai`) | `openai` or `anthropic` |
+| `LLM_FALLBACK_PROVIDER` | Optional (`anthropic`) | The provider to fall back to; `none` disables the fallback |
+| `ALPHA_VANTAGE_API_KEY` | Optional | Second market data source and company facts. Without it, Finnie uses yfinance. |
+| `TAVILY_API_KEY` | Optional | Extra news search. Without it, news comes from yfinance. |
+| `HF_HUB_OFFLINE` | Keep `1` | Loads the embedding model from the local cache only |
+| `MCP_API_TOKEN` | Only for the MCP HTTP server | Bearer token, at least 32 characters ([docs/MCP.md](docs/MCP.md)) |
+| `FINNIE_CONFIG` | Optional | Another settings file instead of `config.yaml` |
+
+Without a usable API key, the app opens a setup page that names the missing key, instead of an error.
+
+`config.yaml` covers:
+- models per provider, temperature, timeouts, and retries
+- retrieval (chunk size, `top_k`, the 0.40 relevance threshold)
+- market data cache times (60 seconds while the market is open)
+- the workflow's turn budget and limits
+- Monte Carlo settings
+- the MCP server's address
+
+Each setting has a comment.
+
+## Using Finnie
+
+On a first visit, Finnie asks for your knowledge level and risk tolerance. A 5-question quiz helps if you're unsure. Answers adapt to your level: plain language and defined terms for beginners, more depth for advanced users.
+
+![Onboarding](docs/images/onboarding.png)
+
+**Chat** is the main page. Ask anything in the box pinned at the bottom.
+- **While it works:** the chat shows which specialists are running.
+- **The answer:** it streams in with the specialists who wrote it, numbered citations, and the sources behind them, plus charts when they help.
+- **Multi-part questions:** a question that spans topics (for example, "how diversified is my portfolio, and what does its expense ratio mean?") goes to several specialists, and their answers are merged into one.
+- **Goal questions:** if you have a saved portfolio, Finnie first asks how much of it counts toward the goal.
+
+| | |
+|---|---|
+| ![Specialists working](docs/images/chat_progress.png) | ![The answer](docs/images/chat.png) |
+
+| Tab | What it does |
+|---|---|
+| **Portfolio** | Enter holdings, upload a CSV (`ticker,shares,cost_basis`), or load a sample. Shows allocation, diversification, risk, fund fees, past-year risk measures, a back-test against SPY, and a comparison with a typical mix for your risk tolerance. Saved holdings are used in chat too. |
+| **Markets** | The S&P 500, Nasdaq-100, Dow, and Russell 2000 with their tracking ETFs, sector moves, and whether prices are live, delayed, or the last close. Also a lookup for any ticker: price trend, moving averages, RSI, company facts, and recent news. |
+| **Goals** | A Monte Carlo projection for a goal: the chance of reaching it, the range of outcomes, and the monthly amount an 80% chance needs. |
+| **Knowledge** | Search the knowledge base, browse the 112 articles by category, and look up 172 glossary terms. Every article lists its sources (SEC, FINRA, IRS, Federal Reserve, and others). |
+
+| | |
+|---|---|
+| ![Portfolio](docs/images/portfolio.png) | ![Markets](docs/images/markets.png) |
+| ![Goals](docs/images/goals.png) | ![Knowledge](docs/images/knowledge.png) |
+
+**Saved data, without a login:**
+- **Where:** Finnie remembers your profile, portfolio, and conversations under a random ID kept in a browser cookie. The data is stored in `data/app/finnie.sqlite`, which is git-ignored, so it's still there after a refresh or an app restart.
+- **Managing it:** rename or delete a conversation from its **⋯** menu in the sidebar. **Profile → Delete my data** removes everything for your browser.
+- **Fresh start:** a private browser window always starts fresh.
+
+## Tests and evaluations
+
+```bash
+pytest                                   # 922 tests in parallel, 100% coverage; network blocked, so no API calls
+ruff check . && ruff format --check .    # lint and formatting
+mypy                                     # type checks
+python scripts/validate_kb.py            # knowledge base rules (schema, ids, sources)
+```
+
+These need API keys or the internet, and report the numbers in [docs/BENCHMARKS.md](docs/BENCHMARKS.md):
+
+```bash
+python scripts/check_kb_links.py         # every knowledge base source link resolves
+python scripts/eval_retrieval.py         # retrieval quality: hit@4 93.3%
+python scripts/eval_routing.py           # routing accuracy: 97.0% (LLM), 78.8% (keyword fallback)
 python scripts/bench_workflow.py         # end-to-end latency with live models and data
+python scripts/bench_mcp.py              # MCP tool latency over HTTP
 ```
 
-### 5. Run the app
+GitHub Actions runs five jobs on every push:
+- lint, type checks, and tests
+- the Streamlit UI tests
+- the combined coverage gate (90%)
+- the knowledge base link check
+- a Docker job: it builds the image, starts it with `docker compose`, checks that search and the app work with networking switched off, and checks the MCP server's token protection
 
-```bash
-python -m src.web_app          # or: streamlit run src/web_app/app.py, from the project root
-```
+## MCP server (Claude Desktop and Claude Code)
 
-Start it from the project root (the launcher above does that for you): Streamlit reads the theme in `.streamlit/config.toml` from the folder it's started in.
+Finnie's tools are also an [MCP](https://modelcontextprotocol.io) server:
+- **6 tools:** quotes, market overview, portfolio analysis, goal projection, knowledge base search, and tax accounts
+- **resources:** the articles and the glossary
+- **a beginner prompt**
 
-Open http://localhost:8501. On a first visit Finnie asks for your knowledge level and risk tolerance; there's a 5-question quiz if you're unsure. The sidebar has **New conversation**, your recent conversations (rename or delete one from its **⋯** menu), a **Profile** button to change those answers, and a system status icon.
+The client (Claude) does the reasoning; Finnie supplies the data. Full setup is in [docs/MCP.md](docs/MCP.md).
 
-Finnie remembers you without a login. Your profile, portfolio, and conversations are saved in `data/app/finnie.sqlite`, which is git-ignored, under a random ID stored in a browser cookie. They're still there after a refresh or a restart. **Delete my data** on the Profile page removes everything for this browser. The tabs:
-
-- **Chat**: ask anything in the box pinned at the bottom. You see which specialists are working while they run. The answer then streams in, with the specialists who wrote it, the sources it cites (open any knowledge base article in Knowledge), and charts when relevant. When you ask about a savings goal and have a saved portfolio, Finnie first asks how much of the portfolio counts toward that goal.
-- **Portfolio**: enter holdings in the table, upload a CSV (`ticker,shares,cost_basis`), or load a sample. You get allocation, diversification, risk, the portfolio expense ratio, past-year risk measures, a back-test of today's holdings against SPY, and a comparison with a typical mix for your risk tolerance. Holdings saved here are used in chat too.
-- **Markets**: index and sector moves today, plus a lookup for any ticker with its price trend, moving averages, RSI, company facts, and recent English-language news.
-- **Goals**: a Monte Carlo projection for one goal, with the chance of reaching it. Tick **Include saved portfolio** and edit the amount to count some or all of your portfolio.
-- **Knowledge**: search the knowledge base, browse articles by category, and look up glossary terms.
-
-### 6. Use Finnie from Claude (MCP server)
-
-Finnie's tools are also an MCP server, so Claude Desktop or Claude Code can use its market data, portfolio analytics, goal projections, and knowledge base. Full steps are in [docs/MCP.md](docs/MCP.md).
-
-- **Claude Desktop (stdio):** add the `finnie` entry from docs/MCP.md to `claude_desktop_config.json` (**Settings → Developer → Edit Config**), fully quit Claude Desktop from the system tray, and start it again.
+- **Claude Desktop (stdio):**
+  1. Add the `finnie` entry from docs/MCP.md to `claude_desktop_config.json` (**Settings → Developer → Edit Config**).
+  2. Fully quit Claude Desktop from the system tray.
+  3. Start it again.
 - **HTTP on localhost (Claude Code, scripts):** set `MCP_API_TOKEN` in `.env`, then:
 
   ```bash
@@ -84,3 +203,98 @@ Finnie's tools are also an MCP server, so Claude Desktop or Claude Code can use 
   python scripts/mcp_client_demo.py        # shows the 401s, then lists tools and calls one with the token
   claude mcp add --transport http --scope local finnie http://127.0.0.1:8765/mcp --header "Authorization: Bearer <token>"
   ```
+
+  With Docker: `docker compose --profile mcp up` runs the HTTP server next to the app.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI["Streamlit UI<br/>Chat · Portfolio · Markets · Goals · Knowledge"] --> WF
+    CD["Claude Desktop / Claude Code"] -- "MCP: stdio or HTTP + token" --> MCP["MCP server"]
+    subgraph Finnie
+        WF["LangGraph workflow<br/>route · plan · run specialists · merge · guard"] --> AG["6 specialist agents"]
+        AG --> TOOLS["Domain tools<br/>portfolio · Monte Carlo · tax · indicators"]
+        AG --> RAG["RAG retriever<br/>FAISS + MiniLM, 1,100 chunks"]
+        MCP --> TOOLS
+        MCP --> RAG
+        TOOLS --> MD["Market data<br/>SQLite cache · yfinance · Alpha Vantage · Tavily"]
+    end
+    AG --> LLM["LLM factory<br/>OpenAI, Anthropic fallback"]
+```
+
+**How a question flows through the workflow (`src/workflow/`):**
+1. **Screening:** an input check rejects prohibited or oversized requests.
+2. **Routing:** a fast model picks the specialists. A keyword router is the fallback.
+3. **Planning:** the plan runs the specialists in stages, in parallel within a stage (LangGraph `Send`). Agents that need another agent's results run in a later stage; for example, goal planning can use the portfolio analysis.
+4. **Merging:** the answers are merged into one, with unified citations.
+5. **Output guard:** a check rewrites anything that reads like personal advice, then adds data-freshness notes and the disclaimer.
+
+**Memory:** conversation memory is kept per conversation in a SQLite checkpointer, and older turns are summarized.
+
+**The specialists (`src/agents/`):**
+
+| Agent | Teaches about |
+|---|---|
+| Finance Q&A | Concepts and definitions (the default) |
+| Portfolio Analysis | Diversification, allocation, risk, and fees of your holdings |
+| Market Analysis | Quotes, indexes, sectors, and indicators, in plain English |
+| Goal Planning | Saving toward a goal, with Monte Carlo odds |
+| News Synthesizer | Recent news, summarized with why it matters |
+| Tax Education | Account types, capital gains, and this year's IRS limits |
+
+**Design choices:**
+- **Domain logic:** it's pure, LLM-free code in `src/core` and `src/data`, shared by the agents and the MCP server and fully unit-tested.
+- **Failure handling:** each layer has a fallback.
+  - LLM provider fallback and retries
+  - a keyword router when routing fails
+  - market data provider chain → stale cache → clearly labelled mock data
+  - a turn deadline
+  - a plain-language reply when every agent fails
+
+Details, diagrams, and the reasons behind each choice are in [docs/DESIGN.md](docs/DESIGN.md).
+
+## Project structure
+
+```text
+src/
+  core/         config, LLM factory, guardrails, portfolio math, Monte Carlo, tax, indicators
+  data/         market data providers, cache, news
+  rag/          knowledge base loader, chunking, FAISS index, retriever
+  agents/       the six specialists, their tools and prompts
+  workflow/     LangGraph graph: router, planner, nodes, synthesis, titles
+  web_app/      Streamlit app, pages, charts, theme, per-browser storage
+  mcp_server/   MCP tools, HTTP transport and token check, launcher
+data/
+  knowledge_base/   112 articles (markdown with sources) + glossary
+  reference/        securities catalog, tax figures, market calendar
+  sample_portfolios/
+scripts/        index build, evaluations, benchmarks, MCP demo client
+tests/          unit tests, UI tests, evaluation sets
+docs/           DESIGN.md, MCP.md, BENCHMARKS.md, images/
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "Finnie needs an API key to start" | Set `OPENAI_API_KEY` in `.env` (or `ANTHROPIC_API_KEY` with `LLM_PROVIDER=anthropic`) and restart. |
+| "The embedding model … isn't in the local Hugging Face cache" | Run step 3 once with `HF_HUB_OFFLINE=0`. |
+| The app looks dark or unstyled | Start it with `python -m src.web_app`, or run Streamlit from the project root. |
+| `py -3.12` not found, or the venv uses another Python | Install Python 3.12 from python.org, then create the venv with that interpreter. |
+| `Activate.ps1 cannot be loaded` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again. |
+| Market data says "mock" or "stale" | A provider is down or rate-limited. Finnie labels the data and keeps working. The sidebar's **System status** shows each provider. |
+| Port 8501 is busy | `python -m src.web_app --server.port 8502` (Docker: change the first number in `docker-compose.yml` → `ports`). |
+| `docker compose` complains about `env_file` | Update to Docker Compose 2.24 or later, or create `.env` from `.env.example`. |
+| MCP: Claude Desktop doesn't list finnie | See the checklist in [docs/MCP.md](docs/MCP.md#1-claude-desktop-stdio-windows). |
+
+## Further documentation
+
+- [docs/DESIGN.md](docs/DESIGN.md): architecture, workflow, agents, RAG, data, UI, MCP, security, testing, deployment, and the decisions log
+- [docs/BENCHMARKS.md](docs/BENCHMARKS.md): retrieval quality, routing accuracy, latency, MCP and Docker measurements
+- [docs/MCP.md](docs/MCP.md): MCP server setup and verification
+- Optional cloud deployment (AWS EC2 with Caddy, or ECS Fargate) is designed in [DESIGN.md §12](docs/DESIGN.md#12-docker-and-aws-deployment). It is not deployed.
+
+---
+
+*Finnie provides educational information only, not financial, investment, tax, or legal advice. Consult a qualified professional before making financial decisions.*

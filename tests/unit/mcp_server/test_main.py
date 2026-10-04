@@ -38,13 +38,15 @@ def test_default_is_stdio_from_the_project_root(fake_server):
 def test_http_flag(monkeypatch, fake_server):
     seen: dict[str, Any] = {}
 
-    def serve(build, settings, *, port):
-        seen.update(build=build, port=port)
+    def serve(build, settings, *, port, host):
+        seen.update(build=build, port=port, host=host)
         return 0
 
     monkeypatch.setattr(launcher, "serve_http", serve)
     assert launcher.main(["--http", "--port", "9000"]) == 0
-    assert seen["port"] == 9000 and seen["build"]() is fake_server
+    assert seen["port"] == 9000 and seen["host"] is None and seen["build"]() is fake_server
+    assert launcher.main(["--http", "--host", "0.0.0.0"]) == 0
+    assert seen["host"] == "0.0.0.0"
 
 
 def test_bad_config_exits_with_a_message(monkeypatch, fake_server, tmp_path, capsys):
@@ -71,3 +73,12 @@ def test_http_serves_on_localhost(monkeypatch, make_settings, services, capsys):
     assert started == [{"host": "127.0.0.1", "port": 9001, "log_level": "warning"}]
     err = capsys.readouterr().err
     assert "http://127.0.0.1:9001/mcp" in err and TOKEN not in err
+
+
+def test_http_host_override(monkeypatch, make_settings, services):
+    started: list[dict[str, Any]] = []
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: started.append(kwargs))
+    settings = make_settings(mcp_api_token=TOKEN)
+    build = lambda: server_module.build_server(services)  # noqa: E731
+    assert launcher.serve_http(build, settings, host="0.0.0.0") == 0
+    assert started[0]["host"] == "0.0.0.0" and started[0]["port"] == 8765

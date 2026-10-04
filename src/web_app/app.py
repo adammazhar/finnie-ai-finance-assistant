@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:  # pragma: no cover - only under `streamlit run`
 
 import streamlit as st  # noqa: E402
 
+from src.core.llm import LLMConfigurationError  # noqa: E402
 from src.web_app import profile_page, services, sidebar, state, theme  # noqa: E402
 from src.web_app.tabs import chat, goals, knowledge, markets, portfolio  # noqa: E402
 
@@ -96,6 +97,28 @@ def _remember_browser() -> None:
     )
 
 
+def _setup_problem() -> str | None:
+    """Why Finnie can't start (no usable LLM API key), or None when it can."""
+    try:
+        services.context()
+    except LLMConfigurationError as exc:
+        return str(exc)
+    return None
+
+
+def _setup_page(problem: str) -> None:
+    """Shown instead of a stack trace when the app isn't configured yet."""
+    st.markdown("## Finnie needs an API key to start")
+    st.error(problem)
+    st.markdown(
+        "1. Copy `.env.example` to `.env` in the project folder.\n"
+        "2. Set `OPENAI_API_KEY`, or set `ANTHROPIC_API_KEY` and `LLM_PROVIDER=anthropic`.\n"
+        "3. Restart Finnie: `python -m src.web_app`, or `docker compose up` with Docker "
+        "(it reads the same `.env`)."
+    )
+    st.caption("Keys stay on your machine in `.env`, which is never committed.")
+
+
 def main() -> None:
     st.set_page_config(
         page_title="Finnie: financial education assistant",
@@ -103,6 +126,11 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    problem = _setup_problem()
+    if problem is not None:
+        theme.apply("Onboarding")
+        _setup_page(problem)
+        return
     _configure_logging()
     state.start()
     _remember_browser()

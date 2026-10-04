@@ -11,6 +11,7 @@ with a plain message, never a stack trace.
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -78,17 +79,25 @@ class Services:
     glossary: Callable[[], Glossary] = load_glossary
 
 
-def default_services() -> Services:
+def default_services(*, warm: bool = True) -> Services:
+    """The real services. With ``warm``, the knowledge base (embedding model and index,
+    tens of seconds on a cold start) loads in the background as soon as the server starts,
+    so the first search doesn't run into a client's tool timeout."""
     from src.data.service import get_market_data_service
     from src.rag.retriever import get_retriever
 
-    def retriever() -> Retriever | None:
-        try:
-            return get_retriever()
-        except Exception:
-            logger.exception("Knowledge base unavailable")
-            return None
+    lock = threading.Lock()  # the warm-up and a first search wait for one load
 
+    def retriever() -> Retriever | None:
+        with lock:
+            try:
+                return get_retriever()
+            except Exception:
+                logger.exception("Knowledge base unavailable")
+                return None
+
+    if warm:
+        threading.Thread(target=retriever, name="finnie-kb-warmup", daemon=True).start()
     return Services(market=get_market_data_service(), settings=get_settings(), retriever=retriever)
 
 

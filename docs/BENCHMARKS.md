@@ -1,8 +1,8 @@
 # Finnie Benchmarks
 
-Measured results for retrieval quality and performance, routing accuracy, and workflow latency. Each section names the command that reproduces it.
+Measured results for the final system: retrieval quality and speed, routing accuracy, workflow latency, the MCP server, the Docker image, a fresh-clone install, and the test suite. Each section names the command that reproduces it.
 
-**Machine:** Windows 11, Intel Core (family 6 model 186), CPU only, Python 3.12.10. **Date:** 2026-09-30.
+**Machine:** Windows 11, Intel Core (family 6 model 186), 12 logical CPUs, 64 GB RAM, CPU only, Python 3.12.10. Docker numbers come from GitHub's hosted Linux runners (4 vCPUs). Each section gives its date; the last update is 2026-10-02.
 
 ## Targets
 
@@ -17,6 +17,9 @@ The course documents ask for "performance considerations" and "performance bench
 | Single-specialist turn | p50 < 6 s | 5.8 s | reported by `scripts/bench_workflow.py` |
 | Multi-specialist turn | p50 < 15 s | 12.9 s | `scripts/bench_workflow.py` |
 | First visible progress in chat | p95 < 1 s | 17 ms | `scripts/bench_workflow.py` |
+| Test coverage | ≥ 90% | 100% (922 tests) | `pytest` and the CI `coverage` job |
+| MCP tool call, server warm | < 1 s | 4–256 ms median | measured by `scripts/bench_mcp.py` |
+| Docker: healthy after `docker compose up` | < 60 s | about 10 s | the CI `docker` job |
 
 ## Retrieval quality (Phase 5)
 
@@ -95,17 +98,70 @@ Turn times vary by a few seconds between runs with model and API latency. In the
 
 While a turn runs, the chat shows each step and specialist as it happens. The first update appears in milliseconds, which is well under the 1 s target. The answer streams in once the output guardrail has approved it.
 
-## Test suite run time (Phase 8)
+## MCP server (Phases 9–10)
 
-`pytest` runs 809 tests in parallel with pytest-xdist (`-n auto --dist loadgroup`) and coverage. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
+`python scripts/bench_mcp.py` starts the Streamable HTTP server in-process on loopback, with a throwaway token, and calls each tool through a real MCP client. The full HTTP path is measured: bearer-token check, the SDK, and JSON-RPC. Measured on 2026-10-02.
+
+**Knowledge base cold start:** the first search answered **27.1 s** after the server started.
+- That is the one-time load of the embedding model and FAISS index (sentence-transformers and torch imports included).
+- The server begins this load in a background thread at startup (decision 33), and answers `tools/list` right away.
+- In practice the load is usually done before the first question arrives. Before the warm-up was added, a first search took 34 s from the moment it was asked (measured while the machine was also busy installing packages).
+
+With the server warm:
+
+| Tool | First call | Median of next 10 |
+|---|---|---|
+| `explain_tax_account` | 13 ms | 4 ms |
+| `project_financial_goal` (10,000 Monte Carlo paths + the 80% contribution solver) | 259 ms | 256 ms |
+| `search_financial_knowledge` | 27 ms | 29 ms |
+| `get_stock_quote` | 16 ms | 7 ms |
+| `get_market_overview` (4 index levels, 4 ETFs, 11 sectors) | 62 ms | 25 ms |
+| `analyze_portfolio` (2 holdings, with a year of history) | 60 ms | 46 ms |
+
+Market data was already in the SQLite cache from an earlier run, so first calls show cached reads. On a cold cache, a first quote took about 430 ms and the market overview about 590 ms (yfinance).
+
+## Docker image (Phase 10)
+
+Measured by the `docker` job in CI on GitHub's Linux runners (2026-10-02), because the development PC has no Docker.
+
+| Measure | Result |
+|---|---|
+| Image size | 2.27 GB (CPU-only `torch 2.14.1+cpu`; PyTorch is most of it) |
+| Build, no cache | about 4.5 min, including about 70 s to install dependencies and 30–55 s to download the model and build the index |
+| Build, dependencies cached | about 3.5 min (the index layer rebuilds when code changes) |
+| `docker compose up` to healthy | about 10 s |
+| With networking switched off (`--network none`) | the model loads, a search returns "Expense Ratios and Why Small Differences Add Up", the setup page shows without a key, and onboarding renders with a placeholder key |
+| MCP profile | 401 without the token, a valid response with it |
+
+## Fresh-clone install (Phase 10)
+
+The repository was cloned from GitHub into an empty folder and set up by following only the README on Windows 11 (PowerShell), with an empty Hugging Face cache (2026-10-02).
+
+| README step | Result |
+|---|---|
+| 1. venv + `pip install -r requirements-dev.txt` + `pip install -e . --no-deps` | succeeded (several minutes, mostly the PyTorch download) |
+| 2. `.env` from `.env.example` | as documented |
+| 3. download the model and build the index | 1.4 min: 1,100 chunks, 384 dimensions |
+| `pytest` | 919 passed, 100% coverage, 2.4 min |
+| `scripts/validate_kb.py` | Knowledge base OK |
+| 4. `python -m src.web_app` | onboarding, then a chat answer with citations (1,060 characters), then the Knowledge tab, in a real browser |
+
+Gaps found and fixed:
+- With no API key, the app showed an error instead of starting. It now shows a setup page naming the missing key (decision 32).
+- The README now says to create the venv with Python 3.12 explicitly. On a machine where the `py` launcher defaults to 3.14, a bare `py -m venv` would have picked the wrong version.
+
+## Test suite run time
+
+`pytest` runs **922 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
 
 | Where | Configuration | Wall time |
 |---|---|---|
-| Local (12 logical CPUs) | serial, before these changes | ~190 s |
-| Local | parallel, before fixing slow imports | 160 s |
-| Local | parallel, after (`pytest`) | ~125 s |
-| Local | unit suite only / UI suite only (as in CI) | 106 s / 49 s |
-| CI (GitHub-hosted, 4 vCPUs) | unit job / UI job / combined coverage job | see the latest run |
+| Local (12 logical CPUs) | serial, Phase 8 before the speed-ups | ~190 s |
+| Local | parallel, Phase 8 before fixing slow imports | 160 s |
+| Local | parallel, final (`pytest`) | ~130 s |
+| CI (GitHub-hosted, 4 vCPUs) | `unit` / `ui` / `coverage` / `kb-links` / `docker` jobs | 4.1 / 2.2 / 0.2 / 2.9 / 4.6 min, in parallel except coverage |
 
-Most of the gain came from imports, not parallelism alone. LangChain's text-splitters package imports sentence-transformers, transformers, and torch, which takes about 20 s per process, and each xdist worker paid that during collection. That import is now lazy. Agent and UI tests build their small search indexes directly, and the chunking tests share one worker, so only that worker pays the cost. The remaining long pole is that worker: about 60 s for the chunking, index, and retrieval tests, including the import.
-
+Most of the Phase 8 gain came from imports, not parallelism alone:
+- **The slow import:** LangChain's text-splitters package imports sentence-transformers, transformers, and torch, which takes about 20 s per process. Each xdist worker paid that during collection.
+- **The fix:** that import is now lazy. Agent and UI tests build their small search indexes directly, and the chunking tests share one worker, so only that worker pays the cost.
+- **What's left:** the slowest part is now that worker, at about 60 s for the chunking, index, and retrieval tests, including the import.

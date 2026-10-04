@@ -1,0 +1,42 @@
+# Run Finnie locally with one command:
+#
+#   docker compose up --build              # the app at http://localhost:8501
+#   docker compose --profile mcp up --build   # also the MCP server at http://localhost:8765/mcp
+#
+# API keys come from .env (copy .env.example). Without a key the app still starts and
+# says which key is missing. Ports are published on 127.0.0.1 only.
+
+services:
+  finnie:
+    build: .
+    image: finnie:latest
+    ports:
+      - "127.0.0.1:8501:8501"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - finnie-app-data:/app/data/app     # profiles, portfolios, conversations
+      - finnie-cache:/app/data/cache      # market data cache
+    restart: unless-stopped
+
+  finnie-mcp:
+    # Optional: the MCP server over Streamable HTTP. Needs MCP_API_TOKEN in .env.
+    profiles: ["mcp"]
+    image: finnie:latest
+    build: .
+    command: ["python", "-m", "src.mcp_server", "--http", "--host", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:8765:8765"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - finnie-cache:/app/data/cache
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+volumes:
+  finnie-app-data:
+  finnie-cache:

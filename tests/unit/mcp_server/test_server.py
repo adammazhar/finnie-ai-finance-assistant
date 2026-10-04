@@ -269,7 +269,7 @@ def test_default_services(monkeypatch):
     market = FakeMarketService()
     monkeypatch.setattr(data_service, "get_market_data_service", lambda: market)
     monkeypatch.setattr(rag_retriever, "get_retriever", lambda: "index")
-    services = default_services()
+    services = default_services(warm=False)
     assert services.market is market
     assert services.retriever() == "index"
 
@@ -277,7 +277,28 @@ def test_default_services(monkeypatch):
         raise RuntimeError("no index on disk")
 
     monkeypatch.setattr(rag_retriever, "get_retriever", broken)
-    assert default_services().retriever() is None
+    assert default_services(warm=False).retriever() is None
+
+
+def test_default_services_warm_the_knowledge_base_in_the_background(monkeypatch):
+    import threading
+
+    import src.data.service as data_service
+    import src.rag.retriever as rag_retriever
+
+    loaded = threading.Event()
+    threads: list[str] = []
+
+    def load():
+        threads.append(threading.current_thread().name)
+        loaded.set()
+        return "index"
+
+    monkeypatch.setattr(data_service, "get_market_data_service", FakeMarketService)
+    monkeypatch.setattr(rag_retriever, "get_retriever", load)
+    default_services()
+    assert loaded.wait(timeout=10)
+    assert threads == ["finnie-kb-warmup"]
 
 
 def test_build_server_defaults_to_real_services(monkeypatch, services):
