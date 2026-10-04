@@ -32,6 +32,7 @@ class SlidingWindowRateLimiter:
             self._calls.popleft()
 
     def try_acquire(self) -> bool:
+        """Record a call and return ``True`` if the window has room; else return ``False``."""
         with self._lock:
             now = self._clock()
             self._evict(now)
@@ -41,6 +42,7 @@ class SlidingWindowRateLimiter:
             return True
 
     def seconds_until_available(self) -> float:
+        """Seconds until a call would be allowed; 0.0 when one is allowed now."""
         with self._lock:
             now = self._clock()
             self._evict(now)
@@ -62,12 +64,18 @@ class DailyBudget:
         return self._clock().date().isoformat()
 
     def used(self) -> int:
+        """Requests counted so far today (UTC)."""
         return self._cache.get_counter(self._name, self._period())
 
     def remaining(self) -> int:
+        """Requests left today, never negative."""
         return max(0, self._limit - self.used())
 
     def try_consume(self) -> bool:
+        """Count one request and return ``True`` if it fits today's budget.
+
+        A limit of 0 or less always refuses.
+        """
         if self._limit <= 0 or self.remaining() <= 0:
             return False
         return self._cache.increment_counter(self._name, self._period()) <= self._limit

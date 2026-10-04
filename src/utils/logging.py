@@ -42,14 +42,20 @@ def redact(text: str) -> str:
 
 
 class SecretRedactingFilter(logging.Filter):
+    """Masks API keys in each record's message before any handler formats it."""
+
     def filter(self, record: logging.LogRecord) -> bool:
+        """Swap in the formatted, redacted message and clear ``args``; never drops a record."""
         record.msg = redact(record.getMessage())
         record.args = None
         return True
 
 
 class JsonFormatter(logging.Formatter):
+    """One JSON object per line, including any ``extra=`` fields."""
+
     def format(self, record: logging.LogRecord) -> str:
+        """Serialize the record; tracebacks are redacted here, messages by the filter."""
         payload: dict[str, Any] = {
             "ts": datetime.fromtimestamp(record.created, UTC).isoformat(timespec="milliseconds"),
             "level": record.levelname,
@@ -65,10 +71,13 @@ class JsonFormatter(logging.Formatter):
 
 
 class TextFormatter(logging.Formatter):
+    """Human-readable single-line format for local development, with secrets redacted."""
+
     def __init__(self) -> None:
         super().__init__("%(asctime)s %(levelname)-7s %(name)s: %(message)s")
 
     def format(self, record: logging.LogRecord) -> str:
+        """Format the record and redact the whole output, tracebacks included."""
         # Redact the full output: tracebacks may come from a cached ``record.exc_text``
         # formatted by another handler before ours ran.
         return redact(super().format(record))

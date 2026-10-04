@@ -52,6 +52,8 @@ def _int(value: Any) -> int | None:
 
 
 class AlphaVantageProvider:
+    """Alpha Vantage client with an optional local per-minute limiter and daily budget."""
+
     name = NAME
 
     def __init__(
@@ -101,6 +103,10 @@ class AlphaVantageProvider:
         return Freshness(source=NAME, as_of=as_of, fetched_at=self._clock())
 
     def get_quote(self, ticker: str) -> Quote:
+        """Latest quote from ``GLOBAL_QUOTE``, timed at that trading day's close.
+
+        Raises ``SymbolNotFoundError`` when no price comes back.
+        """
         data = self._request(function="GLOBAL_QUOTE", symbol=ticker)
         raw = data.get("Global Quote") or {}
         price = _num(raw.get("05. price"))
@@ -123,6 +129,10 @@ class AlphaVantageProvider:
         )
 
     def get_daily_history(self, ticker: str, days: int) -> PriceHistory:
+        """Unadjusted daily bars from ``TIME_SERIES_DAILY`` (compact output).
+
+        Raises ``ProviderError`` for more than 100 days, the free-tier maximum.
+        """
         if days > COMPACT_BARS:
             raise ProviderError(f"{NAME}: free tier returns at most {COMPACT_BARS} daily bars")
         data = self._request(function="TIME_SERIES_DAILY", symbol=ticker, outputsize="compact")
@@ -151,6 +161,10 @@ class AlphaVantageProvider:
         )
 
     def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Fundamentals from ``OVERVIEW``, with sector and industry title-cased.
+
+        Raises ``SymbolNotFoundError`` when the response has no symbol or name.
+        """
         data = self._request(function="OVERVIEW", symbol=ticker)
         if not data.get("Symbol") or not data.get("Name"):
             raise SymbolNotFoundError(f"{NAME}: no overview for {ticker}")

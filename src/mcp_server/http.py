@@ -39,6 +39,7 @@ class TokenError(RuntimeError):
 
 
 def api_token(settings: Settings) -> str:
+    """MCP_API_TOKEN, stripped; raises ``TokenError`` if missing or too short."""
     secret = settings.mcp_api_token.get_secret_value().strip() if settings.mcp_api_token else ""
     if not secret:
         raise TokenError(
@@ -113,6 +114,7 @@ async def _respond(
 
 
 def transport_security(config: MCPConfig) -> TransportSecuritySettings:
+    """DNS-rebinding protection: only localhost (and the configured host) as Host and Origin."""
     hosts = sorted({config.host, *LOCAL_HOSTS})
     return TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
@@ -139,4 +141,5 @@ def build_http_app(server: MCPServer, settings: Settings) -> Any:
 
 
 def url(settings: Settings) -> str:
+    """The HTTP endpoint clients connect to, e.g. http://127.0.0.1:8765/mcp."""
     return f"http://{settings.mcp.host}:{settings.mcp.port}{settings.mcp.path}"

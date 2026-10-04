@@ -27,6 +27,7 @@ def test_registry():
         "get_news",
         "get_tax_figures",
         "compare_tax_accounts",
+        "get_withdrawal_rules",
         "illustrate_capital_gains",
         "request_handoff",
     }
@@ -228,6 +229,9 @@ def test_project_goal(make_context):
     )
     assert "conservative assumptions: 4.5% expected return, 6% volatility" in out
     assert "probability of reaching $100,000 in 10 years" in out and "hypothetical" in out
+    # the dollar basis is spelled out, so "4.5% return" and the results don't seem to disagree
+    assert "all amounts in today's dollars: the 4.5% return is before inflation" in out
+    assert "With a steady 4.5% return" in out
     projection = state.data["goal_projection"]
     assert projection["required_monthly_contribution"] > 0
     assert projection["dollars"] == "today's" and len(projection["yearly"]) == 11
@@ -237,7 +241,8 @@ def test_project_goal(make_context):
         args | {"risk_tolerance": "aggressive", "inflation_adjusted": False},
         agent="goal_planning",
     )
-    assert "aggressive assumptions" in aggressive and "(nominal dollars" in aggressive
+    assert "aggressive assumptions" in aggressive
+    assert "all amounts in future (nominal) dollars" in aggressive
     assert "The odds are low" not in aggressive
 
 
@@ -332,3 +337,41 @@ def test_request_handoff(make_context):
         make_context(), "request_handoff", {"agent": "portfolio", "reason": "x"}, agent="portfolio"
     )
     assert self_handoff.startswith("Not handed off")
+
+
+def test_get_quotes_understands_index_names(make_context):
+    """Regression: "SPX" found nothing, so chat said the S&P 500 was unavailable."""
+    out, _ = run_tool(make_context(), "get_quotes", {"tickers": ["SPX", "djia"]})
+    assert "^GSPC: $6,745.12" in out and "^DJI: $46,520.30" in out
+    assert "unavailable" not in out
+
+
+def test_withdrawal_rules_separate_plans_from_iras(make_context):
+    """Regression (near-retiree persona): the first-time-home exception was given for a 401(k)."""
+    out, state = run_tool(make_context(), "get_withdrawal_rules", {"account": "both"}, agent="tax")
+    home = next(line for line in out.splitlines() if "First-time home" in line)
+    assert "workplace plans (401(k), 403(b)): no" in home and "IRAs: yes" in home
+    rule_55 = next(line for line in out.splitlines() if "Rule of 55" in line)
+    assert "workplace plans (401(k), 403(b)): yes" in rule_55 and "IRAs: no" in rule_55
+    assert "The user's age isn't known" in out and "age 75" in out
+    assert {s.url for s in state.sources} == {
+        "https://www.irs.gov/retirement-plans/plan-participant-employee/"
+        "retirement-topics-exceptions-to-tax-on-early-distributions",
+        "https://www.irs.gov/irb/2024-33_IRB",
+    }
+
+
+def test_withdrawal_rules_use_the_users_age_or_birth_year(make_context):
+    out, _ = run_tool(
+        make_context(),
+        "get_withdrawal_rules",
+        {"account": "ira"},
+        agent="tax",
+        profile=UserProfile(age=58),
+    )
+    assert "Age 58 in " in out and "RMDs start at age 75" in out
+    assert "workplace plans" not in out  # only the IRA column was asked for
+    born_1955, _ = run_tool(
+        make_context(), "get_withdrawal_rules", {"birth_year": 1955}, agent="tax"
+    )
+    assert "Born in 1955: RMDs start at age 73" in born_1955

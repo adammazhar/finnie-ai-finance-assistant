@@ -26,6 +26,8 @@ PLAUSIBLE_RANGE = (-0.01, 0.25)
 
 
 class RiskFreeRate(BaseModel):
+    """The risk-free rate used for a Sharpe ratio (an annual fraction) and where it came from."""
+
     rate: float  # annual, as a fraction
     source: str
     as_of: date | None
@@ -41,14 +43,23 @@ class RiskFreeRate(BaseModel):
 
 
 class TreasuryYieldSource(Protocol):
-    def get_treasury_bill_yield(self) -> Quote: ...
+    """Anything that can fetch the 13-week T-bill yield."""
+
+    def get_treasury_bill_yield(self) -> Quote:
+        """The 13-week T-bill yield; the quote's ``price`` is in percent."""
 
 
 def fallback_risk_free_rate(rate: float) -> RiskFreeRate:
+    """Wrap the configured rate (an annual fraction), labelled as the fallback."""
     return RiskFreeRate(rate=rate, source=FALLBACK_SOURCE, as_of=None, is_fallback=True)
 
 
 def fetch_risk_free_rate(market: TreasuryYieldSource, fallback: float) -> RiskFreeRate:
+    """The live T-bill yield as a fraction, or ``fallback`` if unavailable or implausible.
+
+    Market data errors don't propagate: they're logged as a warning and the fallback is
+    used. Plausible means between -1% and 25%.
+    """
     try:
         quote = market.get_treasury_bill_yield()
     except MarketDataError as exc:

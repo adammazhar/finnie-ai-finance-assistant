@@ -19,7 +19,25 @@ from src.core.models import RiskTolerance
 REFERENCE_DIR = PROJECT_ROOT / "data" / "reference"
 
 SecurityType = Literal["stock", "etf", "mutual_fund", "money_market", "cash", "other"]
-AssetClass = Literal["equity", "bond", "cash", "real_estate", "commodity", "crypto"]
+AssetClass = Literal["equity", "bond", "cash", "real_estate", "commodity", "crypto", "unknown_mix"]
+# How each asset class (and the "other" comparison group) is named in charts, tables, and chat.
+# "unknown_mix" is a fund Finnie has no breakdown for: it isn't counted as stocks or bonds.
+ASSET_CLASS_LABELS: dict[str, str] = {
+    "equity": "Stocks",
+    "bond": "Bonds",
+    "cash": "Cash",
+    "real_estate": "Real estate",
+    "commodity": "Commodities",
+    "crypto": "Crypto",
+    "unknown_mix": "Mix unknown",
+    "other": "Other",
+}
+
+
+def asset_class_label(asset_class: str) -> str:
+    """The display name of an asset class, e.g. ``unknown_mix`` -> "Mix unknown"."""
+    return ASSET_CLASS_LABELS.get(asset_class, asset_class.replace("_", " ").capitalize())
+
 
 _OVERVIEW_TYPES: dict[str, SecurityType] = {
     "equity": "stock",
@@ -51,10 +69,18 @@ class ExpenseRatio(BaseModel):
 
     @property
     def verified(self) -> bool:
+        """True when the ratio was confirmed on the provider's site."""
         return self.status == "verified"
 
 
 class SecurityInfo(BaseModel):
+    """How one security is classified for analysis: type, asset class, sector, fees, and risk.
+
+    ``allocation`` is the asset-class mix of a mixed fund (fractions summing to 1);
+    ``risk`` is a 1-10 rating. ``known`` is false when the entry was inferred rather than
+    taken from the catalog.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     ticker: str
@@ -93,6 +119,8 @@ class SecurityInfo(BaseModel):
 
 
 class SecurityCatalog:
+    """The securities from ``securities.yaml``, keyed by ticker."""
+
     def __init__(self, securities: dict[str, SecurityInfo], last_reviewed: str) -> None:
         self._securities = securities
         self.last_reviewed = last_reviewed
@@ -103,7 +131,12 @@ class SecurityCatalog:
     def __len__(self) -> int:
         return len(self._securities)
 
+    def tickers(self) -> list[str]:
+        """Every ticker in the catalog, in file order."""
+        return list(self._securities)
+
     def get(self, ticker: str) -> SecurityInfo | None:
+        """The catalog entry for ``ticker``, or ``None`` if it isn't listed."""
         return self._securities.get(ticker)
 
     def unverified_expense_ratios(self) -> list[str]:
@@ -131,7 +164,9 @@ class SecurityCatalog:
             ticker=ticker,
             name=name or ticker,
             type=security_type,
-            asset_class="equity",
+            # A fund's stock/bond split can't be guessed from its name: a target-date fund
+            # holds both. Say so rather than counting it as 100% stocks.
+            asset_class="unknown_mix" if is_fund else "equity",
             sector=sector or ("Broad Market" if is_fund else "Unknown"),
             diversified=is_fund,
             risk=6 if is_fund else 8,
@@ -140,6 +175,12 @@ class SecurityCatalog:
 
 
 class RiskProfile(BaseModel):
+    """A risk tolerance's target allocation and long-run return/volatility assumptions.
+
+    The allocation is fractions summing to 1; ``expected_return`` (nominal) and
+    ``volatility`` are annual fractions.
+    """
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     name: RiskTolerance
@@ -187,6 +228,7 @@ def load_catalog(path: Path = REFERENCE_DIR / "securities.yaml") -> SecurityCata
 def load_risk_profiles(
     path: Path = REFERENCE_DIR / "risk_profiles.yaml",
 ) -> dict[RiskTolerance, RiskProfile]:
+    """Load the risk profiles; raises ``ValueError`` if any of the three tolerances is missing."""
     data = _load_yaml(path)
     profiles = {
         name: RiskProfile(name=name, **fields)
@@ -200,9 +242,11 @@ def load_risk_profiles(
 
 @cache
 def get_catalog() -> SecurityCatalog:
+    """The security catalog, loaded once per process."""
     return load_catalog()
 
 
 @cache
 def get_risk_profiles() -> dict[RiskTolerance, RiskProfile]:
+    """The risk profiles, loaded once per process."""
     return load_risk_profiles()

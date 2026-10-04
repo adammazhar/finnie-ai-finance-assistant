@@ -41,16 +41,24 @@ CREATE TABLE IF NOT EXISTS counters (
 
 @dataclass(frozen=True)
 class CacheEntry:
+    """One cached payload, with the provider it came from and when it was fetched."""
+
     key: str
     payload: dict[str, Any]
     source: str
     fetched_at: datetime
 
     def age(self, now: datetime) -> timedelta:
+        """How long before ``now`` the entry was fetched."""
         return now - self.fetched_at
 
 
 class TTLCache:
+    """Thread-safe SQLite store of JSON payloads by key, plus named per-period counters.
+
+    If the database file can't be opened, it logs a warning and falls back to an in-memory database.
+    """
+
     def __init__(self, path: Path | str = MEMORY, clock: Clock = utcnow) -> None:
         self._clock = clock
         self._lock = threading.Lock()
@@ -89,12 +97,14 @@ class TTLCache:
         return CacheEntry(key=key, payload=payload, source=row[1], fetched_at=fetched_at)
 
     def get_fresh(self, key: str, ttl: timedelta) -> CacheEntry | None:
+        """Return the entry only if it is no older than ``ttl``, else ``None``."""
         entry = self.get(key)
         if entry is None or entry.age(self._clock()) > ttl:
             return None
         return entry
 
     def set(self, key: str, payload: dict[str, Any], source: str) -> None:
+        """Store (or replace) ``payload`` as JSON, stamped with the current time and ``source``."""
         with self._lock, self._conn:
             self._conn.execute(
                 "INSERT OR REPLACE INTO entries (key, payload, source, fetched_at) "
@@ -103,16 +113,19 @@ class TTLCache:
             )
 
     def delete(self, key: str) -> None:
+        """Remove the entry for ``key``, if there is one."""
         with self._lock, self._conn:
             self._conn.execute("DELETE FROM entries WHERE key = ?", (key,))
 
     def purge_older_than(self, age: timedelta) -> int:
+        """Delete entries fetched more than ``age`` ago; returns how many were removed."""
         cutoff = (self._clock() - age).isoformat()
         with self._lock, self._conn:
             cursor = self._conn.execute("DELETE FROM entries WHERE fetched_at < ?", (cutoff,))
         return cursor.rowcount
 
     def increment_counter(self, name: str, period: str) -> int:
+        """Increment ``name`` for ``period`` (a new counter starts at 1); returns the new count."""
         with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO counters (name, period, count) VALUES (?, ?, 1) "
@@ -125,6 +138,7 @@ class TTLCache:
         return int(row[0])
 
     def get_counter(self, name: str, period: str) -> int:
+        """The ``name`` counter for ``period``, or 0 if it was never incremented."""
         with self._lock:
             row = self._conn.execute(
                 "SELECT count FROM counters WHERE name = ? AND period = ?", (name, period)
@@ -132,5 +146,6 @@ class TTLCache:
         return int(row[0]) if row else 0
 
     def close(self) -> None:
+        """Close the database connection."""
         with self._lock:
             self._conn.close()

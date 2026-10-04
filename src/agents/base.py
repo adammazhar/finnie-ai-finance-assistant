@@ -59,8 +59,17 @@ FALLBACK_ANSWER = (
 )
 
 LEVEL_GUIDANCE = {
-    "beginner": "The user is a beginner: use plain language, define jargon the first time, "
-    "and include a simple example.",
+    "beginner": (
+        "The user is a beginner. Write the way you'd explain it to a smart friend with no "
+        "finance background:\n"
+        "- Define every financial term in plain words in the same sentence where it first "
+        'appears, e.g. "an expense ratio, the yearly fee a fund charges". That includes '
+        "terms like ETF, index, volatility, beta, Sharpe ratio, moving average, and 401(k).\n"
+        "- If they ask for normal or simple words, use everyday language with no formulas.\n"
+        "- Keep it short: about 150 words. Use at most two short headings (### only), or "
+        "none; prefer short paragraphs and up to five bullets.\n"
+        "- Include one small, concrete example."
+    ),
     "intermediate": "The user knows the basics: skip elementary definitions and be concise.",
     "advanced": "The user is experienced: be precise and concise; technical terms are fine.",
 }
@@ -117,6 +126,7 @@ class RunState:
 
 
 def format_blocks(blocks: list[ContextBlock]) -> str:
+    """Knowledge base passages as numbered text for the prompt: "[n] Title > Section"."""
     return "\n\n".join(
         f"[{b.number}] {b.chunk.chunk.title} > {b.chunk.chunk.section}\n{b.chunk.chunk.text}"
         for b in blocks
@@ -152,6 +162,7 @@ def used_news(news: list[Source], cited: list[int], answer: str) -> list[Source]
 
 @cache
 def load_prompt(name: str) -> str:
+    """A prompt file from ``src/agents/prompts/`` (``_policy`` is shared by every agent)."""
     return (PROMPTS_DIR / f"{name}.md").read_text(encoding="utf-8").strip()
 
 
@@ -170,6 +181,12 @@ def message_text(message: BaseMessage) -> str:
 
 
 class BaseAgent:
+    """Base class for the specialist agents.
+
+    Subclasses only set ``name``, ``description``, ``rag_categories`` (``None`` searches
+    every category), and ``tool_names``; prompting, retrieval, and the tool loop live here.
+    """
+
     name: ClassVar[AgentName]
     description: ClassVar[str]
     rag_categories: ClassVar[tuple[str, ...] | None] = ()  # None = all categories
@@ -181,6 +198,18 @@ class BaseAgent:
     # ---- prompt -------------------------------------------------------------------------
 
     def system_prompt(self, state: RunState) -> str:
+        """The full system prompt for one run, built from:
+
+        - the shared education policy and this agent's prompt
+        - today's date
+        - guidance for the user's knowledge level
+        - the user's profile and saved portfolio
+        - findings from earlier specialists in this turn
+        - the retrieved passages, to cite as [n]
+
+        Text that came from outside (passages, other agents' findings) is fenced as
+        untrusted, so instructions inside it aren't followed.
+        """
         request = state.request
         profile = request.profile
         parts = [
@@ -229,6 +258,18 @@ class BaseAgent:
     # ---- run ----------------------------------------------------------------------------
 
     def run(self, request: AgentRequest) -> AgentResult:
+        """Answer one request, never raising.
+
+        The steps:
+        1. Retrieve passages from this agent's categories.
+        2. Run the bounded tool-calling loop.
+        3. Drop citations that point at nothing.
+        4. Record which source each surviving citation refers to, so the workflow can
+           renumber them when merging answers.
+
+        A failure comes back as ``AgentResult(error=...)``, not an exception, so one
+        agent failing doesn't sink the turn.
+        """
         started = time.perf_counter()
         state = RunState(request=request, agent=self.name)
         try:

@@ -61,6 +61,7 @@ def fallback_title(agents: Sequence[str]) -> str:
 def write_title(
     llm: Any, messages: Sequence[BaseMessage], summary: str | None = None
 ) -> str | None:
+    """A conversation title from the fast model, or ``None`` if the call fails or is empty."""
     lines = [f"Earlier: {summary}"] if summary else []
     for message in messages:
         role = "User" if isinstance(message, HumanMessage) else "Finnie"

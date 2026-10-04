@@ -120,11 +120,13 @@ def _setup_page(problem: str) -> None:
 
 
 def main() -> None:
+    """One script run: setup page if no API key, onboarding on a first visit, otherwise
+    the sidebar, the tab bar, and the selected page."""
     st.set_page_config(
         page_title="Finnie: financial education assistant",
         page_icon="💬",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="auto",  # open on desktop, closed on phones (it would cover the page)
     )
     problem = _setup_problem()
     if problem is not None:

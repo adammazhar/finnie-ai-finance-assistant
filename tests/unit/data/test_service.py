@@ -425,3 +425,18 @@ def test_news_with_no_english_articles_tries_the_next_provider(svc, yfp, av):
     yfp.scripts["get_news"] = [[NewsArticle(title="テスラ株が急騰、納車台数が予想を上回る")]]
     feed = svc.get_news(ticker="TSLA")
     assert feed.freshness.source == "alpha_vantage"
+
+
+def test_news_drops_quote_pages(svc, yfp, av):
+    yfp.scripts["get_news"] = [
+        [
+            NewsArticle(
+                title="SPY Sep 2026 665.000 call (SPY260929C00665000) Stock Price, News, "
+                "Quote & History",
+                url="https://ca.finance.yahoo.com/quote/SPY260929C00665000/",
+            ),
+            NewsArticle(title="Stocks rise as the Fed signals patience"),
+        ]
+    ]
+    feed = svc.get_news(ticker="SPY")
+    assert [a.title for a in feed.articles] == ["Stocks rise as the Fed signals patience"]

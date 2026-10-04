@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import streamlit as st
@@ -10,6 +11,7 @@ from src.core.indicators import MoverSummary, technical_snapshot
 from src.core.market_hours import market_status, price_time_label
 from src.core.models import normalize_ticker
 from src.data.errors import MarketDataError
+from src.data.symbols import SymbolDirectory
 from src.web_app import charts, services
 from src.web_app.formatting import (
     big_money,
@@ -21,7 +23,10 @@ from src.web_app.formatting import (
     provider_name,
 )
 
+logger = logging.getLogger(__name__)
+
 HISTORY_DAYS = 400  # enough for a 200-day average over the past year
+SUGGESTED_COMPANIES = 4000  # the largest SEC companies offered while typing
 TRENDS = {
     "uptrend": "Uptrend",
     "downtrend": "Downtrend",
@@ -94,32 +99,117 @@ def _news(ticker: str) -> None:
     st.caption(freshness_caption([feed.freshness]) or "")
 
 
-def _lookup() -> None:
-    raw = st.text_input("Look up a ticker", value="SPY", key="mk_ticker", max_chars=12)
+def _is_index(ticker: str) -> bool:
+    return ticker.startswith("^")
+
+
+def _amount(ticker: str, value: float | None, decimals: int = 2) -> str:
+    """Dollars for a stock or fund; plain points for an index level."""
+    if value is None:
+        return "n/a"
+    if _is_index(ticker):
+        return f"{value:,.{decimals}f}"
+    return money(value, cents=decimals > 0)
+
+
+def _suggestions(directory: SymbolDirectory) -> list[str]:
+    """What the search box offers as you type: every index and Finnie fund, plus the largest
+    SEC companies. Anything else is found by pressing Enter (see ``_resolve``)."""
+    shown = [e for e in directory.entries if e.source != "sec"]
+    shown += [e for e in directory.entries if e.source == "sec"][:SUGGESTED_COMPANIES]
+    return [e.label for e in shown]
+
+
+def _resolve(text: str, directory: SymbolDirectory) -> str | None:
+    """The ticker for a typed name or ticker, or ``None`` after explaining what to do.
+
+    Searches every SEC company (not just the ones offered while typing), then Yahoo
+    Finance; with several matches, the user picks one.
+    """
+    text = text.strip()
+    exact = directory.get(text)
+    if exact is not None:
+        return exact.ticker
+    matches = directory.search(text, limit=6) or services.online_symbol_search(text)
+    if matches:
+        picked = st.radio(
+            md(f'Did you mean one of these for "{text}"?'),
+            [m.label for m in matches],
+            index=None,
+            key="mk_pick",
+        )
+        return picked.split(" · ", 1)[0] if picked else None
     try:
-        ticker = normalize_ticker(raw)
+        return normalize_ticker(text)  # not in any list: try it as a ticker anyway
     except ValueError:
-        st.warning("Enter a ticker symbol like AAPL, VTI, or BRK.B.")
+        st.warning(
+            md(f'Nothing matches "{text}". Try a company or fund name, or a ticker like AAPL.')
+        )
+        return None
+
+
+def _clear_search() -> None:
+    """Widget callback: picking from the list replaces a search typed below it."""
+    st.session_state["mk_query"] = ""
+    st.session_state.pop("mk_pick", None)
+
+
+def _lookup() -> None:
+    directory = services.symbols()
+    labels = _suggestions(directory)
+    default = directory.get("SPY")
+    choice = st.selectbox(
+        "Look up a stock, fund, or index",
+        labels,
+        index=labels.index(default.label) if default and default.label in labels else None,
+        key="mk_symbol",
+        on_change=_clear_search,
+        placeholder="Type a name or ticker, e.g. Apple or S&P 500",
+        help="Suggestions come from the SEC's company list and Finnie's fund and index list.",
+    )
+    query = st.text_input(
+        "Not in the list? Search by name or ticker",
+        key="mk_query",
+        placeholder="e.g. Nestle, or a ticker such as NSRGY",
+        help="Searches every company on the SEC's list, then Yahoo Finance.",
+    )
+    if query.strip():
+        ticker = _resolve(query, directory)
+    else:
+        ticker = choice.split(" · ", 1)[0] if choice else None
+    if ticker is None:
         return
     market = services.context().market
     try:
         history = market.get_daily_history(ticker, HISTORY_DAYS)
         snapshot = technical_snapshot(history)
     except (MarketDataError, ValueError) as exc:
-        st.warning(md(f"Couldn't load price history for {ticker}: {exc}"))
+        logger.info("Ticker lookup failed", extra={"ticker": ticker, "error": str(exc)})
+        st.warning(
+            md(
+                f"Couldn't find price history for {ticker}. Check the symbol (for example "
+                "AAPL, VTI, or ^GSPC for the S&P 500). If it's right, the data providers may "
+                "be unavailable for a moment."
+            )
+        )
         return
     cols = st.columns(4)
     try:
         quote = market.get_quote(ticker)
     except MarketDataError:  # no quote: fall back to the last daily close
-        cols[0].metric("Last close", money(snapshot.price, cents=True))
+        cols[0].metric("Last close", _amount(ticker, snapshot.price))
         when = f"{snapshot.as_of:%b} {snapshot.as_of.day}, {snapshot.as_of.year}"
         st.caption(f"Last close · {when} · {market_status().label}")
     else:
         change = f"{quote.change_percent:+.2f}%" if quote.change_percent is not None else None
-        cols[0].metric("Price", money(quote.price, cents=True), change)
+        cols[0].metric(
+            "Level" if _is_index(ticker) else "Price", _amount(ticker, quote.price), change
+        )
         st.caption(price_time_label(quote.freshness.as_of))
-    cols[1].metric("52-week range", f"{money(snapshot.low_52w)} to {money(snapshot.high_52w)}")
+    cols[1].metric(
+        "52-week range",
+        md(f"{_amount(ticker, snapshot.low_52w, 0)} to {_amount(ticker, snapshot.high_52w, 0)}"),
+    )
     cols[2].metric("Trend", TRENDS.get(snapshot.trend, snapshot.trend))
     cols[3].metric(
         "RSI (14-day)", f"{snapshot.rsi_14:.0f}" if snapshot.rsi_14 is not None else "n/a"
@@ -169,9 +259,10 @@ def _company(market: Any, ticker: str) -> None:
 
 
 def render() -> None:
+    """Draw the Markets tab: the market overview, then the ticker lookup."""
     st.subheader("Markets today")
     _overview()
     st.divider()
-    st.subheader("Look up a stock or fund")
+    st.subheader("Look up a stock, fund, or index")
     _lookup()
     st.caption("Market data is for learning. It isn't a recommendation to buy or sell anything.")

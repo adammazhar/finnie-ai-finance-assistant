@@ -67,6 +67,26 @@ securities:
   AOR:    {name: iShares Core 60/40 Balanced Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.6, bond: 0.4}, sector: Broad Market, diversified: true, risk: 5}
   AOA:    {name: iShares Core 80/20 Aggressive Allocation ETF, type: etf, asset_class: equity, allocation: {equity: 0.8, bond: 0.2}, sector: Broad Market, diversified: true, risk: 6}
 
+  # Target-date and balanced funds: stock/bond mix from each fund's Vanguard fact sheet
+  # dated June 30, 2026 (target-date mixes shift toward bonds as the target year nears).
+  VTINX: {name: Vanguard Target Retirement Income Fund, type: mutual_fund, asset_class: bond, allocation: {equity: 0.315, bond: 0.685}, sector: Broad Market, diversified: true, risk: 3}
+  VTWNX: {name: Vanguard Target Retirement 2020 Fund, type: mutual_fund, asset_class: bond, allocation: {equity: 0.343, bond: 0.657}, sector: Broad Market, diversified: true, risk: 3}
+  VTTVX: {name: Vanguard Target Retirement 2025 Fund, type: mutual_fund, asset_class: bond, allocation: {equity: 0.486, bond: 0.514}, sector: Broad Market, diversified: true, risk: 4}
+  VTHRX: {name: Vanguard Target Retirement 2030 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.596, bond: 0.404}, sector: Broad Market, diversified: true, risk: 5}
+  VTTHX: {name: Vanguard Target Retirement 2035 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.676, bond: 0.324}, sector: Broad Market, diversified: true, risk: 5}
+  VFORX: {name: Vanguard Target Retirement 2040 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.753, bond: 0.247}, sector: Broad Market, diversified: true, risk: 6}
+  VTIVX: {name: Vanguard Target Retirement 2045 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.827, bond: 0.173}, sector: Broad Market, diversified: true, risk: 6}
+  VFIFX: {name: Vanguard Target Retirement 2050 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.905, bond: 0.095}, sector: Broad Market, diversified: true, risk: 6}
+  VFFVX: {name: Vanguard Target Retirement 2055 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.912, bond: 0.088}, sector: Broad Market, diversified: true, risk: 6}
+  VTTSX: {name: Vanguard Target Retirement 2060 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.913, bond: 0.087}, sector: Broad Market, diversified: true, risk: 6}
+  VASIX: {name: Vanguard LifeStrategy 20/80 Fund, type: mutual_fund, asset_class: bond, allocation: {equity: 0.214, bond: 0.786}, sector: Broad Market, diversified: true, risk: 3}
+  VSCGX: {name: Vanguard LifeStrategy 40/60 Fund, type: mutual_fund, asset_class: bond, allocation: {equity: 0.415, bond: 0.585}, sector: Broad Market, diversified: true, risk: 4}
+  VSMGX: {name: Vanguard LifeStrategy 60/40 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.618, bond: 0.382}, sector: Broad Market, diversified: true, risk: 5}
+  VASGX: {name: Vanguard LifeStrategy 80/20 Fund, type: mutual_fund, asset_class: equity, allocation: {equity: 0.819, bond: 0.181}, sector: Broad Market, diversified: true, risk: 6}
+  VBIAX: {name: Vanguard Balanced Index Fund Admiral Shares, type: mutual_fund, asset_class: equity, allocation: {equity: 0.611, bond: 0.382, cash: 0.007}, sector: Broad Market, diversified: true, risk: 5}
+  VWELX: {name: Vanguard Wellington Fund Investor Shares, type: mutual_fund, asset_class: equity, allocation: {equity: 0.656, bond: 0.336, cash: 0.008}, sector: Broad Market, diversified: true, risk: 5}
+  VWINX: {name: Vanguard Wellesley Income Fund Investor Shares, type: mutual_fund, asset_class: bond, allocation: {equity: 0.367, bond: 0.617, cash: 0.016}, sector: Broad Market, diversified: true, risk: 3}
+
   # Real assets and crypto
   VNQ:    {name: Vanguard Real Estate ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, risk: 7}
   SCHH:   {name: Schwab U.S. REIT ETF, type: etf, asset_class: real_estate, sector: Real Estate, diversified: true, risk: 7}
@@ -474,3 +494,105 @@ expense_ratios:
     as_of: 2026-09-29
     verified_on: 2026-09-30
     source_url: "https://www.ssga.com/mainfund/XLC"
+  VTINX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0308.pdf"
+  VTWNX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0682.pdf"
+  VTTVX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0304.pdf"
+  VTHRX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0695.pdf"
+  VTTHX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0305.pdf"
+  VFORX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0696.pdf"
+  VTIVX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0306.pdf"
+  VFIFX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0699.pdf"
+  VFFVX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F1487.pdf"
+  VTTSX:
+    ratio: 0.0008
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F1691.pdf"
+  VASIX:
+    ratio: 0.001
+    status: verified
+    as_of: 2026-02-27
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0723.pdf"
+  VSCGX:
+    ratio: 0.001
+    status: verified
+    as_of: 2026-02-27
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0724.pdf"
+  VSMGX:
+    ratio: 0.001
+    status: verified
+    as_of: 2026-02-27
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0914.pdf"
+  VASGX:
+    ratio: 0.001
+    status: verified
+    as_of: 2026-02-27
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0122.pdf"
+  VBIAX:
+    ratio: 0.0007
+    status: verified
+    as_of: 2026-04-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0502.pdf"
+  VWELX:
+    ratio: 0.0024
+    status: verified
+    as_of: 2026-03-27
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0021.pdf"
+  VWINX:
+    ratio: 0.0022
+    status: verified
+    as_of: 2026-01-28
+    verified_on: 2026-10-04
+    source_url: "https://advisors.vanguard.com/assets/corp/fund_communications/pdf_publish/us-products/fact-sheet/F0027.pdf"

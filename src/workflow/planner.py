@@ -22,6 +22,10 @@ def build_plan(
     *,
     max_stages: int,
 ) -> list[list[str]]:
+    """Group the agents into stages that respect their dependencies, at most ``max_stages``.
+
+    Duplicate agents are dropped, and stages beyond the budget are merged into the last one.
+    """
     chosen = list(dict.fromkeys(agents))
     if not chosen:
         return []

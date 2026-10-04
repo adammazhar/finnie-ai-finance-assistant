@@ -101,7 +101,24 @@ def is_english(text: str) -> bool:
     return len(words) < 4 or any(w in ENGLISH_WORDS for w in words)
 
 
+# Search results that are price pages rather than articles, e.g. Yahoo's
+# "SPY Sep 2026 665.000 call (SPY260929C00665000) Stock Price, News, Quote & History"
+OPTION_SYMBOL = re.compile(r"\b[A-Z]{1,6}\d{6}[CP]\d{8}\b")
+QUOTE_PAGE_TITLE = re.compile(r"stock price, news, quote|quote & history|quote and history", re.I)
+QUOTE_PAGE_PATH = re.compile(r"/quote/|/options?/", re.I)
+
+
+def is_article(title: str, url: str | None) -> bool:
+    """False for quote, option-chain, and other price pages that news searches sometimes
+    return; True for anything that looks like an actual article."""
+    if OPTION_SYMBOL.search(title) or QUOTE_PAGE_TITLE.search(title):
+        return False
+    return not (url and QUOTE_PAGE_PATH.search(url))
+
+
 class TavilyNewsProvider:
+    """News search through Tavily's ``news`` topic, limited to the last ``days`` days."""
+
     name = NAME
 
     def __init__(
@@ -120,6 +137,11 @@ class TavilyNewsProvider:
     def get_news(
         self, ticker: str | None = None, query: str | None = None, limit: int = 5
     ) -> list[NewsArticle]:
+        """Search Tavily for ``query``, or "<ticker> stock news"; ``[]`` when given neither.
+
+        Summaries are cut to 500 characters. Raises ``ProviderError`` on an unexpected response
+        shape.
+        """
         search = query or (f"{ticker} stock news" if ticker else None)
         if not search:
             return []

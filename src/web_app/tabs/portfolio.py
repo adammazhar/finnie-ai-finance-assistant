@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -17,8 +18,10 @@ from src.core.portfolio import (
     expense_ratio_label,
     fetch_and_analyze,
     fund_expense_ratio,
+    holding_error,
     holdings_from_csv,
 )
+from src.core.reference import asset_class_label
 from src.web_app import charts, services, state
 from src.web_app.formatting import freshness_caption, md, money, percent
 
@@ -30,10 +33,15 @@ SAMPLES = {
 }
 EXPLAIN_PROMPT = "Explain my portfolio: how diversified is it, and what are its main risks?"
 EDITOR_VERSION = "pf_editor_version"
+UPLOAD_USED = "pf_upload_used"  # file_id of the upload last loaded with "Use uploaded file"
 
 
 @st.cache_data(ttl=600, show_spinner="Analyzing your portfolio…")
 def analyze(holdings_json: str, risk_tolerance: str) -> PortfolioAnalysis:
+    """Fetch prices and analyze the holdings against the user's risk profile.
+
+    The holdings arrive as JSON so the result can be cached (10 minutes) by value.
+    """
     context = services.context()
     holdings = [Holding.model_validate(h) for h in json.loads(holdings_json)]
     return fetch_and_analyze(
@@ -78,6 +86,7 @@ def _inputs() -> None:
             key="pf_upload",
         )
         if upload is not None and st.button("Use uploaded file", key="pf_use_upload"):
+            st.session_state[UPLOAD_USED] = upload.file_id
             _load_from_csv(upload.getvalue().decode("utf-8", errors="replace"), upload.name)
 
     rows = pd.DataFrame(
@@ -90,17 +99,34 @@ def _inputs() -> None:
         key=f"pf_editor_{st.session_state.get(EDITOR_VERSION, 0)}",
         column_config={
             "ticker": st.column_config.TextColumn("Ticker", required=True),
-            "shares": st.column_config.NumberColumn("Shares", min_value=0.0, format="%.4g"),
+            # no min_value: the editor would silently flip "-5" to 5; Save explains instead
+            "shares": st.column_config.NumberColumn("Shares", format="%.4g"),
             "cost_basis": st.column_config.NumberColumn(
-                "Total cost (optional)", min_value=0.0, format="dollar"
+                "Total cost (optional)",
+                format="dollar",
+                help="What you paid for all the shares together (cost_basis in a CSV file).",
             ),
         },
         width="stretch",
     )
     if st.button("Save holdings", type="primary", key="pf_save"):
-        holdings, problems = _rows_to_holdings(edited)
-        _warn_all(problems)
-        _replace(holdings)
+        _save(edited, upload)
+
+
+def _save(edited: pd.DataFrame, upload: Any) -> None:
+    """Save the table, unless a chosen file hasn't been loaded yet or there's nothing to save."""
+    if upload is not None and st.session_state.get(UPLOAD_USED) != upload.file_id:
+        st.warning(
+            "You chose a file but haven't loaded it yet. Click **Use uploaded file** to "
+            "load it, or remove the file to save the table as it is."
+        )
+        return
+    holdings, problems = _rows_to_holdings(edited)
+    _warn_all(problems)
+    if not holdings and not problems and not state.portfolio():
+        st.info("The table is empty. Add a row (ticker and shares) or load a sample first.")
+        return
+    _replace(holdings)  # an empty table clears a saved portfolio
 
 
 def _rows_to_holdings(frame: pd.DataFrame) -> tuple[list[Holding], list[str]]:
@@ -119,15 +145,25 @@ def _rows_to_holdings(frame: pd.DataFrame) -> tuple[list[Holding], list[str]]:
                 )
             )
         except ValueError as exc:
-            problems.append(f"Row {number} ({ticker}) was skipped: {str(exc).splitlines()[-1]}")
+            problems.append(f"Row {number} ({ticker}) was skipped: {holding_error(exc)}")
     return holdings, problems
 
 
 def _metrics(analysis: PortfolioAnalysis) -> None:
     cols = st.columns(4)
     cols[0].metric("Total value", money(analysis.total_value, cents=True))
-    cols[1].metric("Diversification", f"{analysis.diversification_score:.0f} / 100")
-    cols[2].metric("Risk level", f"{analysis.risk_level} ({analysis.risk_score:.1f}/10)")
+    cols[1].metric(
+        "Diversification",
+        f"{analysis.diversification_score:.0f} / 100",
+        help="How spread out the money is across holdings, asset types, and sectors. "
+        "Higher means one holding or sector going wrong hurts less.",
+    )
+    cols[2].metric(
+        "Risk level",
+        f"{analysis.risk_level} ({analysis.risk_score:.1f}/10)",
+        help="How much the portfolio's value could swing, from 1 (cash-like) to 10 "
+        "(concentrated in volatile stocks), based on what the holdings are.",
+    )
     cols[3].metric(
         "Portfolio expense ratio",
         percent(fund_expense_ratio(analysis.holdings), 2),
@@ -151,22 +187,46 @@ def _risk(analysis: PortfolioAnalysis) -> None:
         return
     table = pd.DataFrame(
         [
-            ("Return over the period", percent(metrics.annual_return, signed=True)),
-            ("Volatility (annualized)", percent(metrics.annual_volatility)),
-            ("Largest drop from a high", percent(metrics.max_drawdown)),
-            ("Beta vs S&P 500", f"{metrics.beta:.2f}" if metrics.beta is not None else "n/a"),
+            (
+                "Return over the period",
+                percent(metrics.annual_return, signed=True),
+                "How much today's holdings gained or lost over the past year.",
+            ),
+            (
+                "Volatility (annualized)",
+                percent(metrics.annual_volatility),
+                "How much the value bounced around. Higher means bumpier.",
+            ),
+            (
+                "Largest drop from a high",
+                percent(metrics.max_drawdown),
+                "The worst fall from a peak to a low during the period.",
+            ),
+            (
+                "Beta vs S&P 500",
+                f"{metrics.beta:.2f}" if metrics.beta is not None else "n/a",
+                "1 moves like the market; 0.5 moves about half as much; above 1 moves more.",
+            ),
             (
                 "Sharpe ratio",
                 f"{metrics.sharpe_ratio:.2f}" if metrics.sharpe_ratio is not None else "n/a",
+                "Return earned per unit of bumpiness, above a safe Treasury bill. "
+                "Higher is better; below 0 means the bill did better.",
             ),
         ],
-        columns=["Measure", "Value"],
+        columns=["Measure", "Value", "What it means"],
     )
     st.dataframe(table, hide_index=True, width="stretch")
     st.caption(
         f"{metrics.start:%b %d, %Y} to {metrics.end:%b %d, %Y}. Sharpe uses a risk-free rate of "
         f"{md(metrics.risk_free.label())}. Past results don't predict future returns."
     )
+
+
+def _fee(ratio: float | None, is_fund: bool) -> str:
+    if not is_fund:
+        return "—"
+    return f"{ratio:.2%}" if ratio is not None else "not known"
 
 
 def _holdings_table(analysis: PortfolioAnalysis) -> None:
@@ -178,9 +238,9 @@ def _holdings_table(analysis: PortfolioAnalysis) -> None:
                 "Shares": h.shares,
                 "Price": h.price,
                 "Value": h.value,
-                "Weight": h.weight,
+                "Weight": f"{h.weight:.1%}",
                 "Sector": h.sector,
-                "Expense ratio": h.expense_ratio if h.type in FUND_TYPES else None,
+                "Expense ratio": _fee(h.expense_ratio, h.type in FUND_TYPES),
             }
             for h in analysis.holdings
         ]
@@ -192,8 +252,9 @@ def _holdings_table(analysis: PortfolioAnalysis) -> None:
         column_config={
             "Price": st.column_config.NumberColumn(format="dollar"),
             "Value": st.column_config.NumberColumn(format="dollar"),
-            "Weight": st.column_config.NumberColumn(format="percent"),
-            "Expense ratio": st.column_config.NumberColumn(format="percent"),
+            "Expense ratio": st.column_config.TextColumn(
+                help="Yearly fund fee. Individual stocks don't charge one."
+            ),
         },
     )
 
@@ -233,10 +294,14 @@ def _analysis(analysis: PortfolioAnalysis) -> None:
         st.markdown(md("\n".join(f"- {line}" for line in analysis.observations)))
     # The tab always passes the user's risk profile, so there are always gaps to show.
     st.markdown(f"**Compared with a typical {analysis.profile} mix**")
+    st.caption(
+        "This typical mix is based on your risk tolerance only. Your time horizon matters "
+        "too: money you'll need within a few years has less time to recover from a market drop."
+    )
     gaps = pd.DataFrame(
         [
             {
-                "Group": g.group,
+                "Group": asset_class_label(g.group),
                 "Yours": g.current,
                 "Typical": g.target,
                 "Difference": g.difference,
@@ -267,6 +332,7 @@ def _analysis(analysis: PortfolioAnalysis) -> None:
 
 
 def render() -> None:
+    """Draw the Portfolio tab: holdings input, then the analysis of the saved holdings."""
     st.subheader("Your portfolio")
     st.caption("Holdings saved here are used in chat and on the Goals tab.")
     _inputs()

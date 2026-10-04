@@ -21,11 +21,14 @@ NEWS_CITATION = re.compile(r"\[N(\d{1,2})\]")
 
 
 class ContextBlock(BaseModel):
+    """One retrieved chunk as numbered (``[number]``) in the LLM context."""
+
     number: int
     chunk: RetrievedChunk
 
     @property
     def source(self) -> Source:
+        """The chunk as a ``Source``, linking its article's first reference URL."""
         chunk = self.chunk.chunk
         first = chunk.sources[0] if chunk.sources else None
         return Source(
@@ -49,6 +52,12 @@ def build_context(chunks: Sequence[RetrievedChunk]) -> tuple[str, list[ContextBl
 
 
 class CitationCheck(BaseModel):
+    """An answer after citation checking.
+
+    ``text`` has invalid markers stripped; ``cited`` lists the valid numbers in first-use order and
+    ``removed`` the stripped ones.
+    """
+
     text: str
     cited: list[int]
     removed: list[int]

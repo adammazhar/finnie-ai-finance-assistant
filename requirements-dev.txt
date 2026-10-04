@@ -8,4 +8,5 @@ responses==0.26.3
 hypothesis==6.168.3
 ruff==0.16.9
 mypy==2.3.1
+interrogate==1.7.0
 types-PyYAML==6.0.12.20260906

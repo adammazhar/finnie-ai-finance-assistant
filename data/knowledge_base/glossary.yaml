@@ -374,6 +374,9 @@ terms:
   - term: Prospectus
     definition: "A legal document describing an investment offering, such as a mutual fund or new stock, including its goals, risks, fees, and management. Funds must provide one, and it is the main source for understanding what you own."
     related: [Mutual fund, Expense ratio]
+  - term: Pump-and-dump scheme
+    definition: "A fraud in which promoters hype a stock or crypto token, often a small, thinly traded one, with false or misleading claims spread online. The buying frenzy \"pumps\" the price up, the promoters \"dump\" their shares at the inflated price, and the price usually collapses, leaving later buyers with losses. Urgent messages to buy quickly are a common red flag."
+    related: [Stock, Liquidity, Volatility]
   - term: Qualified dividend
     definition: "A dividend that meets IRS rules, including a minimum holding period, to be taxed at the lower long-term capital gains rates rather than ordinary income rates. Most dividends from U.S. companies can qualify."
     related: [Dividend, Long-term capital gain, Ordinary income, Ex-dividend date]

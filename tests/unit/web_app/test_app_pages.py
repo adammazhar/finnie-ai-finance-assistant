@@ -147,13 +147,15 @@ def test_market_overview_and_ticker_lookup(ui):
     assert "- Plain headline" in markdown
 
 
-def test_ticker_lookup_handles_bad_input_and_outages(ui):
+def test_ticker_lookup_handles_bad_input_and_outages(ui, monkeypatch):
     app, _, _ = page(ui, "Markets", market=FakeMarketService(news=[]))
     assert "No recent news found for SPY." in texts(app.caption)
-    app.text_input(key="mk_ticker").set_value("not a ticker!").run()
-    assert any("Enter a ticker symbol" in t for t in texts(app.warning))
-    app.text_input(key="mk_ticker").set_value("ZZZZ").run()
-    assert any("Couldn't load price history for ZZZZ" in t for t in texts(app.warning))
+    monkeypatch.setattr(services, "symbol_fallback", lambda query: [])
+    app.text_input(key="mk_query").set_value("ZZZZ").run()
+    # a plain message, without provider internals
+    assert any("Couldn't find price history for ZZZZ" in t for t in texts(app.warning))
+    assert not any("alpha_vantage" in t or "yfinance" in t for t in texts(app.warning))
+    monkeypatch.undo()  # back to the real search box for the outage check
     market = FakeMarketService(fail={"get_quotes", "get_news", "get_company_overview"})
     app, _, _ = ui(page="Markets", market=market)
     assert any("Market data is unavailable right now" in t for t in texts(app.main.error))
@@ -323,3 +325,130 @@ def test_buttons_that_ask_in_chat_scroll_to_the_start_of_the_answer(ui):
     # typing in the chat box doesn't jump anywhere, and the scroll happens once
     app.chat_input(key="chat_input").set_value("And bonds?").run()
     assert not scroll_scripts(app)
+
+
+# ---- markets: search by name -----------------------------------------------------------------
+
+
+def test_search_box_offers_names_and_defaults_to_spy(ui):
+    app, _, _ = page(ui, "Markets")
+    box = app.selectbox(key="mk_symbol")
+    assert box.value == "SPY · SPDR S&P 500 ETF Trust · ETF"
+    assert "^GSPC · S&P 500 Index · Index" in box.options
+    assert "AAPL · Apple Inc. · Stock" in box.options
+    assert len(box.options) <= len(services.symbols().entries)  # only the largest companies
+    box.set_value("AAPL · Apple Inc. · Stock").run()
+    assert any(m.label == "Price" for m in app.metric)
+    assert not app.radio  # a suggestion was picked, so nothing to choose from
+
+
+def search(app, text):
+    """Type into "Not in the list? Search by name or ticker"."""
+    app.text_input(key="mk_query").set_value(text).run()
+    return app
+
+
+def test_a_typed_name_offers_matches_to_pick(ui):
+    app, _, _ = page(ui, "Markets")
+    search(app, "Apple")
+    choices = app.radio(key="mk_pick")
+    assert choices.options[0] == "AAPL · Apple Inc. · Stock"
+    assert not any(m.label == "Price" for m in app.metric)  # waits for a pick
+    choices.set_value("AAPL · Apple Inc. · Stock").run()
+    assert any(m.label == "Price" for m in app.metric)
+
+
+def test_an_exact_ticker_typed_in_full_is_looked_up(ui):
+    app, _, _ = page(ui, "Markets")
+    search(app, "vti")
+    assert any(m.label == "Price" for m in app.metric) and not app.radio
+
+
+def test_picking_from_the_list_replaces_a_typed_search(ui):
+    app, _, _ = page(ui, "Markets")
+    search(app, "Apple")
+    app.selectbox(key="mk_symbol").set_value("VTI · Vanguard Total Stock Market ETF · ETF").run()
+    assert app.text_input(key="mk_query").value == "" and not app.radio
+    assert any(m.label == "Price" for m in app.metric)
+
+
+def test_names_not_in_the_local_list_are_searched_online(ui, monkeypatch):
+    from src.data.symbols import SymbolMatch
+
+    seen = []
+
+    def fake_online(query):
+        seen.append(query)
+        return [SymbolMatch(ticker="NSRGY", name="Nestle S.A.", kind="Stock", source="yahoo")]
+
+    monkeypatch.setattr(services, "symbol_fallback", fake_online)
+    app, _, _ = page(ui, "Markets")
+    search(app, "Nestle chocolate")
+    assert seen == ["Nestle chocolate"]
+    assert app.radio(key="mk_pick").options == ["NSRGY · Nestle S.A. · Stock"]
+
+
+def test_unknown_text_is_tried_as_a_ticker_or_explained(ui, monkeypatch):
+    monkeypatch.setattr(services, "symbol_fallback", lambda query: [])
+    app, _, _ = page(ui, "Markets")
+    search(app, "QQQQZZ")
+    assert any("Couldn't find price history for QQQQZZ" in t for t in texts(app.warning))
+    search(app, "not a ticker!")
+    assert any('Nothing matches "not a ticker!"' in t for t in texts(app.warning))
+
+
+# ---- goals: defaults per goal type, profile horizon, saved inputs ----------------------------
+
+
+def test_goal_types_have_their_own_starting_inputs(ui):
+    app, _, _ = page(ui, "Goals")
+    assert app.number_input(key="goal_target").value == 1_000_000.0  # retirement
+    app.selectbox(key="goal_type").set_value("Emergency fund").run()
+    assert app.number_input(key="goal_target").value == 15_000.0
+    assert app.slider(key="goal_years").value == 2
+    assert app.selectbox(key="goal_risk").value == "conservative"
+    assert any("Emergency savings are usually kept in cash" in t for t in texts(app.info))
+    app.selectbox(key="goal_type").set_value("House down payment").run()
+    assert (app.number_input(key="goal_target").value, app.slider(key="goal_years").value) == (
+        60_000.0,
+        5,
+    )
+    assert not any("Emergency savings" in t for t in texts(app.info))
+
+
+def test_retirement_years_come_from_the_profile(ui):
+    from src.core.models import UserProfile
+
+    horizon = {"finnie_profile": UserProfile(investment_horizon_years=7)}
+    app, _, _ = page(ui, "Goals", session=horizon)
+    assert app.slider(key="goal_years").value == 7
+    by_age = {"finnie_profile": UserProfile(age=40, risk_tolerance="aggressive")}
+    app, _, _ = page(ui, "Goals", session=by_age, browser="c" * 32)  # nothing saved yet
+    assert app.slider(key="goal_years").value == 25  # 65 - 40
+    assert app.selectbox(key="goal_risk").value == "aggressive"
+
+
+def test_goal_inputs_are_saved_and_restored(ui):
+    from tests.unit.web_app.conftest import BROWSER
+
+    app, _, _ = page(ui, "Goals")
+    app.selectbox(key="goal_type").set_value("College").run()
+    app.number_input(key="goal_target").set_value(80_000.0).run()
+    saved = services.store().load(BROWSER).goal
+    assert saved["goal"] == "College" and saved["target"] == 80_000.0
+    restored = {"finnie_goal_inputs": saved | {"years": 9}}
+    again, _, _ = page(ui, "Goals", session=restored)
+    assert again.selectbox(key="goal_type").value == "College"
+    assert again.number_input(key="goal_target").value == 80_000.0
+    assert again.slider(key="goal_years").value == 9
+    broken = {"finnie_goal_inputs": {"goal": "Yacht", "risk": "reckless"}}
+    fallback, _, _ = page(ui, "Goals", session=broken)
+    assert fallback.selectbox(key="goal_type").value == "Retirement"
+
+
+def test_an_index_shows_a_level_not_a_price(ui):
+    app, _, _ = page(ui, "Markets")
+    app.selectbox(key="mk_symbol").set_value("^GSPC · S&P 500 Index · Index").run()
+    level = next(m for m in app.metric if m.label == "Level")
+    assert level.value == "6,745.12" and "$" not in level.value
+    assert not any(m.label == "Price" for m in app.metric)

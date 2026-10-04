@@ -27,6 +27,8 @@ KEYWORD_FLOOR = 0.75  # regression floor for the fallback router (docs/BENCHMARK
 
 
 class RoutingCase(BaseModel):
+    """One labelled routing question from the eval set."""
+
     question: str
     agents: list[AgentName] = Field(default_factory=list)
     alternatives: list[list[AgentName]] = Field(default_factory=list)
@@ -35,18 +37,24 @@ class RoutingCase(BaseModel):
     history: list[str] = Field(default_factory=list, description="user, Finnie, user, ...")
 
     def messages(self) -> list[BaseMessage]:
+        """The case's earlier conversation as messages, alternating user and Finnie."""
         return [
             HumanMessage(content=text) if i % 2 == 0 else AIMessage(content=text)
             for i, text in enumerate(self.history)
         ]
 
     def accepts(self, decision: RouteDecision) -> bool:
+        """Whether the decision chose every needed agent (or an alternative set).
+
+        Out-of-scope cases pass only when the decision is out of scope too, and vice versa.
+        """
         if self.out_of_scope or decision.out_of_scope:
             return self.out_of_scope == decision.out_of_scope
         chosen = set(decision.agents)
         return any(set(wanted) <= chosen for wanted in [self.agents, *self.alternatives])
 
     def exact(self, decision: RouteDecision) -> bool:
+        """Like ``accepts``, but the chosen agents must equal a wanted set, with no extras."""
         if self.out_of_scope or decision.out_of_scope:
             return self.accepts(decision)
         chosen = set(decision.agents)
@@ -54,11 +62,14 @@ class RoutingCase(BaseModel):
 
 
 def load_cases(path: Path = DEFAULT_CASES) -> list[RoutingCase]:
+    """The labelled routing questions (``tests/evals/routing_cases.yaml``)."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [RoutingCase.model_validate(case) for case in raw["cases"]]
 
 
 class RoutingReport(BaseModel):
+    """Accuracy, extras, fallbacks, and latency for one router over the eval set."""
+
     router: str
     cases: int
     accuracy: float
@@ -74,6 +85,8 @@ Router = Callable[[RoutingCase], RouteDecision]
 
 
 def llm_router(llm: Any, *, max_agents: int, min_confidence: float) -> Router:
+    """The production LLM router, with each case's earlier messages as history."""
+
     def route(case: RoutingCase) -> RouteDecision:
         return route_with_llm(
             llm,
@@ -94,6 +107,7 @@ def keyword_router(max_agents: int) -> Router:
 
 
 def evaluate(router: Router, cases: list[RoutingCase], name: str) -> RoutingReport:
+    """Score a router: correct (every needed agent chosen), exact (no extras), latency."""
     correct = exact = extra = fallbacks = 0
     latencies: list[float] = []
     misses: list[str] = []

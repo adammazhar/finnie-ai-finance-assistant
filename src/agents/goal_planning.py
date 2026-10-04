@@ -4,6 +4,8 @@ from src.agents.base import BaseAgent
 
 
 class GoalPlanningAgent(BaseAgent):
+    """Projects savings goals with the Monte Carlo ``project_goal`` tool."""
+
     name = "goal_planning"
     description = "Projects savings goals and explains the probability of reaching them."
     rag_categories = ("retirement_planning", "financial_planning_goals", "investing_basics")

@@ -31,7 +31,7 @@ from src.data.models import BatchQuotes, CompanyOverview, PriceHistory, Quote
 SECTOR_COUNT = 11  # GICS sectors
 BROAD_SECTORS = frozenset({"Broad Market", "International"})
 NON_EQUITY_SECTORS = frozenset({"Fixed Income", "Cash", "Commodities", "Crypto", "Real Estate"})
-PROFILE_GROUPS = ("equity", "bond", "cash", "other")
+PROFILE_GROUPS = ("equity", "bond", "cash", "other", "unknown_mix")
 FEE_DRAG_YEARS = (10, 20, 30)
 CASH_TYPES = frozenset({"cash", "money_market"})
 FUND_TYPES = frozenset({"etf", "mutual_fund", "money_market"})
@@ -45,6 +45,13 @@ class PortfolioError(ValueError):
 
 
 class HoldingValuation(BaseModel):
+    """One holding's value and classification.
+
+    ``weight`` is a fraction of the priced portfolio's value. ``unrealized_gain_pct`` is
+    a fraction of cost basis (0.1 means 10%), ``None`` without a cost basis.
+    ``expense_ratio`` is an annual fraction.
+    """
+
     ticker: str
     name: str
     shares: float
@@ -66,6 +73,12 @@ class HoldingValuation(BaseModel):
 
 
 class RiskMetrics(BaseModel):
+    """Risk and return over the price history, from :func:`risk_metrics`.
+
+    Return and volatility are annualized fractions. ``max_drawdown`` is the worst
+    peak-to-trough fall (-0.25 means 25% below the previous peak).
+    """
+
     annual_return: float
     annual_volatility: float
     sharpe_ratio: float | None
@@ -79,12 +92,15 @@ class RiskMetrics(BaseModel):
 
 
 class AllocationGap(BaseModel):
+    """Current vs target weight for one asset group of a risk profile (both fractions)."""
+
     group: str
     current: float
     target: float
 
     @property
     def difference(self) -> float:
+        """Current minus target weight; positive means more than the profile's target."""
         return self.current - self.target
 
 
@@ -103,6 +119,13 @@ class Backtest(BaseModel):
 
 
 class PortfolioAnalysis(BaseModel):
+    """The full result of :func:`analyze_portfolio`.
+
+    Allocations, weights, and ratios are fractions; money is dollars at today's prices.
+    ``fee_drag`` maps years to the dollars fees would cost by then (see
+    :func:`expense_summary`).
+    """
+
     total_value: float
     holdings: list[HoldingValuation]
     asset_allocation: dict[str, float]
@@ -150,6 +173,24 @@ def merge_holdings(holdings: Iterable[Holding]) -> list[Holding]:
     return [Holding(ticker=t, shares=shares[t], cost_basis=basis[t]) for t in shares]
 
 
+def holding_error(exc: Exception) -> str:
+    """A plain-language reason a holding was rejected, e.g. "shares must be more than 0"."""
+    if not isinstance(exc, ValidationError):
+        return "shares and cost must be numbers"  # float() failed on the raw text
+    error = exc.errors()[0]
+    field = {"shares": "shares", "cost_basis": "total cost", "ticker": "ticker"}.get(
+        str(error["loc"][0]) if error["loc"] else "", "value"
+    )
+    limit = (error.get("ctx") or {}).get("le")
+    if error["type"] == "greater_than":
+        return f"{field} must be more than 0"
+    if error["type"] == "greater_than_equal":
+        return f"{field} can't be negative"
+    if error["type"] == "less_than_equal" and limit is not None:
+        return f"{field} can't be more than {limit:,.0f} (check for extra zeros)"
+    return str(error["msg"])
+
+
 def holdings_from_csv(text: str) -> tuple[list[Holding], list[str]]:
     """Parse ``ticker,shares[,cost_basis]`` CSV text. Returns (holdings, row errors)."""
     reader = csv.DictReader(io.StringIO(text.strip()))
@@ -178,8 +219,7 @@ def holdings_from_csv(text: str) -> tuple[list[Holding], list[str]]:
                 )
             )
         except (ValueError, ValidationError) as exc:
-            reason = exc.errors()[0]["msg"] if isinstance(exc, ValidationError) else str(exc)
-            errors.append(f"Row {row_number} ({ticker}): {reason}")
+            errors.append(f"Row {row_number} ({ticker}): {holding_error(exc)}")
     if not holdings and not errors:
         errors.append("No holdings found.")
     return merge_holdings(holdings), errors
@@ -233,6 +273,10 @@ def value_holdings(
 def asset_allocation(
     rows: Sequence[HoldingValuation], securities: Mapping[str, SecurityInfo]
 ) -> dict[str, float]:
+    """Share of portfolio value in each asset class, looking through mixed funds.
+
+    Sorted largest first and rounded to four decimals.
+    """
     mix: dict[str, float] = defaultdict(float)
     for row in rows:
         for asset_class, share in securities[row.ticker].look_through.items():
@@ -241,6 +285,7 @@ def asset_allocation(
 
 
 def sector_allocation(rows: Sequence[HoldingValuation]) -> dict[str, float]:
+    """Share of portfolio value in each sector, sorted largest first."""
     mix: dict[str, float] = defaultdict(float)
     for row in rows:
         mix[row.sector] += row.weight
@@ -393,9 +438,17 @@ def expense_ratio_label(analysis: PortfolioAnalysis) -> str:
     individual stocks have no expense ratio)."
     """
     funds = [h for h in analysis.holdings if h.type in FUND_TYPES and h.expense_ratio is not None]
+    unknown = [
+        h.ticker for h in analysis.holdings if h.type in FUND_TYPES and h.expense_ratio is None
+    ]
     stocks = [h for h in analysis.holdings if h.type == "stock"]
     ratio = fund_expense_ratio(analysis.holdings)
     if ratio is None:
+        if unknown:
+            return (
+                f"Portfolio expense ratio: unknown (Finnie doesn't have the fee for "
+                f"{_names(unknown)}; check the fund's prospectus)."
+            )
         return "Portfolio expense ratio: none (no funds; individual stocks have no expense ratio)."
     by_ratio: dict[float, list[str]] = defaultdict(list)
     for h in funds:
@@ -408,7 +461,15 @@ def expense_ratio_label(analysis: PortfolioAnalysis) -> str:
         parts.append(f"{names} {verb} {fee:.2%}{each}")
     if stocks:
         parts.append("individual stocks have no expense ratio")
-    return f"Portfolio expense ratio: {ratio:.2%} (funds only; {', '.join(parts)})."
+    # a fund whose fee isn't known must not silently drop out of the figure
+    scope = "funds with a known fee only" if unknown else "funds only"
+    if unknown:
+        parts.append(f"fee not known for {_names(unknown)}, so the true figure may be higher")
+    return f"Portfolio expense ratio: {ratio:.2%} ({scope}; {', '.join(parts)})."
+
+
+def _names(tickers: list[str]) -> str:
+    return tickers[0] if len(tickers) == 1 else ", ".join(tickers[:-1]) + f" and {tickers[-1]}"
 
 
 def risk_metrics(
@@ -468,13 +529,18 @@ def correlation_matrix(returns: pd.DataFrame) -> dict[str, dict[str, float]] | N
 
 
 def profile_gaps(allocation: Mapping[str, float], profile: RiskProfile) -> list[AllocationGap]:
+    """Compare the equity/bond/cash mix with a risk profile's targets.
+
+    Asset classes outside those three count as "other", which is listed only when the
+    portfolio holds some.
+    """
     current = {group: 0.0 for group in PROFILE_GROUPS}
     for asset_class, weight in allocation.items():
         current[asset_class if asset_class in current else "other"] += weight
     gaps = []
     for group in PROFILE_GROUPS:
         target = profile.allocation.get(group, 0.0)  # type: ignore[call-overload]
-        if group == "other" and current[group] == 0 and target == 0:
+        if group in ("other", "unknown_mix") and current[group] == 0 and target == 0:
             continue
         gaps.append(AllocationGap(group=group, current=round(current[group], 4), target=target))
     return gaps
@@ -647,7 +713,8 @@ def build_observations(
                     f"Stocks are {gap.current:.0%} of the portfolio, {direction} than the "
                     f"{gap.target:.0%} in Finnie's reference allocation for a "
                     f"{profile.label.lower()} risk tolerance. More stock usually means higher "
-                    "long-run growth potential and bigger short-term swings."
+                    "long-run growth potential and bigger short-term swings. That reference "
+                    "is based on risk tolerance only; time horizon matters too."
                 )
 
     unconfirmed = [r.ticker for r in analysis.holdings if r.expense_ratio_verified is False]
@@ -656,7 +723,19 @@ def build_observations(
             f"The expense ratio for {', '.join(unconfirmed)} couldn't be confirmed on the fund "
             "provider's website, so treat it as approximate."
         )
-    unknown = [r.ticker for r in analysis.holdings if not r.classification_known]
+    mixed = [r.ticker for r in analysis.holdings if r.asset_class == "unknown_mix"]
+    if mixed:
+        share = analysis.asset_allocation.get("unknown_mix", 0.0)
+        notes.append(
+            f"Finnie doesn't know the stock/bond mix of {', '.join(mixed)} ({share:.0%} of the "
+            'portfolio), so it\'s shown as "mix unknown" and not counted as stocks or bonds. '
+            "The fund's fact sheet lists its mix."
+        )
+    unknown = [
+        r.ticker
+        for r in analysis.holdings
+        if not r.classification_known and r.asset_class != "unknown_mix"
+    ]
     if unknown:
         notes.append(
             f"{', '.join(unknown)} isn't in Finnie's reference list, so its classification is "
@@ -683,10 +762,19 @@ def _sorted(mix: Mapping[str, float]) -> dict[str, float]:
 
 
 class MarketData(Protocol):
-    def get_quotes(self, tickers: Iterable[str]) -> BatchQuotes: ...
-    def get_daily_history(self, ticker: str, days: int = ...) -> PriceHistory: ...
-    def get_company_overview(self, ticker: str) -> CompanyOverview: ...
-    def get_treasury_bill_yield(self) -> Quote: ...
+    """The market data calls :func:`fetch_and_analyze` needs."""
+
+    def get_quotes(self, tickers: Iterable[str]) -> BatchQuotes:
+        """Latest quotes for ``tickers``, with per-ticker errors for any that failed."""
+
+    def get_daily_history(self, ticker: str, days: int = ...) -> PriceHistory:
+        """The last ``days`` daily bars for ``ticker``."""
+
+    def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Company profile, used to classify tickers the catalog doesn't list."""
+
+    def get_treasury_bill_yield(self) -> Quote:
+        """The 13-week T-bill yield; the quote's ``price`` is in percent."""
 
 
 def holding_values(

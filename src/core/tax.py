@@ -50,17 +50,23 @@ class _Sourced(_Model):
 
 
 class TaxFigure(_Sourced):
+    """One sourced tax figure, such as a contribution limit, keyed by ``key`` in the YAML."""
+
     key: str
     label: str
     value: float | list[float]
 
 
 class Bracket(_Model):
+    """A tax bracket: ``rate`` (a fraction) applies to income up to ``up_to`` dollars."""
+
     rate: float = Field(ge=0, le=1)
     up_to: float | None = Field(default=None, gt=0)
 
 
 class BracketTable(_Sourced):
+    """Brackets for each filing status; limits must ascend and the top bracket is open-ended."""
+
     label: str
     single: list[Bracket]
     married_joint: list[Bracket]
@@ -74,10 +80,13 @@ class BracketTable(_Sourced):
         return self
 
     def for_status(self, status: FilingStatus) -> list[Bracket]:
+        """The brackets for ``status``."""
         return self.single if status == "single" else self.married_joint
 
 
 class AccountType(_Model):
+    """A tax-advantaged account type and how it's taxed, in plain text."""
+
     key: str
     name: str
     contributions: str
@@ -89,7 +98,51 @@ class AccountType(_Model):
     notes: str
 
 
+Applies = Literal["yes", "no", "n/a"]
+
+
+class WithdrawalException(_Model):
+    """One exception to the 10% early-withdrawal tax, and whether it applies to workplace
+    plans (401(k), 403(b)) and to IRAs."""
+
+    key: str
+    label: str
+    plans: Applies
+    iras: Applies
+
+
+class WithdrawalExceptions(_Sourced):
+    """The IRS table of early-withdrawal exceptions by account type."""
+
+    items: list[WithdrawalException]
+
+
+class RmdAge(_Model):
+    """The RMD starting age for people born in ``[born_from, born_before)``."""
+
+    born_from: date | None = None
+    born_before: date | None = None
+    age: float
+    note: str = ""
+
+    def covers(self, born: date) -> bool:
+        """True when someone born on ``born`` falls in this row."""
+        after = self.born_from is None or born >= self.born_from
+        before = self.born_before is None or born < self.born_before
+        return after and before
+
+
+class RmdAges(_Sourced):
+    """When required minimum distributions start, by date of birth (SECURE 2.0)."""
+
+    first_rmd_due: str
+    schedule: list[RmdAge]
+
+
 class TaxReference(_Model):
+    """One tax year's reference data: figures, brackets, account types, early-withdrawal
+    exceptions, and RMD ages."""
+
     tax_year: int
     jurisdiction: str
     last_reviewed: str
@@ -97,6 +150,8 @@ class TaxReference(_Model):
     ordinary_income: BracketTable
     long_term_capital_gains: BracketTable
     accounts: dict[str, AccountType]
+    early_withdrawal_exceptions: WithdrawalExceptions
+    rmd_ages: RmdAges
 
     @model_validator(mode="after")
     def _account_figures_exist(self) -> TaxReference:
@@ -115,6 +170,7 @@ class TaxReference(_Model):
         return items
 
     def figure(self, key: str) -> TaxFigure:
+        """The figure named ``key``; raises ``KeyError`` with a readable message if unknown."""
         try:
             return self.figures[key]
         except KeyError:
@@ -122,6 +178,7 @@ class TaxReference(_Model):
 
 
 def load_tax_reference(path: Path) -> TaxReference:
+    """Load and validate a ``tax_<year>.yaml`` file."""
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     brackets = data.get("brackets") or {}
     return TaxReference(
@@ -132,11 +189,14 @@ def load_tax_reference(path: Path) -> TaxReference:
         ordinary_income=BracketTable(**brackets["ordinary_income"]),
         long_term_capital_gains=BracketTable(**brackets["long_term_capital_gains"]),
         accounts={k: AccountType(key=k, **v) for k, v in (data.get("accounts") or {}).items()},
+        early_withdrawal_exceptions=WithdrawalExceptions(**data["early_withdrawal_exceptions"]),
+        rmd_ages=RmdAges(**data["rmd_ages"]),
     )
 
 
 @cache
 def get_tax_reference(year: int = 2026) -> TaxReference:
+    """The reference data for ``year``, loaded once per year per process."""
     return load_tax_reference(REFERENCE_DIR / f"tax_{year}.yaml")
 
 
@@ -144,6 +204,8 @@ def get_tax_reference(year: int = 2026) -> TaxReference:
 
 
 class AccountComparisonRow(BaseModel):
+    """One account type's row in :func:`compare_accounts`, with its limit figures resolved."""
+
     key: str
     name: str
     contributions: str
@@ -187,10 +249,54 @@ def compare_accounts(
     return rows
 
 
+def _age_text(age: float) -> str:
+    return "70½" if age == 70.5 else f"{age:g}"
+
+
+def rmd_age_for(reference: TaxReference, *, birth_year: int) -> str:
+    """The RMD starting age for a birth year, in words, with the rule's note if any.
+
+    Two rows can share a birth year (1949 was split mid-year); then both are given.
+    """
+    rows = [
+        row
+        for row in reference.rmd_ages.schedule
+        if row.covers(date(birth_year, 1, 1)) or row.covers(date(birth_year, 12, 31))
+    ]
+    ages = " or ".join(dict.fromkeys(_age_text(r.age) for r in rows))
+    notes = "; ".join(r.note for r in rows if r.note)
+    return f"born in {birth_year}: RMDs start at age {ages}" + (f" ({notes})" if notes else "")
+
+
+def rmd_age_for_current_age(reference: TaxReference, *, age: int, year: int) -> str:
+    """The RMD age for someone who is ``age`` in ``year``. Their birth year is one of two
+    (it depends on their birthday), so both are checked and given when they differ."""
+    later, earlier = year - age, year - age - 1
+    first, second = (
+        rmd_age_for(reference, birth_year=earlier),
+        rmd_age_for(reference, birth_year=later),
+    )
+    if first.split(": ", 1)[1] == second.split(": ", 1)[1]:
+        return (
+            f"Age {age} in {year} means born in {earlier} or {later}; " + second.split(": ", 1)[1]
+        )
+    return f"Age {age} in {year} means born in {earlier} or {later}: {first}; {second}"
+
+
+def exceptions_for(reference: TaxReference, account: Literal["plans", "iras"]) -> list[str]:
+    """Labels of the early-withdrawal exceptions that apply to ``plans`` or ``iras``."""
+    return [
+        item.label
+        for item in reference.early_withdrawal_exceptions.items
+        if getattr(item, account) == "yes"
+    ]
+
+
 # ---- illustrative calculations --------------------------------------------------------
 
 
 def marginal_rate(brackets: list[Bracket], taxable_income: float) -> float:
+    """The rate of the bracket ``taxable_income`` falls in, as a fraction."""
     for bracket in brackets:
         if bracket.up_to is None or taxable_income <= bracket.up_to:
             return bracket.rate
@@ -235,6 +341,11 @@ def is_long_term(purchase: date, sale: date) -> bool:
 
 
 class CapitalGainsIllustration(BaseModel):
+    """Result of :func:`illustrate_capital_gains`.
+
+    Taxes are dollars; ``effective_rate_on_gain`` is a fraction of the gain.
+    """
+
     gain: float
     purchase_date: date
     sale_date: date

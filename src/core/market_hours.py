@@ -23,6 +23,8 @@ MarketState = Literal["open", "pre_market", "after_hours", "weekend", "holiday"]
 
 
 class MarketCalendar(BaseModel):
+    """NYSE regular hours (Eastern), holidays, and early closes, from ``market_calendar.yaml``."""
+
     source_url: str
     verified_on: date
     open: time
@@ -32,6 +34,7 @@ class MarketCalendar(BaseModel):
     early_closes: frozenset[date]
 
     def is_trading_day(self, day: date) -> bool:
+        """True on weekdays that aren't market holidays."""
         return day.weekday() < 5 and day not in self.holidays
 
     def session(self, day: date) -> tuple[datetime, datetime]:
@@ -41,6 +44,8 @@ class MarketCalendar(BaseModel):
 
 
 class MarketStatus(BaseModel):
+    """Whether the market is open at a given moment, when it last closed, and a display label."""
+
     state: MarketState
     is_open: bool
     last_close: datetime  # Eastern time
@@ -49,6 +54,7 @@ class MarketStatus(BaseModel):
 
 @lru_cache(maxsize=1)
 def get_calendar(path: Path = REFERENCE_DIR / "market_calendar.yaml") -> MarketCalendar:
+    """Load and validate the market calendar, cached (only the most recent path is kept)."""
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     return MarketCalendar.model_validate(data)
 
@@ -63,6 +69,11 @@ def _previous_trading_day(day: date, calendar: MarketCalendar) -> date:
 def market_status(
     now: datetime | None = None, calendar: MarketCalendar | None = None
 ) -> MarketStatus:
+    """The market's state at ``now`` (default: the current time), judged in Eastern time.
+
+    ``last_close`` is the most recent close before ``now``: today's close after hours,
+    otherwise the previous trading day's.
+    """
     calendar = calendar or get_calendar()
     local = (now or datetime.now(UTC)).astimezone(ET)
     today = local.date()

@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run ``streamlit run`` on ``app.py`` from the project root; returns the exit code."""
     os.chdir(ROOT)
     sys.argv = ["streamlit", "run", str(ROOT / "src" / "web_app" / "app.py"), *(argv or [])]
     return int(cli.main(standalone_mode=False) or 0)

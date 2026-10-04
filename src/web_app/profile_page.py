@@ -100,6 +100,12 @@ def _quiz() -> None:
 
 
 def render(first_visit: bool) -> None:
+    """Draw the profile form: the welcome screen on a first visit, otherwise settings.
+
+    The widgets are keyed by ``KEYS`` and filled from the saved profile the first time;
+    Save writes it with ``state.set_profile``. Delete my data is offered only on the
+    settings page.
+    """
     if KEYS["knowledge_level"] not in st.session_state:
         _load(state.profile())
     _, middle, _ = st.columns([1, 3, 1])

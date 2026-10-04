@@ -31,6 +31,7 @@ def md(text: str | None) -> str:
 
 
 def money(value: float | None, cents: bool = False) -> str:
+    """Dollars with thousands separators, whole by default or with cents; "n/a" for None."""
     if value is None:
         return "n/a"
     return f"${value:,.2f}" if cents else f"${value:,.0f}"
@@ -47,6 +48,7 @@ def big_money(value: float | None) -> str:
 
 
 def percent(value: float | None, digits: int = 1, signed: bool = False) -> str:
+    """A fraction as a percentage (0.123 -> "12.3%"), optionally signed; "n/a" for None."""
     if value is None:
         return "n/a"
     return f"{value:+.{digits}%}" if signed else f"{value:.{digits}%}"
@@ -68,11 +70,13 @@ def freshness_caption(freshness: Sequence[Freshness]) -> str | None:
 
 
 def provider_name(freshness: Freshness) -> str:
+    """Display name of the provider behind a piece of data, e.g. "Yahoo Finance"."""
     source = freshness.origin or freshness.source
     return PROVIDERS.get(source, source.replace("_", " ").title())
 
 
 def domain(url: str | None) -> str | None:
+    """The host of a URL without ``www.``, for source labels; None if there is none."""
     if not url:
         return None
     host = urlparse(url).netloc.lower()
@@ -80,6 +84,7 @@ def domain(url: str | None) -> str | None:
 
 
 def first_sentence(text: str | None, limit: int = 300) -> str | None:
+    """The first sentence of ``text``, cut at a word with "…" if longer than ``limit``."""
     if not text or not text.strip():
         return None
     match = SENTENCE_END.search(text.strip())
@@ -88,7 +93,11 @@ def first_sentence(text: str | None, limit: int = 300) -> str | None:
 
 
 def snippet(text: str, limit: int = SNIPPET_CHARS) -> str:
-    """Shorten to whole sentences within ``limit`` characters (one sentence at least)."""
+    """Shorten to whole sentences within ``limit`` characters (one sentence at least).
+
+    Markdown list items become "•"-separated, so they don't run together as one item.
+    """
+    text = re.sub(r"(?m)^\s*(?:[-*]|\d+\.)\s+", "• ", text)
     text = " ".join(text.split())
     if len(text) <= limit:
         return text
@@ -108,6 +117,7 @@ def match_label(score: float) -> str:
 
 
 def agent_badges(agents: Sequence[str]) -> str:
+    """Markdown badges naming the specialists that worked on an answer."""
     return " ".join(f":blue-badge[{specialist(a).capitalize()}]" for a in agents)
 
 

@@ -69,6 +69,7 @@ def theme_type() -> Literal["light", "dark"]:
 
 
 def base_css(c: dict[str, str]) -> str:
+    """CSS for every page in the palette ``c``: layout, text colors, buttons, and sidebar."""
     return f"""
 .block-container {{ padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1180px; }}
 h1, h2, h3, h4 {{ color: {c["heading"]}; letter-spacing: -0.01em; }}
@@ -96,6 +97,16 @@ button[data-testid="stBaseButton-primary"]:hover {{
 }}
 button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p {{
   color: {c["on_primary"]} !important;
+}}
+
+/* rows of metric cards wrap instead of truncating values (e.g. 4 index cards at tablet
+   width with the sidebar open become 2 x 2) */
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"]) {{
+  flex-wrap: wrap;
+}}
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] [data-testid="stMetric"])
+  > [data-testid="stColumn"] {{
+  flex: 1 1 11rem !important; min-width: 11rem; width: auto !important;
 }}
 
 /* metric cards */
@@ -180,6 +191,7 @@ button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p {{
 
 
 def chat_css(c: dict[str, str]) -> str:
+    """Extra CSS for the Chat page: a centered reading column and user message bubbles."""
     return f"""
 /* Claude.ai-style chat: one centered reading column, input pinned at the bottom */
 [data-testid="stChatMessage"] {{
@@ -195,6 +207,10 @@ def chat_css(c: dict[str, str]) -> str:
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {{
   color: {c["text"]};
 }}
+/* headings inside answers stay modest: a model's "# Title" shouldn't outsize the page */
+[data-testid="stChatMessage"] h1 {{ font-size: 1.3rem; }}
+[data-testid="stChatMessage"] h2 {{ font-size: 1.15rem; }}
+[data-testid="stChatMessage"] h3, [data-testid="stChatMessage"] h4 {{ font-size: 1.05rem; }}
 .st-key-chat_intro, .st-key-starters {{ max-width: {CHAT_WIDTH}; margin: 0 auto; }}
 [data-testid="stBottomBlockContainer"] {{ max-width: calc({CHAT_WIDTH} + 2rem); margin: 0 auto; }}
 [data-testid="stChatInput"] {{
@@ -207,6 +223,7 @@ def chat_css(c: dict[str, str]) -> str:
 
 
 def apply(page: str) -> None:
+    """Inject the CSS for ``page`` in the active theme's palette."""
     colors = PALETTES[theme_type()]
     css = base_css(colors) + (chat_css(colors) if page == "Chat" else "")
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)

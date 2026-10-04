@@ -21,6 +21,12 @@ def request_json(
     timeout_s: float,
     **kwargs: Any,
 ) -> Any:
+    """Send a request and return the decoded JSON body.
+
+    Timeouts, connection errors, and HTTP 5xx raise ``TransientProviderError`` (retryable); HTTP 429
+    raises ``RateLimitError``; other request failures, other 4xx, and non-JSON bodies raise
+    ``ProviderError``.
+    """
     try:
         response = session.request(method, url, timeout=timeout_s, **kwargs)
     except (requests.Timeout, requests.ConnectionError) as exc:

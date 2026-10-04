@@ -40,7 +40,7 @@ from src.data.errors import (
 )
 from src.data.mock_provider import MockMarketDataProvider
 from src.data.models import BatchQuotes, CompanyOverview, NewsArticle, NewsFeed, PriceHistory, Quote
-from src.data.news import TavilyNewsProvider, is_english
+from src.data.news import TavilyNewsProvider, is_article, is_english
 from src.data.rate_limit import DailyBudget, SlidingWindowRateLimiter
 from src.data.yfinance_client import YFinanceProvider
 from src.utils.clock import Clock, utcnow
@@ -55,29 +55,43 @@ MAX_NEWS = 20
 
 
 class PriceProvider(Protocol):
+    """What the service needs from a quote, history, and company overview provider."""
+
     name: str
 
-    def get_quote(self, ticker: str) -> Quote: ...
-    def get_daily_history(self, ticker: str, days: int) -> PriceHistory: ...
-    def get_company_overview(self, ticker: str) -> CompanyOverview: ...
+    def get_quote(self, ticker: str) -> Quote:
+        """Latest quote for ``ticker``."""
+
+    def get_daily_history(self, ticker: str, days: int) -> PriceHistory:
+        """The last ``days`` daily bars for ``ticker``."""
+
+    def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Company profile and fundamentals for ``ticker``."""
 
 
 class NewsProvider(Protocol):
+    """What the service needs from a news provider."""
+
     name: str
 
     def get_news(
         self, ticker: str | None = None, query: str | None = None, limit: int = 5
-    ) -> list[NewsArticle]: ...
+    ) -> list[NewsArticle]:
+        """Up to ``limit`` articles about ``ticker`` or ``query``."""
 
 
 @dataclass(frozen=True)
 class ProviderStatus:
+    """Whether one provider is configured, with a short detail line for the UI sidebar."""
+
     name: str
     enabled: bool
     detail: str
 
 
 class MarketDataService:
+    """Cache-first lookups that fall back through providers, stale cache, then demo data."""
+
     def __init__(
         self,
         *,
@@ -108,6 +122,12 @@ class MarketDataService:
     # ---- public API -------------------------------------------------------------------
 
     def get_quote(self, ticker: str) -> Quote:
+        """Latest quote, cached for a market-aware TTL.
+
+        Raises ``InvalidTickerError`` for a malformed ticker, ``SymbolNotFoundError`` when every
+        provider reports the ticker unknown, and ``DataUnavailableError`` when no live, cached, or
+        demo data is available.
+        """
         symbol = _normalize(ticker)
         return self._fetch(
             Quote,
@@ -175,6 +195,11 @@ class MarketDataService:
         return BatchQuotes(quotes=ordered, errors=errors)
 
     def get_daily_history(self, ticker: str, days: int = 252) -> PriceHistory:
+        """The last ``days`` daily bars, cached for the daily-data TTL.
+
+        Raises ``ValueError`` unless ``days`` is 1-5000; otherwise falls back and fails like
+        ``get_quote``.
+        """
         symbol = _normalize(ticker)
         if not 1 <= days <= MAX_HISTORY_DAYS:
             raise ValueError(f"days must be between 1 and {MAX_HISTORY_DAYS}")
@@ -187,6 +212,11 @@ class MarketDataService:
         )
 
     def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Company profile and fundamentals, cached for the daily-data TTL.
+
+        Tries the overview providers (Alpha Vantage first when configured); falls back and fails
+        like ``get_quote``.
+        """
         symbol = _normalize(ticker)
         return self._fetch(
             CompanyOverview,
@@ -211,8 +241,12 @@ class MarketDataService:
         def from_provider(provider: NewsProvider) -> Callable[[], NewsFeed]:
             def call() -> NewsFeed:
                 found = provider.get_news(ticker=symbol, query=topic, limit=limit)
-                articles = [a for a in found if is_english(f"{a.title} {a.summary or ''}")]
-                if not articles:  # none at all, or none in English: try the next provider
+                articles = [
+                    a
+                    for a in found
+                    if is_english(f"{a.title} {a.summary or ''}") and is_article(a.title, a.url)
+                ]
+                if not articles:  # none, none in English, or only quote pages: next provider
                     raise SymbolNotFoundError(f"{provider.name}: no news for {label}")
                 return self._feed(label, articles, provider.name)
 

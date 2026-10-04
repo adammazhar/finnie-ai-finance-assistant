@@ -23,6 +23,12 @@ def session_close_utc(day: date, now: datetime) -> datetime:
 
 
 class Quote(BaseModel):
+    """A latest price quote, as returned by providers and ``MarketDataService.get_quote``.
+
+    ``change`` and ``change_percent`` are derived from ``previous_close`` when a provider omits
+    them.
+    """
+
     ticker: str
     price: float = Field(gt=0)
     previous_close: float | None = None
@@ -47,6 +53,8 @@ class Quote(BaseModel):
 
 
 class PriceBar(BaseModel):
+    """One daily open/high/low/close bar."""
+
     date: date
     open: float
     high: float
@@ -56,6 +64,8 @@ class PriceBar(BaseModel):
 
 
 class PriceHistory(BaseModel):
+    """Daily bars for one ticker, kept sorted oldest first."""
+
     ticker: str
     bars: list[PriceBar]
     adjusted: bool = Field(description="True when closes are split/dividend adjusted")
@@ -68,9 +78,11 @@ class PriceHistory(BaseModel):
 
     @property
     def closes(self) -> list[float]:
+        """Closing prices, oldest first."""
         return [bar.close for bar in self.bars]
 
     def to_frame(self) -> pd.DataFrame:
+        """The bars as a pandas DataFrame indexed by date (empty when there are no bars)."""
         import pandas as pd
 
         frame = pd.DataFrame([bar.model_dump() for bar in self.bars])
@@ -80,6 +92,8 @@ class PriceHistory(BaseModel):
 
 
 class CompanyOverview(BaseModel):
+    """Company profile and headline fundamentals for one ticker."""
+
     ticker: str
     name: str
     asset_type: str | None = None
@@ -96,6 +110,8 @@ class CompanyOverview(BaseModel):
 
 
 class NewsArticle(BaseModel):
+    """One news item, with sentiment when the provider supplies it (only Alpha Vantage does)."""
+
     title: str
     url: str | None = None
     source: str | None = None
@@ -107,6 +123,8 @@ class NewsArticle(BaseModel):
 
 
 class NewsFeed(BaseModel):
+    """News articles for a ticker or topic, as returned by ``MarketDataService.get_news``."""
+
     query: str
     articles: list[NewsArticle]
     freshness: Freshness
@@ -120,5 +138,7 @@ class NewsFeed(BaseModel):
 
 
 class BatchQuotes(BaseModel):
+    """Result of ``MarketDataService.get_quotes``: quotes by ticker and errors by ticker."""
+
     quotes: dict[str, Quote]
     errors: dict[str, str] = Field(default_factory=dict)

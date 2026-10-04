@@ -35,6 +35,8 @@ INTRO_SECTION = "Overview"
 
 
 class Chunk(BaseModel):
+    """One retrievable piece of an article section, or one glossary term, plus its metadata."""
+
     model_config = ConfigDict(frozen=True)
 
     id: str
@@ -54,6 +56,7 @@ class Chunk(BaseModel):
 
     @property
     def category_label(self) -> str:
+        """Display name of the chunk's category; ``"Glossary"`` for glossary terms."""
         return CATEGORIES.get(self.category, "Glossary")
 
 
@@ -77,6 +80,7 @@ def _splitters(
 
 
 def chunk_article(article: Article, config: RAGConfig) -> list[Chunk]:
+    """Split an article by its markdown headings, then by size; each chunk keeps its section."""
     headers, sizes = _splitters(config)
     meta = article.meta
     chunks: list[Chunk] = []

@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AgentContext:
+    """The models, market data, retriever, and reference data that agents and tools share."""
+
     llm: Any  # main chat model (BaseChatModel or RunnableWithFallbacks)
     market: Any  # MarketDataService or a test double with the same methods
     settings: Settings

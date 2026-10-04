@@ -20,12 +20,12 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | Streamlit App (10) | Multi-tab, intuitive, responsive | §7: 5 tabs, shared session context, beginner-friendly UX |
 | Conversational Flow (8) | Perfect context preservation | §2.5: checkpointer per session, follow-up rewriting, profile and portfolio carried in state |
 | Data Visualization (7) | Professional charts | §7.3: Plotly charts (allocation, performance, sectors, Monte Carlo fan, gauges) |
-| Educational Content (8) | **100+ well-curated articles** | §4.1: 112 original articles in 11 categories, a 150+ term glossary, and a validator |
+| Educational Content (8) | **100+ well-curated articles** | §4.1: 113 original articles in 11 categories, a 173-term glossary, and a validator |
 | Portfolio Analysis (7) | Multiple meaningful metrics | §3.2: 12+ metrics (HHI, sector/asset mix, expense drag, vol, Sharpe, drawdown, beta, correlation) |
 | Market Intelligence (5) | Thoughtful interpretation | §3.3: indices, sectors, locally computed indicators, and a plain-English "market mood" read |
 | Code Organization (5) | Perfect modularity | §13: prescribed layout; domain logic separated from agents, UI, and MCP |
 | Documentation (5) | Diagrams + detailed guides | This doc (architecture and workflow diagrams, decisions log), README (Docker and Python quick starts, configuration, usage with screenshots, tests, MCP, architecture, troubleshooting), `docs/MCP.md`, `docs/BENCHMARKS.md` |
-| Testing (5) | **90%+ coverage incl. edge cases** | §11: 922 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
+| Testing (5) | **90%+ coverage incl. edge cases** | §11: 1,014 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
 | Bonus (≤10) | Beyond requirements | Monte Carlo goal planning, LLM provider fallback, routing evals, one-command Docker with an offline image (AWS designed), MCP over stdio and token-protected HTTP, saved data per browser, prompt-injection-aware guardrails |
 
 The problem statement also requires a demo video, performance benchmarks, sample data, and environment files. The benchmarks are in `docs/BENCHMARKS.md`, sample portfolios in `data/sample_portfolios/`, and the environment template in `.env.example`. The demo video is recorded separately.
@@ -54,7 +54,7 @@ flowchart LR
     end
 
     subgraph Stores["Local stores (data/)"]
-        KB[("knowledge_base/*.md<br/>112 articles + glossary")]
+        KB[("knowledge_base/*.md<br/>113 articles + glossary")]
         VS[("vectorstore/<br/>FAISS index")]
         CACHE[("cache/<br/>SQLite TTL cache")]
         REF[("reference/<br/>securities, tax tables, mock data")]
@@ -412,7 +412,7 @@ SPY, QQQ, DIA, and IWM serve as index proxies. The 11 SPDR sector ETFs cover sec
 
 ### 4.1 Knowledge base (`data/knowledge_base/`)
 
-There are **112 original articles** (Markdown, 400–900 words each), written for Finnie rather than copied. Each cites one or more reputable references (investor.gov, SEC, FINRA, IRS.gov, Federal Reserve, Bogleheads wiki, Investopedia) where readers can verify facts.
+There are **113 original articles** (Markdown, 400–900 words each), written for Finnie rather than copied. Each cites one or more reputable references (investor.gov, SEC, FINRA, IRS.gov, Federal Reserve, Bogleheads wiki, Investopedia) where readers can verify facts.
 
 | Category (folder) | # | Example topics |
 |---|---|---|
@@ -421,13 +421,13 @@ There are **112 original articles** (Markdown, 400–900 words each), written fo
 | `bonds_fixed_income` | 10 | how bonds work, yield vs price, duration, Treasuries, TIPS |
 | `funds_etfs` | 10 | index funds, ETFs vs mutual funds, expense ratios, target-date funds |
 | `portfolio_management` | 12 | diversification, asset allocation, rebalancing, correlation, MPT basics |
-| `retirement_planning` | 12 | 401(k), IRA, Roth vs traditional, employer match, 4% rule, RMDs |
+| `retirement_planning` | 13 | 401(k), IRA, Roth vs traditional, employer match, 4% rule, RMDs, the Rule of 55 |
 | `taxes` | 12 | capital gains, tax-loss harvesting, wash sale, HSA, 529, cost basis |
 | `personal_finance` | 10 | budgeting, emergency fund, debt payoff, credit scores |
 | `market_economics` | 10 | how exchanges work, inflation, interest rates, indices, bull/bear |
 | `risk_behavioral` | 8 | loss aversion, FOMO, market timing, volatility tolerance |
 | `financial_planning_goals` | 6 | SMART goals, house down payment, college saving |
-| **Total** | **112** | plus `glossary.yaml` with 150+ terms (indexed one term per doc) |
+| **Total** | **113** | plus `glossary.yaml` with 173 terms (indexed one term per doc) |
 
 **Article format** (front matter validated by a pydantic schema):
 
@@ -458,7 +458,7 @@ Quality controls:
 
 ### 4.1a Knowledge base build (Phase 4)
 
-- **Contents:** 112 articles (11 categories, 450-800 words each) and a 172-term glossary. Articles were drafted by parallel writers following `data/knowledge_base/AUTHORING.md`: voice, originality, education-not-advice, verified 2026 tax figures only, and calendar-based holding period wording. Each writer opened every cited page to confirm it exists and covers the topic.
+- **Contents:** 113 articles (11 categories, 450-800 words each) and a 173-term glossary (the Rule of 55 article and the "Pump-and-dump scheme" term were added after persona testing). Articles were drafted by parallel writers following `data/knowledge_base/AUTHORING.md`: voice, originality, education-not-advice, verified 2026 tax figures only, and calendar-based holding period wording. Each writer opened every cited page to confirm it exists and covers the topic.
 - **Validator** (`src/rag/knowledge_base.py`, `scripts/validate_kb.py`) checks:
   - front-matter schema
   - id, file, and folder consistency
@@ -843,13 +843,13 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 - Retrieval hit@4 on about 40 question→article pairs (target ≥ 85%)
 - Latency benchmarks: cache hit vs. miss, retrieval, single-agent vs. multi-agent turn (p50/p95)
 
-**Tooling hygiene:** `ruff` (lint and format) and `mypy` over all of `src/`.
+**Tooling hygiene:** `ruff` (lint and format), `mypy` over all of `src/`, and `interrogate`, which requires a docstring on every public module, class, function, and method (100%).
 
-**Result at the end of Phase 10:** 922 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
+**Result at the end of Phase 10:** 1,014 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on every push and PR, on Python 3.12. CI never needs real API keys.
 
-- `unit`: lint, types, and every test except the UI suite.
+- `unit`: lint, types, docstring coverage, and every test except the UI suite.
 - `ui`: the Streamlit `AppTest` suite.
 - `coverage`: combines both coverage files and enforces the 90% gate.
 - `kb-links`: validates the knowledge base and checks every source link, with network access.
@@ -1057,3 +1057,47 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 32 | *(Phase 10)* **A setup page instead of a stack trace when no API key is set.** Found by the Docker job: a fresh start without `.env` crashed. The agent context now builds the models before the slow knowledge-base load, so a missing key is reported in milliseconds. |
 | 33 | *(Phase 10)* **The MCP server warms the knowledge base at startup** in a background thread. The first search was measured at 34 s cold, long enough to risk a client's tool timeout. |
 | 34 | *(after Phase 10)* **Publish the image to GitHub Container Registry** on every push to `main`, tagged `latest` and with the commit SHA, once the image and tests pass. `docker compose up` pulls it by default, and `--build` builds locally. The package follows the repository's visibility. |
+| 35 | *(final rubric check)* **Responsive layout, verified in a browser at 390, 820, and 1440 px.** The sidebar starts closed on phones (`initial_sidebar_state="auto"`); rows of metric cards wrap instead of truncating values; sector chart labels are never clipped. Also added: the API reference (`docs/API.md`), the demo script (`docs/DEMO.md`), the submission checklist (`docs/SUBMISSION.md`), and the roadmap (§17). |
+| 36 | *(user testing)* **Simulated user testing with three AI personas** (a beginner, a near-retiree, a skeptical investor) using the app only through a browser; the findings and their fixes are in `docs/SUBMISSION.md`. Also: a docstring on every public function, enforced in CI by `interrogate`. |
+| 37 | *(after persona testing)* **Picks asked through fiction, role-play, or hypotheticals count as advice requests.** The input screen pairs a framing pattern ("for my novel", "pretend", "hypothetically", "if you were me") with a pick request; the output check also catches comparative leanings ("NVDA might be appealing", "the better buy", "I'd go with") and price targets; and an answer to any buy/sell request opens by saying Finnie can't pick (added deterministically if the model leaves it out). |
+| 38 | *(after persona testing)* **Early-withdrawal exceptions and RMD ages come from IRS reference data, not the model.** `tax_2026.yaml` holds the IRS table of exceptions by account type (the Rule of 55 is plan-only; first-time home and education are IRA-only) and the RMD ages by date of birth (final regulations; 1959 = 73 from the 2024 proposed regulations in the same IRS bulletin). The tax agent's `get_withdrawal_rules` tool states the RMD age for the user's birth year, from their profile age. |
+| 39 | *(after persona testing)* **Funds whose stock/bond mix isn't known are "mix unknown", not stocks.** 17 Vanguard target-date and balanced funds were added with the mix from their fact sheets (June 30, 2026). The reference mix stays based on risk tolerance; the Portfolio tab and observations now say that time horizon matters too. |
+| 40 | *(after persona testing)* **Goals start from per-type defaults and the profile, and are saved per browser** (a `goals` table next to profiles and portfolios). A stricter beginner prompt (define every term, about 150 words, at most two small headings) also applies when several specialists' answers are merged. |
+| 41 | *(after persona testing)* **Markets search by name.** The SEC's company list (10,434 tickers, stored locally, downloaded once with a User-Agent carrying a contact email as the SEC requires) plus Finnie's fund and index list; Streamlit's search box filters as you type (the largest 4,000 companies are offered there), and a second field searches the full list, then Yahoo Finance. Index levels are shown as points, not dollars. A per-citation support check was deferred to the roadmap (§17). |
+
+---
+
+## 17. Roadmap
+
+What comes next, in order. Each item names the technical approach and what already exists to build on. The first two horizons come from work already designed in this document; the third follows the problem statement's "Future Directions".
+
+### 17.1 Next: from local demo to a shared deployment
+
+| Item | Approach | Builds on |
+|---|---|---|
+| Login and per-user data | `st.login` with the existing Auth0 tenant. The store's browser ID becomes the Auth0 `sub`, and guest mode stays the default when `[auth]` isn't configured. | §2.8 (designed); per-browser storage already scopes every query by one ID |
+| Cloud deployment | EC2 + Caddy (HTTPS) running the published GHCR image, with `.env` kept on the instance. Then a `docs/DEPLOYMENT.md` runbook and a pre-demo checklist. | §12.2; image published by CI (decision 34) |
+| Remote MCP with OAuth 2.1 | Auth0 as the authorization server, the SDK's `TokenVerifier` and `AuthSettings`, protected resource metadata, and per-tool scopes. This replaces the static token. | §9.4 (designed) |
+| Shared storage for several app instances | Postgres via LangGraph's Postgres checkpointer, with the `AppStore` tables moved to Postgres. ECS Fargate behind an ALB with sticky sessions. | §12.3; the `AppStore` interface is already narrow |
+| Observability | Export the JSON logs to CloudWatch; LangSmith or OpenTelemetry traces per turn; the routing and retrieval evals on a schedule. | structured logs with secret redaction; `eval_routing.py`, `eval_retrieval.py` |
+
+### 17.2 Then: better answers
+
+| Item | Approach | Builds on |
+|---|---|---|
+| Feedback-driven quality | Thumbs up/down are already logged per answer. Next: review low-rated turns weekly, add them to the eval sets, and tune prompts and routing against those sets. | `st.feedback` logging; the evaluation sets |
+| Citation support check | After an answer is written, the fast model checks that each [n] is supported by passage n and removes the markers that aren't, so a sentence is never credited to an unrelated source. This adds about 0.5–1 s per answer, so it would be measured against the latency targets before turning it on. Found by persona testing (a live-data figure cited to a glossary entry). The market specialist already no longer cites passages for live numbers. | `check_citations` (drops markers that point at nothing); the citation maps in each agent's result |
+| Retrieval upgrades | A hybrid of BM25 and vector search with a small cross-encoder re-ranker. Measured with the existing hit@4 and MRR set before switching. | `src/rag/evaluation.py` (93.3% hit@4 baseline) |
+| Smarter portfolio lessons | Fund look-through (an ETF's top holdings and overlap between funds) and a tax-lot view for capital gains lessons. | the securities catalog; `core/portfolio.py`; the tax agent's capital gains illustration |
+| Personal learning path | Track which concepts a user has asked about, and suggest the next article. | the knowledge base categories and difficulty levels; saved conversations |
+
+### 17.3 Later: the problem statement's future directions
+
+| Item | Approach |
+|---|---|
+| Voice interface | Browser speech-to-text into the chat input, and text-to-speech for answers. The workflow stays unchanged because it's text in and text out. |
+| Multi-modal input | Upload a brokerage statement (PDF) or a chart screenshot. A vision-capable model extracts holdings into the existing `Holding` model, with the user confirming. |
+| International markets and crypto education | More providers behind the existing `PriceProvider` protocol; new knowledge base categories with sourced articles; market calendars per exchange (the NYSE calendar is already data-driven). |
+| Mobile | The Streamlit UI already works at phone width (checked at 390 px). A native app would call a FastAPI layer over `FinnieAssistant.stream`. |
+
+Not planned: automated investing or brokerage integration. Finnie is an education product. Placing trades would turn it into an advice and execution service with different regulatory obligations (§10).

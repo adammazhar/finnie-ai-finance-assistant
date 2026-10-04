@@ -1,6 +1,6 @@
 # Finnie: AI Finance Assistant
 
-Finnie is a multi-agent assistant that teaches beginners about investing. Six specialist agents, orchestrated with LangGraph, answer questions about financial concepts, portfolios, markets, goals, news, and taxes. Answers are grounded in a 112-article knowledge base with sources, and combined with live market data.
+Finnie is a multi-agent assistant that teaches beginners about investing. Six specialist agents, orchestrated with LangGraph, answer questions about financial concepts, portfolios, markets, goals, news, and taxes. Answers are grounded in a 113-article knowledge base with sources, and combined with live market data.
 
 **Finnie provides educational information only, not financial, investment, tax, or legal advice.**
 
@@ -12,6 +12,8 @@ Finnie is a multi-agent assistant that teaches beginners about investing. Six sp
 - [Quick start with Python](#quick-start-with-python)
 - [Configuration](#configuration)
 - [Using Finnie](#using-finnie)
+- [Example questions](#example-questions)
+- [API documentation](#api-documentation)
 - [Tests and evaluations](#tests-and-evaluations)
 - [MCP server (Claude Desktop and Claude Code)](#mcp-server-claude-desktop-and-claude-code)
 - [Architecture](#architecture)
@@ -119,6 +121,7 @@ Secrets and the provider choice go in **`.env`**. Every other setting is in **`c
 | `HF_HUB_OFFLINE` | Keep `1` | Loads the embedding model from the local cache only |
 | `MCP_API_TOKEN` | Only for the MCP HTTP server | Bearer token, at least 32 characters ([docs/MCP.md](docs/MCP.md)) |
 | `FINNIE_CONFIG` | Optional | Another settings file instead of `config.yaml` |
+| `SEC_CONTACT_EMAIL` | Only to refresh the SEC ticker list | The SEC asks automated tools to identify themselves; `scripts/update_sec_tickers.py` puts this in its User-Agent |
 
 Without a usable API key, the app opens a setup page that names the missing key, instead of an error.
 
@@ -151,9 +154,9 @@ On a first visit, Finnie asks for your knowledge level and risk tolerance. A 5-q
 | Tab | What it does |
 |---|---|
 | **Portfolio** | Enter holdings, upload a CSV (`ticker,shares,cost_basis`), or load a sample. Shows allocation, diversification, risk, fund fees, past-year risk measures, a back-test against SPY, and a comparison with a typical mix for your risk tolerance. Saved holdings are used in chat too. |
-| **Markets** | The S&P 500, Nasdaq-100, Dow, and Russell 2000 with their tracking ETFs, sector moves, and whether prices are live, delayed, or the last close. Also a lookup for any ticker: price trend, moving averages, RSI, company facts, and recent news. |
-| **Goals** | A Monte Carlo projection for a goal: the chance of reaching it, the range of outcomes, and the monthly amount an 80% chance needs. |
-| **Knowledge** | Search the knowledge base, browse the 112 articles by category, and look up 172 glossary terms. Every article lists its sources (SEC, FINRA, IRS, Federal Reserve, and others). |
+| **Markets** | The S&P 500, Nasdaq-100, Dow, and Russell 2000 with their tracking ETFs, sector moves, and whether prices are live, delayed, or the last close. Also a lookup by **name or ticker**: type "Apple" or "S&P 500" and pick from the suggestions (from the SEC's company list and Finnie's fund and index list; anything else is searched on Yahoo Finance). It shows the price trend, moving averages, RSI, company facts, and recent news. |
+| **Goals** | A Monte Carlo projection for a goal: the chance of reaching it, the range of outcomes, and the monthly amount an 80% chance needs. Each goal type starts from sensible inputs (an emergency fund from a small, short, cash-like goal; retirement from your profile's horizon or age), and your inputs are saved for next time. |
+| **Knowledge** | Search the knowledge base, browse the 113 articles by category, and look up 173 glossary terms. Every article lists its sources (SEC, FINRA, IRS, Federal Reserve, and others). |
 
 | | |
 |---|---|
@@ -165,10 +168,53 @@ On a first visit, Finnie asks for your knowledge level and risk tolerance. A 5-q
 - **Managing it:** rename or delete a conversation from its **⋯** menu in the sidebar. **Profile → Delete my data** removes everything for your browser.
 - **Fresh start:** a private browser window always starts fresh.
 
+## Example questions
+
+Each one goes to a different specialist; follow-ups in the same conversation keep the context.
+
+| Ask | Who answers | What you get |
+|---|---|---|
+| *What is an index fund?* then *How is that different from an ETF?* | Finance Q&A | A plain-language explanation with cited sources; the follow-up understands "that" |
+| *How diversified is my portfolio, and what does its expense ratio mean for me?* (after saving holdings) | Portfolio + Finance Q&A, merged | Your diversification score, allocation, and fees, explained |
+| *How is the stock market doing today?* | Market Analysis | Index and sector moves, with when the prices are from |
+| *What's the latest news on Apple?* | News Synthesizer | 3–5 recent stories, summarized, with links and dates |
+| *I want $50,000 for a house down payment in 8 years. I can add $400 a month.* | Goal Planning | The chance of reaching it and the monthly amount for an 80% chance. With a saved portfolio, Finnie first asks how much of it counts. |
+| *What's the difference between a Roth IRA and a traditional IRA?* | Tax Education | Side-by-side rules with this year's IRS limits |
+| *Should I buy Tesla stock right now?* | Guardrail | Education about evaluating a stock, not a recommendation |
+
+[docs/DEMO.md](docs/DEMO.md) is a scripted 8-minute walk-through of all of these.
+
+## API documentation
+
+Everything the app does is also available to code. Full reference with tested examples: **[docs/API.md](docs/API.md)**.
+
+```python
+from src.core.models import Holding, UserProfile
+from src.workflow.graph import FinnieAssistant
+
+assistant = FinnieAssistant()  # reads .env and config.yaml
+out = assistant.ask(
+    "What is an index fund?",
+    thread_id="demo",
+    profile=UserProfile(knowledge_level="beginner", risk_tolerance="moderate"),
+)
+print(out.answer)  # markdown with numbered citations and the disclaimer
+# ['finance_qa'] ['https://www.investor.gov/...', ...]
+print(out.agents, [s.url for s in out.sources])
+```
+
+- **`FinnieAssistant`** (`src/workflow/graph.py`):
+  - `ask` returns the whole answer.
+  - `stream` yields progress events, then the answer.
+  - `state`, `forget`, and conversation titles are there too.
+- **Domain layer** (no LLM needed): market data with fallbacks, portfolio analytics, Monte Carlo goal projections, tax reference, and knowledge base search.
+- **MCP**: six tools with typed schemas, two resources, and a prompt ([docs/MCP.md](docs/MCP.md)).
+- **External APIs and their fallbacks**: OpenAI, Anthropic, yfinance, Alpha Vantage, Tavily, and Hugging Face.
+
 ## Tests and evaluations
 
 ```bash
-pytest                                   # 922 tests in parallel, 100% coverage; network blocked, so no API calls
+pytest                                   # 1,014 tests in parallel, 100% coverage; network blocked, so no API calls
 ruff check . && ruff format --check .    # lint and formatting
 mypy                                     # type checks
 python scripts/validate_kb.py            # knowledge base rules (schema, ids, sources)
@@ -185,7 +231,7 @@ python scripts/bench_mcp.py              # MCP tool latency over HTTP
 ```
 
 GitHub Actions runs these jobs on every push:
-- lint, type checks, and tests
+- lint, type checks, docstring coverage (every public function, 100%), and tests
 - the Streamlit UI tests
 - the combined coverage gate (90%)
 - the knowledge base link check
@@ -224,7 +270,7 @@ flowchart LR
     subgraph Finnie
         WF["LangGraph workflow<br/>route · plan · run specialists · merge · guard"] --> AG["6 specialist agents"]
         AG --> TOOLS["Domain tools<br/>portfolio · Monte Carlo · tax · indicators"]
-        AG --> RAG["RAG retriever<br/>FAISS + MiniLM, 1,100 chunks"]
+        AG --> RAG["RAG retriever<br/>FAISS + MiniLM, 1,108 chunks"]
         MCP --> TOOLS
         MCP --> RAG
         TOOLS --> MD["Market data<br/>SQLite cache · yfinance · Alpha Vantage · Tavily"]
@@ -275,10 +321,10 @@ src/
   web_app/      Streamlit app, pages, charts, theme, per-browser storage
   mcp_server/   MCP tools, HTTP transport and token check, launcher
 data/
-  knowledge_base/   112 articles (markdown with sources) + glossary
+  knowledge_base/   113 articles (markdown with sources) + glossary
   reference/        securities catalog, tax figures, market calendar
   sample_portfolios/
-scripts/        index build, evaluations, benchmarks, MCP demo client
+scripts/        index build, SEC ticker refresh, evaluations, benchmarks, MCP demo client
 tests/          unit tests, UI tests, evaluation sets
 docs/           DESIGN.md, MCP.md, BENCHMARKS.md, images/
 ```
@@ -303,6 +349,10 @@ docs/           DESIGN.md, MCP.md, BENCHMARKS.md, images/
 - [docs/DESIGN.md](docs/DESIGN.md): architecture, workflow, agents, RAG, data, UI, MCP, security, testing, deployment, and the decisions log
 - [docs/BENCHMARKS.md](docs/BENCHMARKS.md): retrieval quality, routing accuracy, latency, MCP and Docker measurements
 - [docs/MCP.md](docs/MCP.md): MCP server setup and verification
+- [docs/API.md](docs/API.md): Python and MCP API reference with tested examples
+- [docs/DEMO.md](docs/DEMO.md): the demo video script
+- [docs/SUBMISSION.md](docs/SUBMISSION.md): every rubric line and deliverable, with where to find the evidence
+- [DESIGN.md §17](docs/DESIGN.md#17-roadmap): the technical roadmap
 - Optional cloud deployment (AWS EC2 with Caddy, or ECS Fargate) is designed in [DESIGN.md §12](docs/DESIGN.md#12-docker-and-aws-deployment). It is not deployed.
 
 ---

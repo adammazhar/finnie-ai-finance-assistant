@@ -10,14 +10,14 @@ The course documents ask for "performance considerations" and "performance bench
 
 | Target | Value | Measured | Enforced by |
 |---|---|---|---|
-| Retrieval hit@4 | ≥ 85% | 93.3% unfiltered / 95.6% filtered | `pytest -m slow tests/evals` |
+| Retrieval hit@4 | ≥ 85% | 91.1% unfiltered / 93.3% filtered (re-run 2026-10-04) | `pytest -m slow tests/evals` |
 | Retrieval latency | p95 < 50 ms | 32.7 ms | measured (below) |
-| LLM routing accuracy | ≥ 90% | 97.0% | `scripts/eval_routing.py` |
+| LLM routing accuracy | ≥ 90% | 97.0% (re-run 2026-10-04) | `scripts/eval_routing.py` |
 | Keyword fallback routing accuracy (regression floor) | ≥ 75% | 78.8% | `scripts/eval_routing.py`, and a unit test in CI |
 | Single-specialist turn | p50 < 6 s | 5.8 s | reported by `scripts/bench_workflow.py` |
 | Multi-specialist turn | p50 < 15 s | 12.9 s | `scripts/bench_workflow.py` |
 | First visible progress in chat | p95 < 1 s | 17 ms | `scripts/bench_workflow.py` |
-| Test coverage | ≥ 90% | 100% (922 tests) | `pytest` and the CI `coverage` job |
+| Test coverage | ≥ 90% | 100% (1,014 tests) | `pytest` and the CI `coverage` job |
 | MCP tool call, server warm | < 1 s | 4–256 ms median | measured by `scripts/bench_mcp.py` |
 | Docker: healthy after `docker compose up` | < 60 s | about 10 s | the CI `docker` job |
 
@@ -49,6 +49,17 @@ The design target was hit@4 ≥ 85%.
 
 `pytest -m slow --no-cov tests/evals` enforces the 85% target and full off-topic rejection with the real model, offline.
 
+### Re-run after the persona-testing fixes (2026-10-04)
+
+The knowledge base grew by one article (the Rule of 55) and one glossary term (pump-and-dump scheme), to 113 articles, 173 terms, and 1,108 chunks. At the chosen 0.40 threshold:
+
+| | Hit@4 unfiltered | Hit@4 filtered | MRR (unfiltered / filtered) | Off-topic rejected |
+|---|---|---|---|---|
+| Before (Phase 5) | 93.3% | 95.6% | 0.891 / 0.902 | 100% |
+| **After** | **91.1%** | **93.3%** | **0.885 / 0.896** | **100%** |
+
+The drop is one new miss, "At what age do I have to start withdrawing from my IRA?". The new Rule of 55 article, which is also about withdrawal ages, now ranks in the top 4 ahead of the RMD article. Both are relevant, and the tax agent answers RMD-age questions from IRS reference data (`get_withdrawal_rules`) rather than from retrieval alone. The evaluation set was not changed to recover the number, and both figures stay above the 85% target that `pytest -m slow tests/evals` enforces (which passes).
+
 ## Retrieval performance (Phase 5)
 
 | Measure | Result |
@@ -60,6 +71,9 @@ The design target was hit@4 ≥ 85%.
 | Retrieval latency over 135 queries (embed query + exact search + filter + MMR) | p50 27.7 ms, p95 32.7 ms, max 48.1 ms (target < 50 ms) |
 
 ## Routing accuracy (Phase 7)
+
+**Re-run on 2026-10-04**, after the docstrings (the router's output schema gained a description) and the stricter beginner prompt: LLM router **97.0%** correct, 90.9% exact, with the same two misses; keyword fallback 78.8%. Unchanged from the table below.
+
 
 `python scripts/eval_routing.py` routes the 66 labelled questions in `tests/evals/routing_cases.yaml`. Each question lists the specialists it needs. The set includes:
 
@@ -152,7 +166,7 @@ Gaps found and fixed:
 
 ## Test suite run time
 
-`pytest` runs **922 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
+`pytest` runs **1,014 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
 
 | Where | Configuration | Wall time |
 |---|---|---|

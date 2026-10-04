@@ -8,12 +8,15 @@ from src.core.reference import REFERENCE_DIR
 from src.core.tax import (
     UNVERIFIED_NOTE,
     compare_accounts,
+    exceptions_for,
     get_tax_reference,
     illustrate_capital_gains,
     is_long_term,
     load_tax_reference,
     marginal_rate,
     one_year_anniversary,
+    rmd_age_for,
+    rmd_age_for_current_age,
     tax_on_income,
 )
 
@@ -286,3 +289,34 @@ def test_unverified_bracket_tables_are_listed(tmp_path):
         ref, gain=100, purchase_date=date(2024, 1, 1), sale_date=date(2026, 1, 1), taxable_income=0
     )
     assert result.uses_unverified_figures
+
+
+def test_rmd_age_by_birth_year():
+    ref = get_tax_reference()
+    assert rmd_age_for(ref, birth_year=1948).endswith("age 70½")
+    assert rmd_age_for(ref, birth_year=1949).endswith("age 70½ or 72")  # split mid-year
+    assert rmd_age_for(ref, birth_year=1950).endswith("age 72")
+    assert rmd_age_for(ref, birth_year=1955).endswith("age 73")
+    assert "age 73 (set by the IRS's 2024 proposed regulations" in rmd_age_for(ref, birth_year=1959)
+    assert rmd_age_for(ref, birth_year=1968).endswith("age 75")
+
+
+def test_rmd_age_from_current_age():
+    ref = get_tax_reference()
+    assert rmd_age_for_current_age(ref, age=58, year=2026) == (
+        "Age 58 in 2026 means born in 1967 or 1968; RMDs start at age 75"
+    )
+    straddle = rmd_age_for_current_age(ref, age=66, year=2026)  # born 1959 or 1960
+    assert "born in 1959: RMDs start at age 73" in straddle
+    assert "born in 1960: RMDs start at age 75" in straddle
+
+
+def test_early_withdrawal_exceptions_differ_by_account():
+    ref = get_tax_reference()
+    plans, iras = exceptions_for(ref, "plans"), exceptions_for(ref, "iras")
+    assert any("Rule of 55" in e for e in plans) and not any("Rule of 55" in e for e in iras)
+    assert any("First-time home" in e for e in iras)
+    assert not any("First-time home" in e for e in plans)
+    assert any("higher education" in e for e in iras)
+    assert not any("higher education" in e for e in plans)
+    assert ref.early_withdrawal_exceptions.verified and ref.rmd_ages.verified

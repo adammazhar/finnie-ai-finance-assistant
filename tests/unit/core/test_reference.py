@@ -52,7 +52,9 @@ def test_mock_market_tickers_are_all_classified():
 def test_classify_unknown_ticker(asset_type, expected_type, diversified, sector, expense_ratio):
     info = get_catalog().classify("NEWCO", name="New Co", asset_type=asset_type)
     assert (info.type, info.diversified, info.sector) == (expected_type, diversified, sector)
-    assert info.known is False and info.asset_class == "equity"
+    # a fund's stock/bond split can't be guessed, so it isn't counted as stocks
+    fund = expected_type in ("etf", "mutual_fund")
+    assert info.known is False and info.asset_class == ("unknown_mix" if fund else "equity")
     assert info.expense_ratio == expense_ratio and info.fees is None
     assert info.name == "New Co"
 

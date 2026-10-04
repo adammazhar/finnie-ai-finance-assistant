@@ -70,3 +70,19 @@ plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 ignore_missing_imports = true
 files = ["src/core", "src/data", "src/utils", "src/rag", "src/agents", "src/workflow", "src/web_app"]
+
+[tool.interrogate]
+# Docstring coverage of the public API, enforced in CI (`interrogate src`): every public
+# module, class, function, and method. Private/semiprivate names, magic and __init__
+# methods, and functions nested inside other functions are exempt.
+fail-under = 100
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-private = true
+ignore-semiprivate = true
+ignore-nested-functions = true
+ignore-nested-classes = true
+ignore-overloaded-functions = true
+ignore-setters = true
+verbose = 1

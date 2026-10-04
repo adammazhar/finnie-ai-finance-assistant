@@ -70,6 +70,8 @@ def _translate(exc: Exception) -> MarketDataError:
 
 
 class YFinanceProvider:
+    """Yahoo Finance via the ``yfinance`` library, with errors translated to market data errors."""
+
     name = NAME
 
     def __init__(self, yf_module: Any = None, clock: Clock = utcnow) -> None:
@@ -104,6 +106,11 @@ class YFinanceProvider:
         )
 
     def get_quote(self, ticker: str) -> Quote:
+        """Latest unadjusted close from the last five daily bars, with the prior close.
+
+        Raises ``SymbolNotFoundError`` when there are no prices.
+        """
+
         def fetch() -> Quote:
             frame = self._yf.Ticker(ticker).history(period="5d", interval="1d", auto_adjust=False)
             return self._quote_from_frame(ticker, frame)
@@ -141,6 +148,11 @@ class YFinanceProvider:
         return self._guard(fetch)
 
     def get_daily_history(self, ticker: str, days: int) -> PriceHistory:
+        """The last ``days`` split- and dividend-adjusted daily bars.
+
+        Raises ``SymbolNotFoundError`` when there is no history.
+        """
+
         def fetch() -> PriceHistory:
             start = (self._clock() - timedelta(days=int(days * 1.5) + 10)).date()
             frame = self._yf.Ticker(ticker).history(
@@ -169,6 +181,11 @@ class YFinanceProvider:
         return self._guard(fetch)
 
     def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Profile and fundamentals from ``Ticker.info``.
+
+        Raises ``SymbolNotFoundError`` when Yahoo has no name for the ticker.
+        """
+
         def fetch() -> CompanyOverview:
             info = self._yf.Ticker(ticker).info or {}
             name = info.get("longName") or info.get("shortName")
@@ -197,6 +214,8 @@ class YFinanceProvider:
     def get_news(
         self, ticker: str | None = None, query: str | None = None, limit: int = 5
     ) -> list[NewsArticle]:
+        """Yahoo news for ``ticker``, else a Yahoo search for ``query``; ``[]`` with neither."""
+
         def fetch() -> list[NewsArticle]:
             if ticker:
                 items = self._yf.Ticker(ticker).get_news(count=limit)

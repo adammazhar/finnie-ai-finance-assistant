@@ -69,6 +69,8 @@ PLACEHOLDER_TEXT = re.compile(r"\b(TODO|TBD|lorem ipsum|placeholder)\b", re.IGNO
 
 
 class SourceRef(BaseModel):
+    """A cited reference (name and https URL) in article front matter or the glossary."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=3)
@@ -76,6 +78,8 @@ class SourceRef(BaseModel):
 
 
 class ArticleMeta(BaseModel):
+    """The validated YAML front matter of a knowledge base article."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(pattern=r"^[a-z_]+-\d{3}$")
@@ -88,26 +92,36 @@ class ArticleMeta(BaseModel):
 
 
 class Article(BaseModel):
+    """A parsed knowledge base article: front matter, Markdown body, and file path."""
+
     meta: ArticleMeta
     body: str
     path: Path
 
     @property
     def word_count(self) -> int:
+        """Words in the body; contractions and hyphenated words count once."""
         return len(WORD.findall(self.body))
 
     @property
     def sections(self) -> list[str]:
+        """Titles of the body's ``##`` sections, in order."""
         return re.findall(r"^##\s+(.+?)\s*$", self.body, re.MULTILINE)
 
 
 class ArticleError(ValueError):
+    """An article file that can't be parsed; the message starts with its path."""
+
     def __init__(self, path: Path, message: str) -> None:
         super().__init__(f"{path.as_posix()}: {message}")
         self.path = path
 
 
 def parse_article(path: Path) -> Article:
+    """Read one article file.
+
+    Raises ``ArticleError`` for unreadable, missing, or invalid front matter.
+    """
     try:
         post = frontmatter.loads(path.read_text(encoding="utf-8"))
     except (yaml.YAMLError, UnicodeDecodeError) as exc:
@@ -123,6 +137,7 @@ def parse_article(path: Path) -> Article:
 
 
 def article_paths(root: Path = KB_ROOT) -> list[Path]:
+    """Every ``<category>/<id>.md`` file under ``root``, sorted."""
     return sorted(p for p in root.glob("*/*.md") if p.is_file())
 
 
@@ -132,6 +147,8 @@ def load_articles(root: Path = KB_ROOT) -> list[Article]:
 
 
 class GlossaryTerm(BaseModel):
+    """One glossary entry, with links to related terms."""
+
     model_config = ConfigDict(extra="forbid")
 
     term: str = Field(min_length=2)
@@ -140,10 +157,13 @@ class GlossaryTerm(BaseModel):
 
     @property
     def word_count(self) -> int:
+        """Words in the definition."""
         return len(self.definition.split())
 
 
 class Glossary(BaseModel):
+    """The parsed ``glossary.yaml``: its sources, review date, and terms."""
+
     model_config = ConfigDict(extra="forbid")
 
     sources: list[SourceRef] = Field(min_length=1)
@@ -152,6 +172,11 @@ class Glossary(BaseModel):
 
 
 def load_glossary(root: Path = KB_ROOT) -> Glossary:
+    """Load and validate ``glossary.yaml``.
+
+    Raises ``OSError``, ``yaml.YAMLError``, or ``pydantic.ValidationError`` if it is missing or
+    invalid.
+    """
     data = yaml.safe_load((root / GLOSSARY_FILE).read_text(encoding="utf-8"))
     return Glossary(**data)
 
@@ -214,6 +239,8 @@ def _glossary_problems(glossary: Glossary, min_terms: int) -> list[str]:
 
 
 class ValidationReport(BaseModel):
+    """Outcome of ``validate_knowledge_base``: article and term counts plus every problem found."""
+
     articles: int
     per_category: dict[str, int]
     glossary_terms: int
@@ -221,6 +248,7 @@ class ValidationReport(BaseModel):
 
     @property
     def ok(self) -> bool:
+        """True when no problems were found."""
         return not self.problems
 
 
@@ -231,6 +259,13 @@ def validate_knowledge_base(
     min_glossary_terms: int = MIN_GLOSSARY_TERMS,
     require_glossary: bool = True,
 ) -> ValidationReport:
+    """Check every article and the glossary against the content rules.
+
+    Problems are collected in the report, not raised. Covers front matter, word and section counts,
+    advice or placeholder wording, duplicate ids and titles, empty categories, and glossary size,
+    definitions, and related-term links. ``min_articles=0`` skips the article-count and
+    empty-category checks.
+    """
     problems: list[str] = []
     articles: list[Article] = []
     for path in article_paths(root):
@@ -279,6 +314,10 @@ def validate_knowledge_base(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Command-line entry point for ``scripts/validate_kb.py``.
+
+    Prints a summary and any problems (to stderr); returns 1 if there are problems, else 0.
+    """
     parser = argparse.ArgumentParser(description="Validate the Finnie knowledge base.")
     parser.add_argument("--root", type=Path, default=KB_ROOT)
     parser.add_argument(

@@ -35,11 +35,19 @@ logger = logging.getLogger(__name__)
 
 
 class RetrievedChunk(BaseModel):
+    """A chunk with its cosine similarity to the query."""
+
     chunk: Chunk
     score: float
 
 
 class RetrievalResult(BaseModel):
+    """The chunks chosen for a query.
+
+    ``widened`` is true when the category filter left too few chunks, so all categories were
+    searched.
+    """
+
     query: str
     categories: list[str] | None
     chunks: list[RetrievedChunk]
@@ -53,6 +61,8 @@ class RetrievalResult(BaseModel):
 
 
 class Retriever:
+    """Picks relevant, diverse chunks from a ``VectorIndex`` (steps in the module docstring)."""
+
     def __init__(self, index: VectorIndex, embeddings: Embeddings, config: RAGConfig) -> None:
         self.index = index
         self.embeddings = embeddings
@@ -68,6 +78,10 @@ class Retriever:
         k: int | None = None,
         include_glossary: bool = True,
     ) -> RetrievalResult:
+        """Up to ``k`` (default ``rag.top_k``) relevant, diverse chunks for ``query``.
+
+        Raises ``ValueError`` for an empty query or an unknown category.
+        """
         query = query.strip()
         if not query:
             raise ValueError("Query is empty")
@@ -136,6 +150,10 @@ def build_retriever(
     *,
     index_dir: Path | None = None,
 ) -> Retriever:
+    """Create a retriever from settings, using the saved index or rebuilding it.
+
+    The index is rebuilt and saved to ``index_dir`` when it is missing, unreadable, or out of date.
+    """
     settings = get_settings()
     config = config or settings.rag
     embeddings = embeddings or get_embeddings()

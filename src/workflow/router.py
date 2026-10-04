@@ -24,6 +24,8 @@ ROUTER_PROMPT = (Path(__file__).parent / "prompts" / "router.md").read_text(enco
 
 
 class RouteDecision(BaseModel):
+    """Which specialists should answer the latest message, and what the router extracted."""
+
     standalone_query: str = Field(description="The latest message rewritten to stand alone")
     agents: list[AgentName] = Field(default_factory=list, description="1-3 specialists")
     depends_on: dict[str, list[str]] = Field(default_factory=dict)
@@ -132,6 +134,7 @@ def with_portfolio_for_goals(
 
 
 def extract_tickers(text: str) -> list[str]:
+    """Likely ticker symbols in the text (``$AAPL`` or bare capitals), deduplicated, at most 10."""
     found = []
     for dollar, bare in TICKER_HINT.findall(text):
         candidate = (dollar or bare).upper()

@@ -55,6 +55,8 @@ def _normalize(matrix: np.ndarray) -> np.ndarray:
 
 
 class VectorIndex:
+    """Chunks with their L2-normalized embeddings in an exact (flat) FAISS inner-product index."""
+
     def __init__(self, chunks: Sequence[Chunk], vectors: np.ndarray, meta: dict) -> None:
         if len(chunks) != vectors.shape[0]:
             raise VectorIndexError("chunk count doesn't match vector count")
@@ -69,6 +71,7 @@ class VectorIndex:
 
     @property
     def dimensions(self) -> int:
+        """Length of the embedding vectors."""
         return int(self.vectors.shape[1])
 
     @classmethod
@@ -80,6 +83,10 @@ class VectorIndex:
         *,
         kb_hash: str = "",
     ) -> VectorIndex:
+        """Embed the chunks into a new index; its metadata records the settings and ``kb_hash``.
+
+        Raises ``VectorIndexError`` when ``chunks`` is empty.
+        """
         if not chunks:
             raise VectorIndexError("no chunks to index")
         vectors = np.asarray(embeddings.embed_documents([c.embed_text for c in chunks]))
@@ -108,6 +115,7 @@ class VectorIndex:
         return ordered
 
     def save(self, directory: Path) -> None:
+        """Write the index, chunks, and metadata files to ``directory``, creating it if needed."""
         directory.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self._faiss, str(directory / INDEX_FILE))
         (directory / CHUNKS_FILE).write_text(
@@ -117,6 +125,11 @@ class VectorIndex:
 
     @classmethod
     def load(cls, directory: Path) -> VectorIndex:
+        """Load an index written by ``save``.
+
+        Raises ``VectorIndexError`` if a file is missing or unreadable, or the format version
+        changed.
+        """
         try:
             meta = json.loads((directory / META_FILE).read_text(encoding="utf-8"))
             chunks = [
@@ -133,6 +146,7 @@ class VectorIndex:
 
 
 def is_current(index: VectorIndex, config: RAGConfig, kb_hash: str) -> bool:
+    """Whether the index matches this embedding model, these chunk settings, and ``kb_hash``."""
     meta = index.meta
     return (
         meta.get("embedding_model") == config.embedding_model

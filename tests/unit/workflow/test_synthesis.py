@@ -1,4 +1,10 @@
-from src.workflow.synthesis import MERGE_PROMPT, synthesize, tidy_citations, unify_citations
+from src.workflow.synthesis import (
+    MERGE_BEGINNER,
+    MERGE_PROMPT,
+    synthesize,
+    tidy_citations,
+    unify_citations,
+)
 from tests.fakes.llm import FakeChatModel
 from tests.unit.workflow.conftest import freshness, kb_source, market_source, news_source, result
 
@@ -107,3 +113,14 @@ def test_merge_failure_or_blank_falls_back_to_sections():
         out = synthesize([a, b], llm)
         assert out is not None and not out.merged_by_llm
         assert out.text == "## Markets\nUp 1%.\n\n## News\nEarnings beat."
+
+
+def test_beginner_merges_are_short_and_plain():
+    a = cited("finance_qa", "ETFs [1].", kb=[kb_source("funds-001")])
+    b = cited("tax", "Taxes [1].", kb=[kb_source("taxes-002")])
+    llm = FakeChatModel(responses=["ETFs [1]. Taxes [2]."])
+    synthesize([a, b], llm, "beginner")
+    assert MERGE_BEGINNER in llm.calls[-1][0].content
+    expert = FakeChatModel(responses=["ETFs [1]. Taxes [2]."])
+    synthesize([a, b], expert, "advanced")
+    assert MERGE_BEGINNER not in expert.calls[-1][0].content

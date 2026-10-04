@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the server over stdio (default) or HTTP (``--http``); returns the exit code."""
     parser = argparse.ArgumentParser(prog="python -m src.mcp_server", description=__doc__)
     parser.add_argument("--http", action="store_true", help="Streamable HTTP instead of stdio")
     parser.add_argument("--port", type=int, help="HTTP port (default: mcp.port in config.yaml)")
@@ -57,6 +58,7 @@ def serve_http(
     port: int | None = None,
     host: str | None = None,
 ) -> int:
+    """Serve Streamable HTTP with uvicorn; exits with 2 if MCP_API_TOKEN isn't usable."""
     import uvicorn
 
     from src.mcp_server.http import TokenError, build_http_app

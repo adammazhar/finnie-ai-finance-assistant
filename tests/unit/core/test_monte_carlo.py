@@ -15,6 +15,7 @@ from src.core.monte_carlo import (
     required_contribution_deterministic,
     required_monthly_contribution,
     simulate,
+    years_text,
 )
 from src.core.reference import get_risk_profiles
 
@@ -254,3 +255,14 @@ def test_more_contributions_never_lower_the_odds(current, years, target, contrib
         for monthly in sorted(contributions)
     ]
     assert odds == sorted(odds)
+
+
+def test_years_text():
+    assert years_text(1) == "1 year" and years_text(25) == "25 years"
+
+
+def test_deterministic_value_is_exact_for_a_near_zero_return():
+    """Regression (found by hypothesis): (1+r)^n - 1 lost most of its digits for tiny r."""
+    value = deterministic_future_value(0.0, 2.0, 2.061701148175321e-09, 19)
+    assert value == pytest.approx(loop_future_value(0.0, 2.0, 2.061701148175321e-09, 19), abs=1e-9)
+    assert required_contribution_deterministic(0.0, 456.0, 0.0, 19) == pytest.approx(2.0)

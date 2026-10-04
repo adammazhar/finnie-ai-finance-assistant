@@ -1,4 +1,4 @@
-"""What Finnie keeps for each browser: profile, portfolio, and conversations.
+"""What Finnie keeps for each browser: profile, portfolio, goal inputs, and conversations.
 
 There is no login. Each browser gets a random ID in a cookie, and everything here is
 keyed by it, in a SQLite file (``app.data_path``, git-ignored). Every query is scoped to
@@ -41,6 +41,11 @@ CREATE TABLE IF NOT EXISTS portfolios (
     holdings TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS goals (
+    browser_id TEXT PRIMARY KEY,
+    inputs TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS conversations (
     thread_id TEXT PRIMARY KEY,
     browser_id TEXT NOT NULL,
@@ -55,6 +60,8 @@ CREATE INDEX IF NOT EXISTS conversations_by_browser ON conversations (browser_id
 
 
 class SavedConversation(BaseModel):
+    """One stored conversation: its thread ID, title, messages, and last update."""
+
     thread_id: str
     title: str | None = None
     title_source: TitleSource | None = None
@@ -63,17 +70,26 @@ class SavedConversation(BaseModel):
 
 
 class BrowserData(BaseModel):
+    """Everything saved for one browser, as loaded when a session starts."""
+
     profile: UserProfile | None = None
     portfolio: list[Holding] = Field(default_factory=list)
+    goal: dict[str, Any] | None = None  # the Goals tab's last inputs
     conversations: list[SavedConversation] = Field(default_factory=list)  # newest first
     current_thread: str | None = None
 
 
 def utcnow() -> datetime:
+    """The current time in UTC (the store's default clock)."""
     return datetime.now(UTC)
 
 
 class AppStore:
+    """Per-browser profile, portfolio, and conversations in SQLite.
+
+    Each call opens its own connection, and every query is scoped to one browser ID.
+    """
+
     def __init__(self, path: Path, clock: Callable[[], datetime] = utcnow) -> None:
         self.path = path
         self._clock = clock
@@ -105,6 +121,7 @@ class AppStore:
     # ---- read --------------------------------------------------------------------------
 
     def load(self, browser_id: str) -> BrowserData:
+        """Everything saved for a browser, newest conversation first; records the visit."""
         with self._connect() as db:
             self._touch(db, browser_id)
             profile = db.execute(
@@ -115,6 +132,9 @@ class AppStore:
             ).fetchone()
             current = db.execute(
                 "SELECT current_thread FROM browsers WHERE id = ?", (browser_id,)
+            ).fetchone()
+            goal = db.execute(
+                "SELECT inputs FROM goals WHERE browser_id = ?", (browser_id,)
             ).fetchone()
             rows = db.execute(
                 "SELECT thread_id, title, title_source, chat, updated_at FROM conversations "
@@ -136,10 +156,12 @@ class AppStore:
                 )
                 for thread, title, source, chat, updated in rows
             ],
+            goal=json.loads(goal[0]) if goal else None,
             current_thread=current[0],
         )
 
     def thread_ids(self, browser_id: str) -> list[str]:
+        """The thread IDs of a browser's saved conversations."""
         with self._connect() as db:
             rows = db.execute(
                 "SELECT thread_id FROM conversations WHERE browser_id = ?", (browser_id,)
@@ -149,6 +171,7 @@ class AppStore:
     # ---- write -------------------------------------------------------------------------
 
     def save_profile(self, browser_id: str, profile: UserProfile) -> None:
+        """Insert or replace a browser's profile."""
         with self._connect() as db:
             self._touch(db, browser_id)
             db.execute(
@@ -159,6 +182,7 @@ class AppStore:
             )
 
     def save_portfolio(self, browser_id: str, holdings: list[Holding]) -> None:
+        """Insert or replace a browser's holdings (stored as JSON)."""
         payload = json.dumps([h.model_dump(mode="json") for h in holdings])
         with self._connect() as db:
             self._touch(db, browser_id)
@@ -167,6 +191,17 @@ class AppStore:
                 "ON CONFLICT(browser_id) DO UPDATE SET holdings = excluded.holdings, "
                 "updated_at = excluded.updated_at",
                 (browser_id, payload, self._now()),
+            )
+
+    def save_goal(self, browser_id: str, inputs: dict[str, Any]) -> None:
+        """Insert or replace a browser's Goals tab inputs (stored as JSON)."""
+        with self._connect() as db:
+            self._touch(db, browser_id)
+            db.execute(
+                "INSERT INTO goals (browser_id, inputs, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(browser_id) DO UPDATE SET inputs = excluded.inputs, "
+                "updated_at = excluded.updated_at",
+                (browser_id, json.dumps(inputs), self._now()),
             )
 
     def save_chat(self, browser_id: str, thread_id: str, chat: list[dict[str, Any]]) -> None:
@@ -213,6 +248,7 @@ class AppStore:
         return row[0] if row else None
 
     def set_current(self, browser_id: str, thread_id: str | None) -> None:
+        """Remember which conversation is open (None for a new, unsaved one)."""
         with self._connect() as db:
             self._touch(db, browser_id)
             db.execute(
@@ -220,6 +256,10 @@ class AppStore:
             )
 
     def delete_conversation(self, browser_id: str, thread_id: str) -> bool:
+        """Delete one of a browser's conversations; returns whether it existed.
+
+        If it was the current conversation, the browser is left with none.
+        """
         with self._connect() as db:
             deleted = db.execute(
                 "DELETE FROM conversations WHERE thread_id = ? AND browser_id = ?",
@@ -236,7 +276,7 @@ class AppStore:
         the workflow's memory for them can be removed too."""
         threads = self.thread_ids(browser_id)
         with self._connect() as db:
-            for table in ("conversations", "portfolios", "profiles"):  # fixed names, not input
+            for table in ("conversations", "portfolios", "profiles", "goals"):  # fixed names
                 db.execute(f"DELETE FROM {table} WHERE browser_id = ?", (browser_id,))
             db.execute("DELETE FROM browsers WHERE id = ?", (browser_id,))
         return threads

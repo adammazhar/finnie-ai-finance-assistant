@@ -25,6 +25,8 @@ def merge_results(current: dict[str, Any] | None, update: dict[str, Any] | None)
 
 
 class FinnieState(TypedDict, total=False):
+    """The LangGraph state for one conversation thread (see the module docstring)."""
+
     # Persist across turns (checkpointed per conversation thread)
     messages: Annotated[list[AnyMessage], add_messages]
     profile: dict[str, Any]  # UserProfile

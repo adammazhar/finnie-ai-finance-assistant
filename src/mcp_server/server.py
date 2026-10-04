@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from src.core.config import Settings, get_settings
 from src.core.guardrails import SHORT_DISCLAIMER
-from src.core.indicators import MoverSummary, build_market_overview
+from src.core.indicators import MoverSummary, build_market_overview, index_symbol
 from src.core.market_hours import price_time_label
 from src.core.models import Holding, RiskTolerance
 from src.core.monte_carlo import (
@@ -105,6 +105,8 @@ def default_services(*, warm: bool = True) -> Services:
 
 
 class QuoteResult(BaseModel):
+    """A quote returned by the ``get_stock_quote`` tool."""
+
     ticker: str
     price: float
     change_percent: float | None
@@ -117,6 +119,8 @@ class QuoteResult(BaseModel):
 
 
 class IndexRow(BaseModel):
+    """One major index and the ETF that tracks it, in a market overview."""
+
     name: str
     index_symbol: str | None
     index_level: float | None
@@ -127,12 +131,16 @@ class IndexRow(BaseModel):
 
 
 class SectorRow(BaseModel):
+    """One sector ETF's daily move, in a market overview."""
+
     sector: str
     etf: str
     change_percent: float | None
 
 
 class MarketOverviewResult(BaseModel):
+    """The result of the ``get_market_overview`` tool."""
+
     indices: list[IndexRow]
     sectors: list[SectorRow] = Field(description="Sector ETFs, strongest first")
     summary: list[str]
@@ -142,12 +150,16 @@ class MarketOverviewResult(BaseModel):
 
 
 class HoldingInput(BaseModel):
+    """One holding passed to the ``analyze_portfolio`` tool."""
+
     ticker: str = Field(description="Ticker symbol, e.g. VTI")
     shares: float = Field(gt=0)
     cost_basis: float | None = Field(default=None, ge=0, description="Total cost, optional")
 
 
 class HoldingRow(BaseModel):
+    """One analyzed holding in a portfolio result."""
+
     ticker: str
     name: str
     value: float
@@ -157,6 +169,8 @@ class HoldingRow(BaseModel):
 
 
 class PortfolioResult(BaseModel):
+    """The result of the ``analyze_portfolio`` tool."""
+
     total_value: float
     holdings: list[HoldingRow]
     asset_allocation: dict[str, float]
@@ -173,6 +187,8 @@ class PortfolioResult(BaseModel):
 
 
 class GoalResult(BaseModel):
+    """The result of the ``project_financial_goal`` tool."""
+
     chance_of_reaching_goal: str
     success_probability: float
     ending_balance: dict[str, float] = Field(description="P10, median, and P90 outcomes")
@@ -185,6 +201,8 @@ class GoalResult(BaseModel):
 
 
 class Passage(BaseModel):
+    """One knowledge base passage returned by ``search_financial_knowledge``."""
+
     title: str
     section: str
     category: str
@@ -195,12 +213,16 @@ class Passage(BaseModel):
 
 
 class SearchResult(BaseModel):
+    """The result of the ``search_financial_knowledge`` tool."""
+
     query: str
     results: list[Passage]
     disclaimer: str = SHORT_DISCLAIMER
 
 
 class TaxAccountResult(BaseModel):
+    """The result of the ``explain_tax_account`` tool."""
+
     name: str
     contributions: str
     growth: str
@@ -235,6 +257,10 @@ def _index_rows(overview: Any) -> list[IndexRow]:
 
 
 def build_server(services: Services | None = None) -> MCPServer:
+    """The MCP server with its 6 tools, 2 resources, and 1 prompt, ready for any transport.
+
+    ``services`` defaults to the real market data, knowledge base, and reference data;
+    tests pass fakes."""
     finnie = services or default_services()
     # The SDK logs failed tool calls with their arguments at INFO; keep those out of logs.
     server = MCPServer("Finnie", instructions=INSTRUCTIONS, version="1.0.0", log_level="WARNING")
@@ -245,7 +271,7 @@ def build_server(services: Services | None = None) -> MCPServer:
         """Latest price for a stock, ETF, or index (e.g. AAPL, VTI, ^GSPC), with the exact
         time of the price, whether it's live or delayed, and whether the market is open."""
         try:
-            quote = finnie.market.get_quote(ticker)
+            quote = finnie.market.get_quote(index_symbol(ticker))
         except (MarketDataError, ValueError) as exc:
             raise ToolError(f"No quote for {ticker!r}: {exc}") from None
         return QuoteResult(

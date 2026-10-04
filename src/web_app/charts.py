@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from src.core.indicators import MoverSummary, rsi, sma
 from src.core.monte_carlo import SimulationResult
 from src.core.portfolio import Backtest
+from src.core.reference import asset_class_label
 from src.data.models import PriceHistory
 
 # Okabe-Ito colorblind-safe palette, led by Finnie navy
@@ -36,7 +37,8 @@ def _layout(fig: go.Figure, title: str, **kwargs: object) -> go.Figure:
 
 
 def allocation_donut(mix: Mapping[str, float], title: str = "Asset allocation") -> go.Figure:
-    labels = [k.replace("_", " ").title() for k in mix]
+    """Donut of the portfolio by asset class (equity, bond, cash, ...), in the given order."""
+    labels = [asset_class_label(k) for k in mix]
     fig = go.Figure(
         go.Pie(
             labels=labels,
@@ -54,6 +56,7 @@ def allocation_donut(mix: Mapping[str, float], title: str = "Asset allocation") 
 def allocation_bar(
     mix: Mapping[str, float], title: str = "Sector allocation", axis: str = "Share of portfolio"
 ) -> go.Figure:
+    """Horizontal bars of a mix (sectors by default), largest at the top."""
     items = sorted(mix.items(), key=lambda kv: kv[1])
     fig = go.Figure(
         go.Bar(
@@ -70,6 +73,7 @@ def allocation_bar(
 
 
 def correlation_heatmap(matrix: Mapping[str, Mapping[str, float]]) -> go.Figure:
+    """How closely holdings' daily returns moved together (-1 to 1)."""
     tickers = list(matrix)
     values = [[matrix[a][b] for b in tickers] for a in tickers]
     fig = go.Figure(
@@ -144,11 +148,18 @@ def fan_chart(result: SimulationResult) -> go.Figure:
 
 
 def probability_gauge(probability: float, title: str = "Chance of reaching the goal") -> go.Figure:
+    """The Monte Carlo chance of success as a 0-100% gauge, with the 50% mark."""
+    shown = round(probability * 100)
+    prefix = ""
+    if probability < 0.01:
+        shown, prefix = 1, "<"
+    elif probability > 0.99:
+        shown, prefix = 99, ">"
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
-            value=round(probability * 100, 1),
-            number=dict(suffix="%"),
+            value=shown,
+            number=dict(prefix=prefix, suffix="%", valueformat=".0f"),
             gauge=dict(
                 axis=dict(range=[0, 100], ticksuffix="%"),
                 bar=dict(color=PALETTE[0]),
@@ -172,14 +183,17 @@ def _closes(history: PriceHistory) -> pd.Series:
 
 
 def price_chart(history: PriceHistory) -> go.Figure:
+    """Daily closes with the 50- and 200-day moving averages (when there's enough history)."""
     closes = _closes(history)
+    index = history.ticker.startswith("^")  # an index level is points, not dollars
+    unit = "" if index else "$"
     fig = go.Figure(
         go.Scatter(
             x=closes.index,
             y=closes,
             name="Close",
             line=dict(color=PALETTE[0], width=2),
-            hovertemplate="%{x|%b %d, %Y}: $%{y:,.2f}<extra>Close</extra>",
+            hovertemplate="%{x|%b %d, %Y}: " + unit + "%{y:,.2f}<extra>Close</extra>",
         )
     )
     for window, color in ((50, PALETTE[1]), (200, PALETTE[2])):
@@ -191,15 +205,20 @@ def price_chart(history: PriceHistory) -> go.Figure:
                     y=average,
                     name=f"{window}-day average",
                     line=dict(color=color, width=1.5, dash="dash"),
-                    hovertemplate="%{x|%b %d, %Y}: $%{y:,.2f}<extra>" + f"{window}-day</extra>",
+                    hovertemplate="%{x|%b %d, %Y}: "
+                    + unit
+                    + "%{y:,.2f}<extra>"
+                    + f"{window}-day</extra>",
                 )
             )
     fig.update_xaxes(title="Date")
-    fig.update_yaxes(title="Price (USD)", tickprefix="$")
-    return _layout(fig, f"{history.ticker} price with moving averages")
+    fig.update_yaxes(title="Index level" if index else "Price (USD)", tickprefix=unit)
+    what = "level" if index else "price"
+    return _layout(fig, f"{history.ticker} {what} with moving averages")
 
 
 def rsi_chart(history: PriceHistory) -> go.Figure:
+    """14-day RSI with the 70 (often called overbought) and 30 (oversold) bands shaded."""
     values = rsi(_closes(history))
     fig = go.Figure(
         go.Scatter(
@@ -220,6 +239,7 @@ def rsi_chart(history: PriceHistory) -> go.Figure:
 
 
 def movers_bar(movers: Sequence[MoverSummary], title: str) -> go.Figure:
+    """Today's percent change per fund, strongest first, colored up or down."""
     changes = [m.change_percent or 0.0 for m in movers]
     fig = go.Figure(
         go.Bar(
@@ -228,10 +248,17 @@ def movers_bar(movers: Sequence[MoverSummary], title: str) -> go.Figure:
             orientation="h",
             marker_color=[UP if c > 0 else DOWN if c < 0 else NEUTRAL for c in changes],
             texttemplate="%{x:+.2f}%",
+            textposition="outside",
+            cliponaxis=False,
             hovertemplate="%{y}: %{x:+.2f}%<extra></extra>",
         )
     )
-    fig.update_xaxes(title="Change today (%)", ticksuffix="%", zeroline=True)
+    # room beyond the longest bar on each side, so labels like "-0.01%" are never cut off
+    low, high = min(0.0, *changes), max(0.0, *changes)
+    pad = ((high - low) or 1.0) * 0.25
+    fig.update_xaxes(
+        title="Change today (%)", ticksuffix="%", zeroline=True, range=[low - pad, high + pad]
+    )
     fig.update_yaxes(autorange="reversed")
     return _layout(fig, title, height=max(260, 32 * len(movers) + 90))
 

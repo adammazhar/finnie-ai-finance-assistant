@@ -92,12 +92,14 @@ def test_delete_conversation(store):
 def test_delete_browser_removes_everything_and_reports_threads(store):
     store.save_profile(A, UserProfile())
     store.save_portfolio(A, [Holding(ticker="VTI", shares=1)])
+    store.save_goal(A, {"goal": "College", "target": 100000.0})
     store.save_chat(A, "t1", chat("q1"))
     store.save_chat(B, "t9", chat("other browser"))
     assert store.delete_browser(A) == ["t1"]
     assert store.load(A).model_dump() == {
         "profile": None,
         "portfolio": [],
+        "goal": None,
         "conversations": [],
         "current_thread": None,
     }
@@ -108,3 +110,12 @@ def test_data_survives_a_new_store_on_the_same_file(store, tmp_path):
     store.save_chat(A, "t1", chat("q1"))
     reopened = AppStore(store.path)
     assert [c.thread_id for c in reopened.load(A).conversations] == ["t1"]
+
+
+def test_goal_inputs_are_saved_per_browser(store):
+    assert store.load(A).goal is None
+    store.save_goal(A, {"goal": "Retirement", "years": 7})
+    store.save_goal(A, {"goal": "College", "years": 12})  # replaces the earlier inputs
+    store.save_goal(B, {"goal": "Emergency fund", "years": 2})
+    assert store.load(A).goal == {"goal": "College", "years": 12}
+    assert store.load(B).goal == {"goal": "Emergency fund", "years": 2}

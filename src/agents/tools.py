@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_core.tools import BaseTool, StructuredTool
 from pydantic import BaseModel, Field
@@ -19,7 +19,12 @@ from pydantic import BaseModel, Field
 from src.agents.base import RunState, format_blocks
 from src.agents.context import AgentContext
 from src.core.guardrails import sanitize_untrusted, wrap_untrusted
-from src.core.indicators import MoverSummary, build_market_overview, technical_snapshot
+from src.core.indicators import (
+    MoverSummary,
+    build_market_overview,
+    index_symbol,
+    technical_snapshot,
+)
 from src.core.models import AGENT_NAMES, Holding, Source
 from src.core.monte_carlo import (
     LOW_ODDS,
@@ -28,11 +33,19 @@ from src.core.monte_carlo import (
     low_odds_note,
     required_monthly_contribution,
     simulate,
+    years_text,
 )
 from src.core.portfolio import expense_ratio_label, fetch_and_analyze
-from src.core.tax import compare_accounts, illustrate_capital_gains
+from src.core.reference import asset_class_label
+from src.core.tax import (
+    compare_accounts,
+    illustrate_capital_gains,
+    rmd_age_for,
+    rmd_age_for_current_age,
+)
 from src.rag.chunking import GLOSSARY_CATEGORY
 from src.rag.knowledge_base import CATEGORIES
+from src.utils.clock import utcnow
 
 ToolFactory = Callable[[AgentContext, RunState], BaseTool]
 _FACTORIES: dict[str, ToolFactory] = {}
@@ -46,6 +59,12 @@ def _register(fn: ToolFactory) -> ToolFactory:
 def build_tools(
     names: tuple[str, ...], context: AgentContext, state: RunState
 ) -> dict[str, BaseTool]:
+    """The named LangChain tools for one agent run.
+
+    Each tool wraps a pure function from ``src/core`` or ``src/data``. It returns a short
+    text summary to the model, and writes structured results (chart data, freshness,
+    sources) to ``state``. Raises ``KeyError`` for an unknown tool name.
+    """
     unknown = [n for n in names if n not in _FACTORIES]
     if unknown:
         raise KeyError(f"Unknown tools: {unknown}")
@@ -53,6 +72,7 @@ def build_tools(
 
 
 def available_tools() -> list[str]:
+    """Names of every registered tool, sorted."""
     return sorted(_FACTORIES)
 
 
@@ -64,6 +84,8 @@ def _pct(value: float | None, digits: int = 1) -> str:
 
 
 class SearchArgs(BaseModel):
+    """Arguments for the ``search_knowledge_base`` tool."""
+
     query: str = Field(description="What to look up in Finnie's knowledge base")
     category: str | None = Field(
         default=None, description=f"Optional category: one of {', '.join(CATEGORIES)}"
@@ -72,6 +94,8 @@ class SearchArgs(BaseModel):
 
 @_register
 def make_search_knowledge_base(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that searches the knowledge base and adds new passages to the run as ``[n]`` blocks."""
+
     def search(query: str, category: str | None = None) -> str:
         if context.retriever is None:
             return "The knowledge base is unavailable right now."
@@ -94,11 +118,15 @@ def make_search_knowledge_base(context: AgentContext, state: RunState) -> BaseTo
 
 
 class GlossaryArgs(BaseModel):
+    """Arguments for the ``lookup_glossary_term`` tool."""
+
     term: str = Field(description="A financial term, e.g. 'expense ratio'")
 
 
 @_register
 def make_lookup_glossary_term(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that looks up glossary entries and adds them to the run as citable passages."""
+
     def lookup(term: str) -> str:
         if context.retriever is None:
             return "The glossary is unavailable right now."
@@ -127,13 +155,25 @@ def _market_source(label: str, detail: str) -> Source:
 
 
 class TickersArgs(BaseModel):
-    tickers: list[str] = Field(min_length=1, max_length=15, description="Ticker symbols")
+    """Arguments for the ``get_quotes`` tool (1 to 15 tickers)."""
+
+    tickers: list[str] = Field(
+        min_length=1,
+        max_length=15,
+        description="Ticker symbols. Indexes use Yahoo symbols: ^GSPC (S&P 500), ^DJI (Dow), "
+        "^NDX (Nasdaq-100), ^IXIC (Nasdaq Composite), ^RUT (Russell 2000), ^VIX.",
+    )
 
 
 @_register
 def make_get_quotes(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that fetches quotes, recording each price, its freshness, and a market-data source.
+
+    Tickers that fail are listed as unavailable instead of failing the call.
+    """
+
     def get_quotes(tickers: list[str]) -> str:
-        batch = context.market.get_quotes(tickers)
+        batch = context.market.get_quotes([index_symbol(t) for t in tickers])
         lines = []
         for ticker, quote in batch.quotes.items():
             change = f"{quote.change_percent:+.2f}%" if quote.change_percent is not None else "n/a"
@@ -160,6 +200,8 @@ def _change(mover: MoverSummary) -> str:
 
 @_register
 def make_get_market_overview(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that summarizes indices, sectors, and market mood, and stores the overview."""
+
     def get_market_overview() -> str:
         overview = build_market_overview(context.market)
         state.data["market_overview"] = overview.model_dump(mode="json")
@@ -193,11 +235,15 @@ def make_get_market_overview(context: AgentContext, state: RunState) -> BaseTool
 
 
 class TickerArgs(BaseModel):
+    """Arguments for the single-ticker tools."""
+
     ticker: str = Field(description="One ticker symbol")
 
 
 @_register
 def make_get_technical_snapshot(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that reports a ticker's trend indicators and stores its price history for the chart."""
+
     def get_technical_snapshot(ticker: str) -> str:
         history = context.market.get_daily_history(ticker, context.settings.analytics.history_days)
         snapshot = technical_snapshot(history)
@@ -225,6 +271,8 @@ def make_get_technical_snapshot(context: AgentContext, state: RunState) -> BaseT
 
 @_register
 def make_get_company_overview(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that reports basic facts for a stock or fund, with its name sanitized."""
+
     def get_company_overview(ticker: str) -> str:
         o = context.market.get_company_overview(ticker)
         state.freshness.append(o.freshness)
@@ -258,12 +306,16 @@ def make_get_company_overview(context: AgentContext, state: RunState) -> BaseToo
 
 
 class HoldingArg(BaseModel):
+    """One holding the user described in their message."""
+
     ticker: str
     shares: float = Field(gt=0)
     cost_basis: float | None = Field(default=None, ge=0, description="Total cost, if known")
 
 
 class PortfolioArgs(BaseModel):
+    """Arguments for the ``analyze_portfolio`` tool."""
+
     holdings: list[HoldingArg] | None = Field(
         default=None,
         description="Holdings the user described in this message. Omit to use the user's "
@@ -273,6 +325,12 @@ class PortfolioArgs(BaseModel):
 
 @_register
 def make_analyze_portfolio(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that analyzes the given holdings, or the saved portfolio when none are given.
+
+    Uses the user's risk tolerance for the comparison mix and stores the holdings and
+    analysis for the UI.
+    """
+
     def analyze_portfolio(holdings: list[HoldingArg] | None = None) -> str:
         request = state.request
         rows = [Holding(**h.model_dump()) for h in holdings] if holdings else request.portfolio
@@ -295,7 +353,11 @@ def make_analyze_portfolio(context: AgentContext, state: RunState) -> BaseTool:
 
         lines = [
             f"Total value ${analysis.total_value:,.2f}.",
-            "Asset mix: " + ", ".join(f"{k} {v:.0%}" for k, v in analysis.asset_allocation.items()),
+            "Asset mix: "
+            + ", ".join(
+                f"{asset_class_label(k).lower()} {v:.0%}"
+                for k, v in analysis.asset_allocation.items()
+            ),
             "Holdings: " + ", ".join(f"{h.ticker} {h.weight:.0%}" for h in analysis.holdings),
             f"Diversification score {analysis.diversification_score:.0f}/100; "
             f"risk {analysis.risk_score}/10 ({analysis.risk_level}).",
@@ -328,6 +390,8 @@ def make_analyze_portfolio(context: AgentContext, state: RunState) -> BaseTool:
 
 
 class GoalArgs(BaseModel):
+    """Arguments for the ``project_goal`` tool."""
+
     target_amount: float = Field(gt=0, description="Goal amount in today's dollars")
     years: int = Field(ge=1, le=60)
     current_balance: float = Field(default=0, ge=0)
@@ -340,6 +404,13 @@ class GoalArgs(BaseModel):
 
 @_register
 def make_project_goal(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that runs the Monte Carlo goal projection and stores it for the UI.
+
+    The seed is fixed, so results are repeatable. It also computes the monthly contribution
+    needed for the configured target probability. The risk tolerance defaults to the user's
+    profile.
+    """
+
     def project_goal(
         target_amount: float,
         years: int,
@@ -369,14 +440,21 @@ def make_project_goal(context: AgentContext, state: RunState) -> BaseTool:
             "risk_profile": profile.model_dump(mode="json"),
         }
         p = result.final_percentiles
+        basis = (
+            f"all amounts in today's dollars: the {profile.expected_return:.1%} return is "
+            f"before inflation, and results subtract {inputs.inflation:.1%} inflation a year"
+            if inflation_adjusted
+            else "all amounts in future (nominal) dollars, not adjusted for inflation"
+        )
         return (
-            f"Projection ({result.dollars} dollars, {profile.label.lower()} assumptions: "
+            f"Projection ({profile.label.lower()} assumptions: "
             f"{profile.expected_return:.1%} expected return, {profile.volatility:.0%} "
-            f"volatility, {mc.simulations:,} simulated paths): probability of reaching "
-            f"${target_amount:,.0f} in {years} years is "
+            f"volatility, {mc.simulations:,} simulated paths; {basis}; say this when you "
+            f"quote these figures): probability of reaching "
+            f"${target_amount:,.0f} in {years_text(years)} is "
             f"{chance_text(result.success_probability)}. "
             f"Ending balance range: P10 ${p[10]:,.0f}, median ${p[50]:,.0f}, P90 ${p[90]:,.0f}. "
-            f"With a steady return and no market swings: "
+            f"With a steady {profile.expected_return:.1%} return and no market swings: "
             f"${result.deterministic_final:,.0f}. "
             f"Monthly contribution for a {mc.target_success_probability:.0%} probability: "
             f"${needed:,.2f}. These are hypothetical, not forecasts."
@@ -396,6 +474,8 @@ def make_project_goal(context: AgentContext, state: RunState) -> BaseTool:
 
 
 class NewsArgs(BaseModel):
+    """Arguments for the ``get_news`` tool."""
+
     ticker: str | None = Field(default=None, description="A ticker, for company news")
     query: str | None = Field(default=None, description="A topic, for general market news")
     limit: int = Field(default=5, ge=1, le=10)
@@ -403,6 +483,8 @@ class NewsArgs(BaseModel):
 
 @_register
 def make_get_news(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that fetches recent news and adds each article to the run as an ``[N1]`` source."""
+
     def get_news(ticker: str | None = None, query: str | None = None, limit: int = 5) -> str:
         feed = context.market.get_news(ticker=ticker, query=query, limit=limit)
         state.freshness.append(feed.freshness)
@@ -436,11 +518,15 @@ def make_get_news(context: AgentContext, state: RunState) -> BaseTool:
 
 
 class TaxFiguresArgs(BaseModel):
+    """Arguments for the ``get_tax_figures`` tool."""
+
     keys: list[str] | None = Field(default=None, description="Figure keys; omit to list all")
 
 
 @_register
 def make_get_tax_figures(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that lists tax-year figures with their verification status and IRS source."""
+
     def get_tax_figures(keys: list[str] | None = None) -> str:
         ref = context.tax
         figures = [ref.figures[k] for k in keys or ref.figures if k in ref.figures]
@@ -465,7 +551,78 @@ def make_get_tax_figures(context: AgentContext, state: RunState) -> BaseTool:
     )
 
 
+class WithdrawalArgs(BaseModel):
+    """Arguments for the ``get_withdrawal_rules`` tool."""
+
+    account: Literal["workplace_plan", "ira", "both"] = Field(
+        default="both",
+        description="workplace_plan for 401(k)/403(b) and similar plans, ira for IRAs",
+    )
+    birth_year: int | None = Field(
+        default=None,
+        ge=1900,
+        le=2030,
+        description="The user's birth year if they said it; otherwise their profile age is used",
+    )
+
+
+@_register
+def make_get_withdrawal_rules(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool for early-withdrawal penalty exceptions by account type and the RMD starting age
+    for the user's birth year (from their profile age when no birth year is given)."""
+
+    def get_withdrawal_rules(
+        account: Literal["workplace_plan", "ira", "both"] = "both", birth_year: int | None = None
+    ) -> str:
+        ref = context.tax
+        table = ref.early_withdrawal_exceptions
+        kinds = {"workplace_plan": ["plans"], "ira": ["iras"], "both": ["plans", "iras"]}[account]
+        names = {"plans": "workplace plans (401(k), 403(b))", "iras": "IRAs"}
+        lines = ["Exceptions to the 10% additional tax on withdrawals before age 59½:"]
+        for item in table.items:
+            parts = [f"{names[k]}: {getattr(item, k)}" for k in kinds]
+            lines.append(f"- {item.label} ({'; '.join(parts)})")
+        lines.append("Only say an exception applies to an account type where it says yes.")
+        age = state.request.profile.age
+        if birth_year is not None:
+            text = rmd_age_for(ref, birth_year=birth_year)
+            rmd = text[0].upper() + text[1:]
+        elif age is not None:
+            rmd = rmd_age_for_current_age(ref, age=age, year=utcnow().year)
+        else:
+            rows = [f"{_rmd_row(row)}" for row in ref.rmd_ages.schedule]
+            rmd = "The user's age isn't known. RMD ages by birth date: " + "; ".join(rows)
+        lines += [f"Required minimum distributions: {rmd}.", ref.rmd_ages.first_rmd_due]
+        for title, url in (
+            ("IRS: Exceptions to tax on early distributions", table.source_url),
+            (
+                "IRS: Required minimum distribution ages (final and proposed regulations)",
+                ref.rmd_ages.source_url,
+            ),
+        ):
+            state.sources.append(Source(title=title, kind="knowledge_base", url=url))
+        return "\n".join(lines)
+
+    return StructuredTool.from_function(
+        func=get_withdrawal_rules,
+        name="get_withdrawal_rules",
+        description="Which exceptions to the early-withdrawal penalty apply to 401(k)-type "
+        "plans vs IRAs (they differ), and when the user's required minimum distributions "
+        "start, from IRS sources.",
+        args_schema=WithdrawalArgs,
+    )
+
+
+def _rmd_row(row: Any) -> str:
+    start = f"from {row.born_from:%b %d, %Y}" if row.born_from else ""
+    end = f"before {row.born_before:%b %d, %Y}" if row.born_before else ""
+    age = "70½" if row.age == 70.5 else f"{row.age:g}"
+    return f"born {' '.join(p for p in (start, end) if p)}: age {age}"
+
+
 class AccountsArgs(BaseModel):
+    """Arguments for the ``compare_tax_accounts`` tool."""
+
     account_types: list[str] | None = Field(
         default=None,
         description="Any of: traditional_401k, roth_401k, traditional_ira, roth_ira, hsa, "
@@ -475,6 +632,8 @@ class AccountsArgs(BaseModel):
 
 @_register
 def make_compare_tax_accounts(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that compares the tax treatment and limits of account types and stores the table."""
+
     def compare_tax_accounts(account_types: list[str] | None = None) -> str:
         rows = compare_accounts(context.tax, account_types)
         state.data["account_comparison"] = [r.model_dump(mode="json") for r in rows]
@@ -498,6 +657,8 @@ def make_compare_tax_accounts(context: AgentContext, state: RunState) -> BaseToo
 
 
 class GainsArgs(BaseModel):
+    """Arguments for the ``illustrate_capital_gains`` tool."""
+
     gain: float = Field(gt=0)
     purchase_date: date
     sale_date: date
@@ -507,6 +668,8 @@ class GainsArgs(BaseModel):
 
 @_register
 def make_illustrate_capital_gains(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that illustrates short- vs long-term federal tax on a gain and stores the result."""
+
     def illustrate(
         gain: float,
         purchase_date: date,
@@ -544,12 +707,20 @@ def make_illustrate_capital_gains(context: AgentContext, state: RunState) -> Bas
 
 
 class HandoffArgs(BaseModel):
+    """Arguments for the ``request_handoff`` tool."""
+
     agent: Literal["finance_qa", "portfolio", "market", "goal_planning", "news", "tax"]
     reason: str = Field(description="Why that specialist should also weigh in")
 
 
 @_register
 def make_request_handoff(context: AgentContext, state: RunState) -> BaseTool:
+    """Tool that asks another specialist to answer after this one.
+
+    At most one hand-off per question, never to the same agent, and none while answering a
+    hand-off; refusals come back as text so the model can carry on.
+    """
+
     def request_handoff(agent: str, reason: str) -> str:
         if not state.request.allow_handoff:
             return "Not handed off: hand-offs are disabled while answering a hand-off."

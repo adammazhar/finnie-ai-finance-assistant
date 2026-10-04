@@ -21,20 +21,30 @@ CASES_FILE = PROJECT_ROOT / "tests" / "evals" / "retrieval_cases.yaml"
 
 
 class EvalCase(BaseModel):
+    """One retrieval test question and the article ids that count as a hit."""
+
     question: str
     expected: list[str] = Field(min_length=1)
 
     @property
     def category(self) -> str:
+        """Category of the first expected article (its id minus the number), for filtered runs."""
         return self.expected[0].rsplit("-", 1)[0]
 
 
 class EvalSet(BaseModel):
+    """The evaluation cases, plus off-topic questions that should retrieve nothing."""
+
     cases: list[EvalCase]
     off_topic: list[str] = Field(default_factory=list)
 
 
 class EvalResult(BaseModel):
+    """Scores for one threshold and filter setting.
+
+    ``misses`` lists each missed question with the articles that were retrieved instead.
+    """
+
     threshold: float
     filtered: bool
     k: int
@@ -45,6 +55,7 @@ class EvalResult(BaseModel):
 
 
 def load_eval_set(path: Path = CASES_FILE) -> EvalSet:
+    """The retrieval evaluation set (``tests/evals/retrieval_cases.yaml``)."""
     return EvalSet(**yaml.safe_load(path.read_text(encoding="utf-8")))
 
 

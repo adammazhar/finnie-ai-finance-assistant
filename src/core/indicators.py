@@ -27,6 +27,27 @@ INDEX_PROXIES: dict[str, str] = {
 }
 # The index itself, shown next to the ETF that tracks it (indexes can't be bought).
 INDEX_LEVELS: dict[str, str] = {"SPY": "^GSPC", "QQQ": "^NDX", "DIA": "^DJI", "IWM": "^RUT"}
+# Names people (and models) use for indexes, mapped to the Yahoo symbols the data uses.
+# Without this, "SPX" finds nothing and the S&P 500 looks unavailable.
+INDEX_ALIASES: dict[str, str] = {
+    "SPX": "^GSPC",
+    "GSPC": "^GSPC",
+    "INX": "^GSPC",
+    "DJI": "^DJI",
+    "DJIA": "^DJI",
+    "NDX": "^NDX",
+    "COMP": "^IXIC",
+    "IXIC": "^IXIC",
+    "RUT": "^RUT",
+    "VIX": "^VIX",
+}
+
+
+def index_symbol(ticker: str) -> str:
+    """The Yahoo symbol for an index alias (``SPX`` -> ``^GSPC``); other tickers unchanged."""
+    return INDEX_ALIASES.get(ticker.strip().upper().lstrip("$"), ticker)
+
+
 SECTOR_ETFS: dict[str, str] = {
     "XLK": "Technology",
     "XLF": "Financials",
@@ -72,6 +93,8 @@ def realized_volatility(closes: pd.Series, window: int = 30) -> float | None:
 
 
 class CrossEvent(BaseModel):
+    """A 50/200-day moving-average crossover and the date it happened."""
+
     kind: Literal["golden_cross", "death_cross"]
     date: date
 
@@ -92,6 +115,12 @@ def latest_cross(closes: pd.Series, lookback: int = 60) -> CrossEvent | None:
 
 
 class TechnicalSnapshot(BaseModel):
+    """Moving averages, RSI, volatility, and 52-week range for one ticker, with plain-English notes.
+
+    ``volatility_30d`` is annualized, as a fraction. ``range_position`` is 0 at the
+    52-week low and 1 at the high. Values are ``None`` when there isn't enough history.
+    """
+
     ticker: str
     price: float
     as_of: date
@@ -113,6 +142,12 @@ def _last(series: pd.Series) -> float | None:
 
 
 def technical_snapshot(history: PriceHistory) -> TechnicalSnapshot:
+    """Compute a :class:`TechnicalSnapshot` from daily closes.
+
+    The trend is "uptrend" when price > 50-day > 200-day average, "downtrend" when
+    reversed, and "unknown" without 200 days of history. Raises ``ValueError`` when the
+    history is empty.
+    """
     frame = history.to_frame()
     if frame.empty:
         raise ValueError(f"No price history for {history.ticker}")
@@ -194,6 +229,8 @@ def _snapshot_notes(
 
 
 class MoverSummary(BaseModel):
+    """One index, index ETF, or sector ETF's price and daily change (``change_percent`` is %)."""
+
     ticker: str
     name: str
     price: float
@@ -202,6 +239,11 @@ class MoverSummary(BaseModel):
 
 
 class MarketMood(BaseModel):
+    """A plain-English read of the day: sector breadth and the S&P 500's volatility regime.
+
+    ``average_sector_change`` is in percent (1.2 means +1.2%).
+    """
+
     label: Literal["broadly higher", "broadly lower", "mixed", "unknown"]
     sectors_up: int
     sectors_total: int
@@ -211,6 +253,11 @@ class MarketMood(BaseModel):
 
 
 class MarketOverview(BaseModel):
+    """Indices, sectors, an S&P 500 technical snapshot, and the market mood.
+
+    ``errors`` maps each ticker (or ``SPY history``) that couldn't be fetched to its error.
+    """
+
     indices: list[MoverSummary]
     levels: dict[str, MoverSummary] = {}  # ETF ticker -> the index it tracks (e.g. ^GSPC)
     sectors: list[MoverSummary]
@@ -220,6 +267,12 @@ class MarketOverview(BaseModel):
 
 
 def market_mood(sectors: list[MoverSummary], benchmark: TechnicalSnapshot | None) -> MarketMood:
+    """Describe sector breadth and the benchmark's volatility regime.
+
+    "Broadly higher" means at least 70% of sectors are up and "broadly lower" at most
+    30%. The regime comes from the benchmark's 30-day annualized volatility: calm under
+    12%, normal under 20%, elevated under 30%, else high.
+    """
     changes = [s.change_percent for s in sectors if s.change_percent is not None]
     up = sum(1 for c in changes if c > 0)
     average = round(sum(changes) / len(changes), 3) if changes else None
@@ -273,8 +326,13 @@ def market_mood(sectors: list[MoverSummary], benchmark: TechnicalSnapshot | None
 
 
 class MarketData(Protocol):
-    def get_quotes(self, tickers: list[str]) -> BatchQuotes: ...
-    def get_daily_history(self, ticker: str, days: int = ...) -> PriceHistory: ...
+    """The market data calls :func:`build_market_overview` needs."""
+
+    def get_quotes(self, tickers: list[str]) -> BatchQuotes:
+        """Latest quotes for ``tickers``, with per-ticker errors for any that failed."""
+
+    def get_daily_history(self, ticker: str, days: int = ...) -> PriceHistory:
+        """The last ``days`` daily bars for ``ticker``."""
 
 
 def build_market_overview(market: MarketData, history_days: int = TRADING_DAYS) -> MarketOverview:

@@ -238,6 +238,11 @@ def _answer(prompt: str, scroll: bool) -> None:
 
 
 def render() -> None:
+    """Draw the Chat page and answer a typed or queued question.
+
+    A question queued from another page is first drawn on its own and the page rerun,
+    so the previous page doesn't linger while the answer is written.
+    """
     typed = st.chat_input("Message Finnie…", key="chat_input")
     waiting = None if typed else state.peek_prompt()
     if waiting and not st.session_state.pop(DRAWN, False):

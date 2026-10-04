@@ -19,4 +19,5 @@ AGENT_CLASSES: dict[AgentName, type[BaseAgent]] = {
 
 
 def build_agents(context: AgentContext) -> dict[AgentName, BaseAgent]:
+    """One instance of each of the six specialists, sharing the models and services."""
     return {name: cls(context) for name, cls in AGENT_CLASSES.items()}

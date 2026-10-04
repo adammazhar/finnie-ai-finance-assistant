@@ -29,6 +29,8 @@ NAME = "mock"
 
 
 class MockMarketDataProvider:
+    """Last-resort provider serving demo values from ``mock_market.json``, flagged ``is_mock``."""
+
     name = NAME
 
     def __init__(self, path: Path = DEFAULT_MOCK_PATH, clock: Clock = utcnow) -> None:
@@ -41,6 +43,7 @@ class MockMarketDataProvider:
 
     @property
     def tickers(self) -> frozenset[str]:
+        """Tickers that have demo data."""
         return frozenset(self._data["securities"])
 
     def _security(self, ticker: str) -> dict[str, Any]:
@@ -54,6 +57,10 @@ class MockMarketDataProvider:
         return Freshness(source=NAME, as_of=now, fetched_at=now, is_mock=True)
 
     def get_quote(self, ticker: str) -> Quote:
+        """Demo price and previous close.
+
+        Raises ``SymbolNotFoundError`` for a ticker without demo data.
+        """
         sec = self._security(ticker)
         return Quote(
             ticker=ticker,
@@ -64,6 +71,10 @@ class MockMarketDataProvider:
         )
 
     def get_daily_history(self, ticker: str, days: int) -> PriceHistory:
+        """A random walk over ``days`` weekdays that ends at the demo price (no volume).
+
+        The walk is seeded by the ticker, so a ticker always gets the same series.
+        """
         sec = self._security(ticker)
         rng = random.Random(zlib.crc32(ticker.encode()))
         daily_vol = sec.get("annual_volatility", 0.2) / math.sqrt(TRADING_DAYS_PER_YEAR)
@@ -92,6 +103,10 @@ class MockMarketDataProvider:
         return PriceHistory(ticker=ticker, bars=bars, adjusted=True, freshness=self._freshness())
 
     def get_company_overview(self, ticker: str) -> CompanyOverview:
+        """Demo name, sector, and a few fundamentals.
+
+        Raises ``SymbolNotFoundError`` for a ticker without demo data.
+        """
         sec = self._security(ticker)
         return CompanyOverview(
             ticker=ticker,
@@ -107,12 +122,14 @@ class MockMarketDataProvider:
     def get_news(
         self, ticker: str | None = None, query: str | None = None, limit: int = 5
     ) -> list[NewsArticle]:
+        """The first ``limit`` demo headlines; ``ticker`` and ``query`` are ignored."""
         return [
             NewsArticle(title=item["title"], summary=item["summary"], source="Finnie demo data")
             for item in self._data["news"][:limit]
         ]
 
     def freshness(self) -> Freshness:
+        """A ``Freshness`` record stamped now and flagged ``is_mock``."""
         return self._freshness()
 
 

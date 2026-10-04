@@ -120,3 +120,41 @@ def test_missing_api_key_shows_setup_steps_not_a_stack_trace(monkeypatch):
     assert "OPENAI_API_KEY is not set" in app.error[0].value
     assert any("docker compose up" in t for t in texts(app.markdown))
     assert not app.sidebar.button  # nothing else renders
+
+
+def _save_script(rows, upload_id=None, used_id=None, saved=False):
+    """An app script that calls the Portfolio tab's Save with the given table and upload."""
+    from types import SimpleNamespace
+
+    import pandas as pd
+    import streamlit as st
+
+    from src.core.models import Holding
+    from src.web_app import state
+    from src.web_app.tabs import portfolio
+
+    st.session_state["finnie_portfolio"] = [Holding(ticker="VTI", shares=1)] if saved else []
+    if used_id:
+        st.session_state[portfolio.UPLOAD_USED] = used_id
+    upload = SimpleNamespace(file_id=upload_id) if upload_id else None
+    portfolio._save(pd.DataFrame(rows, columns=["ticker", "shares", "cost_basis"]), upload)
+    st.session_state["saved_after"] = [h.ticker for h in state.portfolio()]
+
+
+def save_app(**kwargs):
+    return AppTest.from_function(_save_script, kwargs=kwargs, default_timeout=60).run()
+
+
+def test_save_warns_about_a_file_that_was_chosen_but_not_loaded(monkeypatch):
+    monkeypatch.setattr("src.web_app.state.set_portfolio", lambda holdings: None)
+    app = save_app(rows=[["AAPL", 1, None]], upload_id="new")
+    assert "haven't loaded it yet" in app.warning[0].value
+    assert not save_app(rows=[["AAPL", 1, None]], upload_id="new", used_id="new").warning
+
+
+def test_save_explains_an_empty_table_and_rejected_rows(monkeypatch):
+    monkeypatch.setattr("src.web_app.state.set_portfolio", lambda holdings: None)
+    assert "The table is empty" in save_app(rows=[]).info[0].value
+    bad = save_app(rows=[["AAPL", -5, None]])
+    assert bad.warning[0].value.endswith("was skipped: shares must be more than 0")
+    assert not save_app(rows=[], saved=True).info  # an empty table clears a saved portfolio

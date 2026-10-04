@@ -304,3 +304,7 @@ def test_default_services_warm_the_knowledge_base_in_the_background(monkeypatch)
 def test_build_server_defaults_to_real_services(monkeypatch, services):
     monkeypatch.setattr(server_module, "default_services", lambda: services)
     assert build_server().name == "Finnie"
+
+
+def test_quote_understands_index_names(services):
+    assert ok(services, "get_stock_quote", {"ticker": "SPX"})["ticker"] == "^GSPC"

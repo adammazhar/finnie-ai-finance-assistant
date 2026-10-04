@@ -26,6 +26,8 @@ jobs:
           ruff format --check .
       - name: Type check
         run: mypy
+      - name: Docstring coverage (every public module, class, and function)
+        run: interrogate src    # settings and the 100% gate: [tool.interrogate] in pyproject.toml
       - name: Test (parallel; coverage is gated after combining with the UI job)
         env:
           COVERAGE_FILE: coverage.unit

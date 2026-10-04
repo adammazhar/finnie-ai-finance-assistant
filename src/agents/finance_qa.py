@@ -4,6 +4,8 @@ from src.agents.base import BaseAgent
 
 
 class FinanceQAAgent(BaseAgent):
+    """Answers general finance questions from the whole knowledge base and glossary."""
+
     name = "finance_qa"
     description = "Explains financial concepts and terms in plain language."
     rag_categories = None  # search the whole knowledge base

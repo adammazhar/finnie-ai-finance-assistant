@@ -32,6 +32,7 @@ THREAD = "finnie_thread_id"
 PROFILE = "finnie_profile"
 ONBOARDED = "finnie_onboarded"
 PORTFOLIO = "finnie_portfolio"
+GOAL_INPUTS = "finnie_goal_inputs"
 CHAT = "finnie_chat"
 CONVERSATIONS = "finnie_conversations"
 PENDING = "finnie_pending_prompt"
@@ -57,6 +58,7 @@ def _cookie_id() -> str | None:
 
 
 def browser_id() -> str:
+    """This browser's ID (set by ``start``), which keys everything in the store."""
     return str(st.session_state[BROWSER])
 
 
@@ -75,6 +77,7 @@ def start() -> None:
         st.session_state[PROFILE] = saved.profile
         st.session_state[ONBOARDED] = True
     st.session_state.setdefault(PORTFOLIO, saved.portfolio)
+    st.session_state.setdefault(GOAL_INPUTS, saved.goal)
     count = len(saved.conversations)
     for conversation in saved.conversations:
         if conversation.title is None:  # e.g. a refresh landed before the title was saved
@@ -130,6 +133,7 @@ def delete_my_data() -> None:
 
 
 def page() -> str:
+    """The open page; Chat by default."""
     return str(st.session_state.get(PAGE) or "Chat")
 
 
@@ -167,17 +171,20 @@ def open_glossary(term: str) -> None:
 
 
 def profile() -> UserProfile:
+    """The user's profile from the session, or the default profile if none is set."""
     value = st.session_state.get(PROFILE)
     return value if isinstance(value, UserProfile) else UserProfile()
 
 
 def set_profile(value: UserProfile) -> None:
+    """Save the profile to the session and the store, and mark onboarding done."""
     st.session_state[PROFILE] = value
     st.session_state[ONBOARDED] = True
     services.store().save_profile(browser_id(), value)
 
 
 def onboarded() -> bool:
+    """Whether this browser has saved a profile (so the welcome screen is skipped)."""
     return bool(st.session_state.get(ONBOARDED))
 
 
@@ -185,10 +192,26 @@ def onboarded() -> bool:
 
 
 def portfolio() -> list[Holding]:
+    """A copy of the saved holdings (empty if none)."""
     return list(st.session_state.get(PORTFOLIO) or [])
 
 
+def goal_inputs() -> dict[str, Any] | None:
+    """The Goals tab's saved inputs for this browser, or ``None`` before the first save."""
+    value = st.session_state.get(GOAL_INPUTS)
+    return dict(value) if isinstance(value, dict) else None
+
+
+def set_goal_inputs(inputs: dict[str, Any]) -> None:
+    """Save the Goals tab's inputs to the session and the store, if they changed."""
+    if inputs == goal_inputs():
+        return
+    st.session_state[GOAL_INPUTS] = dict(inputs)
+    services.store().save_goal(browser_id(), dict(inputs))
+
+
 def set_portfolio(holdings: list[Holding]) -> None:
+    """Replace the holdings in the session and in the store."""
     st.session_state[PORTFOLIO] = list(holdings)
     services.store().save_portfolio(browser_id(), list(holdings))
 
@@ -197,12 +220,14 @@ def set_portfolio(holdings: list[Holding]) -> None:
 
 
 def thread_id() -> str:
+    """The current conversation's workflow thread ID, created on first use."""
     if THREAD not in st.session_state:
         st.session_state[THREAD] = uuid.uuid4().hex
     return str(st.session_state[THREAD])
 
 
 def chat() -> list[dict[str, Any]]:
+    """A copy of the current conversation's messages (role, content, and output)."""
     if CHAT not in st.session_state:
         st.session_state[CHAT] = []
     return list(st.session_state[CHAT])
@@ -214,6 +239,11 @@ def _store() -> dict[str, dict[str, Any]]:
 
 
 def add_chat(role: str, content: str, output: dict[str, Any] | None = None) -> None:
+    """Append a message to the current conversation and save it.
+
+    This also moves the conversation to the top of the sidebar list and makes it the
+    current one in the store.
+    """
     entries = chat()
     entries.append({"role": role, "content": content, "output": output})
     st.session_state[CHAT] = entries
@@ -239,20 +269,24 @@ def set_title(conversation_id: str, title: str) -> None:
 
 
 def renaming() -> str | None:
+    """The ID of the conversation being renamed in the sidebar, if any."""
     return st.session_state.get(RENAMING)
 
 
 def deleting() -> str | None:
+    """The ID of the conversation awaiting delete confirmation, if any."""
     return st.session_state.get(DELETING)
 
 
 def start_rename(conversation_id: str) -> None:
+    """Show the inline rename field for a conversation, filled with its title (a callback)."""
     st.session_state.pop(DELETING, None)
     st.session_state[RENAMING] = conversation_id
     st.session_state[f"rename_{conversation_id}"] = _store()[conversation_id]["title"]
 
 
 def cancel_edit() -> None:
+    """Close an open rename or delete confirmation in the sidebar (a callback)."""
     st.session_state.pop(RENAMING, None)
     st.session_state.pop(DELETING, None)
 
@@ -270,6 +304,7 @@ def rename_conversation(conversation_id: str) -> None:
 
 
 def ask_delete(conversation_id: str) -> None:
+    """Ask to confirm deleting a conversation in the sidebar (a callback)."""
     st.session_state.pop(RENAMING, None)
     st.session_state[DELETING] = conversation_id
 
@@ -301,6 +336,7 @@ def new_conversation() -> None:
 
 
 def switch_conversation(conversation_id: str) -> None:
+    """Open a saved conversation in the chat and make it current (a callback)."""
     saved = _store()[conversation_id]  # the sidebar lists only stored conversations
     st.session_state[THREAD] = conversation_id
     st.session_state[CHAT] = list(saved["chat"])
@@ -319,14 +355,17 @@ def queue_prompt(text: str) -> None:
 
 
 def take_scroll() -> bool:
+    """Whether the chat should scroll to the new answer; reading it clears the flag."""
     return bool(st.session_state.pop(SCROLL, False))
 
 
 def peek_prompt() -> str | None:
+    """The question queued by ``queue_prompt``, left in place."""
     value = st.session_state.get(PENDING)
     return str(value) if value else None
 
 
 def take_prompt() -> str | None:
+    """The question queued by ``queue_prompt``, removed so it's answered once."""
     value = st.session_state.pop(PENDING, None)
     return str(value) if value else None

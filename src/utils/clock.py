@@ -9,4 +9,5 @@ Clock = Callable[[], datetime]
 
 
 def utcnow() -> datetime:
+    """The current time as a timezone-aware UTC datetime; the default :data:`Clock`."""
     return datetime.now(UTC)

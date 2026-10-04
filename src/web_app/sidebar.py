@@ -126,6 +126,7 @@ def _delete_row(conversation_id: str, title: str) -> None:
 
 
 def render() -> None:
+    """Draw the sidebar: name, New conversation, recent conversations, profile, and status."""
     with st.sidebar:
         with st.container(key="brand"):
             st.markdown("## Finnie")

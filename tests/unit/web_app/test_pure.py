@@ -50,10 +50,10 @@ def projection():
 
 
 def test_allocation_charts():
-    mix = {"us_equity": 0.6, "bond": 0.4}
+    mix = {"equity": 0.5, "bond": 0.3, "unknown_mix": 0.1, "new_class": 0.1}
     donut = charts.allocation_donut(mix)
     assert titled(donut) == "Asset allocation"
-    assert list(donut.data[0].labels) == ["Us Equity", "Bond"]
+    assert list(donut.data[0].labels) == ["Stocks", "Bonds", "Mix unknown", "New class"]
     bar = charts.allocation_bar({"Technology": 0.5, "Energy": 0.1, "Health": 0.4})
     assert list(bar.data[0].y) == ["Energy", "Health", "Technology"]  # smallest at the bottom
     assert bar.layout.xaxis.tickformat == ".0%"
@@ -78,8 +78,11 @@ def test_fan_chart(projection):
 
 def test_probability_gauge():
     fig = charts.probability_gauge(0.6432)
-    assert fig.data[0].value == 64.3
-    assert fig.data[0].number.suffix == "%"
+    assert fig.data[0].value == 64  # rounded like the heading's "64%"
+    assert fig.data[0].number.suffix == "%" and fig.data[0].number.prefix == ""
+    low, high = charts.probability_gauge(0.004), charts.probability_gauge(0.996)
+    assert (low.data[0].number.prefix, low.data[0].value) == ("<", 1)  # "under 1%"
+    assert (high.data[0].number.prefix, high.data[0].value) == (">", 99)  # "over 99%"
 
 
 def test_price_and_rsi_charts():
@@ -122,6 +125,27 @@ def test_movers_bar_colors():
     fig = charts.movers_bar(movers, "Sectors")
     assert list(fig.data[0].marker.color) == [charts.UP, charts.DOWN, charts.NEUTRAL]
     assert fig.layout.xaxis.ticksuffix == "%"
+
+
+def test_movers_bar_leaves_room_for_every_label():
+    """Regression: a tiny negative move ("-0.01%") had its label cut off at the axis."""
+    movers = [
+        MoverSummary(ticker=t, name=t, price=1.0, change_percent=c, freshness=fresh())
+        for t, c in (("XLY", 1.13), ("XLV", -0.01))
+    ]
+    fig = charts.movers_bar(movers, "Sectors")
+    low, high = fig.layout.xaxis.range
+    assert low < -0.01 - 0.2 and high > 1.13 + 0.2
+    assert fig.data[0].cliponaxis is False and fig.data[0].textposition == "outside"
+    flat = charts.movers_bar([movers[0]], "x")
+    assert flat.layout.xaxis.range[0] < 0  # all moves up: still padded below zero
+
+
+def test_metric_rows_wrap_instead_of_truncating():
+    from src.web_app.theme import PALETTES, base_css
+
+    css = base_css(PALETTES["light"])
+    assert "flex-wrap: wrap" in css and "min-width: 11rem" in css
 
 
 # ---- formatting ---------------------------------------------------------------------------
@@ -262,3 +286,27 @@ def test_theme_type_defaults_to_light_outside_a_session():
     from src.web_app.theme import theme_type
 
     assert theme_type() == "light"
+
+
+def test_snippet_keeps_list_items_apart():
+    text = "Key takeaways:\n- Born 1951-1959: age 73.\n- Born in 1960 or later: age 75.\n1. Plan."
+    assert snippet(text) == (
+        "Key takeaways: \u2022 Born 1951-1959: age 73. \u2022 Born in 1960 or later: age 75. "
+        "\u2022 Plan."
+    )
+
+
+def test_index_levels_are_not_dollars():
+    history = FakeMarketService().get_daily_history("^GSPC", 400)
+    fig = charts.price_chart(history)
+    assert fig.layout.yaxis.title.text == "Index level" and fig.layout.yaxis.tickprefix == ""
+    assert "$" not in fig.data[0].hovertemplate
+    assert titled(fig) == "^GSPC level with moving averages"
+
+
+def test_market_amounts():
+    from src.web_app.tabs.markets import _amount
+
+    assert _amount("^GSPC", 6745.123) == "6,745.12" and _amount("^GSPC", 6745.1, 0) == "6,745"
+    assert _amount("VTI", 300.5) == "$300.50" and _amount("VTI", 300.5, 0) == "$300"
+    assert _amount("VTI", None) == "n/a"

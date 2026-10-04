@@ -44,6 +44,10 @@ the answer covers several topics.
 - Keep the educational tone and any caveats about data freshness or uncertainty. Don't add \
 recommendations to buy, sell, or allocate.
 - Don't add a disclaimer or a sources list; those are added separately."""
+MERGE_BEGINNER = (
+    "The reader is a beginner. Keep the combined answer short (about 200 words), use at most "
+    "two ### headings, keep every plain-language definition of a term, and don't add jargon."
+)
 
 
 class Citations(BaseModel):
@@ -54,6 +58,10 @@ class Citations(BaseModel):
 
 
 def unify_citations(results: Sequence[AgentResult]) -> Citations:
+    """Renumber every agent's citation markers against one merged sources list.
+
+    Markers that can't be resolved to a source are dropped.
+    """
     merged: list[Source] = []
     position: dict[str, int] = {}
 
@@ -112,6 +120,8 @@ def tidy_citations(text: str, sources: Sequence[Source]) -> tuple[str, list[Sour
 
 
 class Synthesis(BaseModel):
+    """The combined answer for a turn, with its sources, freshness, and contributing agents."""
+
     text: str
     sources: list[Source]
     freshness: list[Freshness]
@@ -119,8 +129,13 @@ class Synthesis(BaseModel):
     merged_by_llm: bool = False
 
 
-def synthesize(results: Sequence[AgentResult], llm: Any | None) -> Synthesis | None:
-    """``None`` when no agent produced an answer (the workflow's fallback handles it)."""
+def synthesize(
+    results: Sequence[AgentResult], llm: Any | None, level: str = "intermediate"
+) -> Synthesis | None:
+    """``None`` when no agent produced an answer (the workflow's fallback handles it).
+
+    ``level`` is the user's knowledge level; a beginner gets a shorter, plainer merge.
+    """
     ok = [r for r in results if r.ok and r.answer]
     if not ok:
         return None
@@ -140,9 +155,8 @@ def synthesize(results: Sequence[AgentResult], llm: Any | None) -> Synthesis | N
     text = sections
     if llm is not None:
         try:
-            reply = llm.invoke(
-                [SystemMessage(content=MERGE_PROMPT), HumanMessage(content=sections)]
-            )
+            prompt = MERGE_PROMPT + ("\n" + MERGE_BEGINNER if level == "beginner" else "")
+            reply = llm.invoke([SystemMessage(content=prompt), HumanMessage(content=sections)])
             candidate = message_text(reply).strip()
             if candidate:
                 text, merged_by_llm = candidate, True

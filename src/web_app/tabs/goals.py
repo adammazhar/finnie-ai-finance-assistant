@@ -10,7 +10,7 @@ from typing import Any, get_args
 
 import streamlit as st
 
-from src.core.models import RiskTolerance
+from src.core.models import RiskTolerance, UserProfile
 from src.core.monte_carlo import (
     LOW_ODDS,
     chance_text,
@@ -18,6 +18,7 @@ from src.core.monte_carlo import (
     low_odds_note,
     required_monthly_contribution,
     simulate,
+    years_text,
 )
 from src.core.portfolio import portfolio_total
 from src.web_app import charts, services, state
@@ -26,6 +27,74 @@ from src.web_app.formatting import md, money, percent
 GOAL_TYPES = ["Retirement", "House down payment", "College", "Emergency fund", "Other"]
 RISKS: list[str] = list(get_args(RiskTolerance))
 RESULT = "goal_result"
+# Starting points per goal type: target ($), years, monthly contribution ($), and risk level
+# (None = the user's own risk tolerance). Retirement and "Other" take the years from the
+# profile when it has them.
+GOAL_DEFAULTS: dict[str, tuple[float, int, float, RiskTolerance | None]] = {
+    "Retirement": (1_000_000.0, 25, 500.0, None),
+    "House down payment": (60_000.0, 5, 800.0, "conservative"),
+    "College": (100_000.0, 15, 300.0, None),
+    "Emergency fund": (15_000.0, 2, 400.0, "conservative"),
+    "Other": (50_000.0, 10, 300.0, None),
+}
+EMERGENCY_NOTE = (
+    "Emergency savings are usually kept in cash, such as a high-yield savings account, so the "
+    "money is there the day it's needed rather than invested where it could fall. This "
+    "projection uses the conservative mix, the closest option here, so treat it as a rough guide."
+)
+# widget key -> name in the saved inputs
+SAVED_FIELDS = {
+    "goal_type": "goal",
+    "goal_target": "target",
+    "goal_years": "years",
+    "goal_inflation": "todays_dollars",
+    "goal_other": "other",
+    "goal_monthly": "monthly",
+    "goal_risk": "risk",
+}
+
+
+def defaults_for(goal: str, profile: UserProfile) -> dict[str, Any]:
+    """Starting inputs for a goal type, using the profile's horizon, age, and risk tolerance."""
+    target, years, monthly, risk = GOAL_DEFAULTS.get(goal, GOAL_DEFAULTS["Other"])
+    if goal in ("Retirement", "Other") and profile.investment_horizon_years:
+        years = profile.investment_horizon_years
+    elif goal == "Retirement" and profile.age:
+        years = 65 - profile.age
+    return {
+        "goal": goal,
+        "target": target,
+        "years": max(1, min(50, years)),
+        "monthly": monthly,
+        "risk": risk or profile.risk_tolerance,
+    }
+
+
+def _apply_defaults() -> None:
+    """Widget callback: a new goal type gets that type's starting inputs."""
+    values = defaults_for(st.session_state["goal_type"], state.profile())
+    st.session_state["goal_target"] = values["target"]
+    st.session_state["goal_years"] = values["years"]
+    st.session_state["goal_monthly"] = values["monthly"]
+    st.session_state["goal_risk"] = values["risk"]
+
+
+def _seed_inputs() -> None:
+    """Before the widgets first draw: this browser's saved inputs, or the defaults."""
+    if "goal_type" in st.session_state:
+        return
+    saved = state.goal_inputs() or {}
+    values = defaults_for(saved.get("goal", GOAL_TYPES[0]), state.profile()) | {
+        "todays_dollars": True,
+        "other": 0.0,
+    }
+    values |= {k: v for k, v in saved.items() if k in values}
+    if values["goal"] not in GOAL_TYPES or values["risk"] not in RISKS:
+        values |= defaults_for(GOAL_TYPES[0], state.profile())
+    for key, name in SAVED_FIELDS.items():
+        st.session_state[key] = values[name]
+
+
 ODDS_NOTE = (
     "How to read the chance: a median (typical) outcome above the target means roughly even "
     "odds. Odds near 99% need even the poor-markets (P10) outcome, which only 1 in 10 "
@@ -93,38 +162,46 @@ def _run(inputs: dict[str, Any]) -> None:
 
 
 def _inputs() -> dict[str, Any]:
+    _seed_inputs()
     left, right = st.columns(2)
     with left:
-        goal = st.selectbox("Goal", GOAL_TYPES, key="goal_type")
+        goal = st.selectbox("Goal", GOAL_TYPES, key="goal_type", on_change=_apply_defaults)
         target = st.number_input(
-            "Target amount ($)", min_value=1000.0, value=500_000.0, step=10_000.0, key="goal_target"
+            "Target amount ($)", min_value=1000.0, step=1000.0, key="goal_target"
         )
         years = st.slider(
-            "Years until the goal", min_value=1, max_value=50, value=25, key="goal_years"
+            "Years until the goal",
+            min_value=1,
+            max_value=50,
+            key="goal_years",
+            help="Starts from the time horizon in your profile, when you've given one.",
         )
         todays_dollars = st.toggle(
-            "Target is in today's dollars (adjust for inflation)", value=True, key="goal_inflation"
+            "Target is in today's dollars (adjust for inflation)", key="goal_inflation"
         )
     with right:
         other = st.number_input(
             "Other savings already set aside for this goal ($)",
             min_value=0.0,
-            value=0.0,
             step=1000.0,
             key="goal_other",
         )
         from_portfolio = _portfolio_amount()
         monthly = st.number_input(
-            "Monthly contribution ($)", min_value=0.0, value=500.0, step=50.0, key="goal_monthly"
+            "Monthly contribution ($)", min_value=0.0, step=50.0, key="goal_monthly"
         )
-        risk = st.selectbox(
-            "Risk level for the projection",
-            RISKS,
-            index=RISKS.index(state.profile().risk_tolerance),
-            key="goal_risk",
-        )
+        risk = st.selectbox("Risk level for the projection", RISKS, key="goal_risk")
+    if goal == "Emergency fund":
+        st.info(EMERGENCY_NOTE, icon=":material/savings:")
     current = other + from_portfolio
     st.caption(md(f"Starting balance for the projection: {money(current, cents=True)}"))
+    state.set_goal_inputs(
+        {
+            name: st.session_state[key]
+            for key, name in SAVED_FIELDS.items()
+            if key in st.session_state
+        }
+    )
     return {
         "goal": goal,
         "target": target,
@@ -142,7 +219,7 @@ def _results(saved: dict[str, Any]) -> None:
     st.markdown(
         md(
             f"### {saved['goal']}: {money(result.inputs.target_amount)} in "
-            f"{result.inputs.years} years"
+            f"{years_text(result.inputs.years)}"
         )
     )
     st.markdown(f"#### Chance of reaching this goal: {chance_text(result.success_probability)}")
@@ -166,7 +243,15 @@ def _results(saved: dict[str, Any]) -> None:
             "It's an illustration, not a recommendation.",
         )
         st.caption(
-            md(f"With steady returns and no market swings: {money(result.deterministic_final)}.")
+            md(
+                f"With a steady {percent(saved['expected_return'])} return and no market "
+                f"swings: {money(result.deterministic_final)}"
+                + (
+                    f" in today's dollars (after {percent(result.inputs.inflation)} inflation)."
+                    if result.dollars == "today's"
+                    else "."
+                )
+            )
         )
     st.plotly_chart(charts.fan_chart(result), width="stretch", key="goal_fan")
     with st.expander("Assumptions"):
@@ -177,8 +262,11 @@ def _results(saved: dict[str, Any]) -> None:
             f"volatility {volatility}",
             f"- Inflation: {percent(inputs.inflation)} a year; results in {result.dollars} dollars",
             f"- Starting balance {money(inputs.current_balance, cents=True)}, "
-            f"{money(inputs.monthly_contribution)} a month for {inputs.years} years",
+            f"{money(inputs.monthly_contribution)} a month for {years_text(inputs.years)}",
             f"- {inputs.simulations:,} simulated market paths with fat-tailed returns",
+            "- A riskier mix has a higher expected return but wider swings, so its "
+            "poor-markets outcomes can be worse. That's why the monthly amount for 80% odds "
+            "can be higher than for a moderate mix, even when the median ends higher.",
         ]
         st.markdown(md("\n".join(lines)))
     st.caption(
@@ -188,6 +276,7 @@ def _results(saved: dict[str, Any]) -> None:
 
 
 def render() -> None:
+    """Draw the Goals tab: the goal inputs, then the last projection kept in session state."""
     st.subheader("Plan a savings goal")
     inputs = _inputs()
     if st.button("Run projection", type="primary", key="goal_run"):

@@ -40,6 +40,8 @@ def normalize_ticker(value: str) -> str:
 
 
 class UserProfile(BaseModel):
+    """What the user has told Finnie about themselves, used to tailor answers and plans."""
+
     model_config = ConfigDict(extra="forbid")
 
     knowledge_level: KnowledgeLevel = "beginner"
@@ -48,13 +50,18 @@ class UserProfile(BaseModel):
     investment_horizon_years: int | None = Field(default=None, ge=0, le=80)
 
 
+# More shares than one person could plausibly hold (Apple has about 15 billion in total);
+# a guard against typos such as an extra six zeros.
+MAX_SHARES = 1_000_000_000
+
+
 class Holding(BaseModel):
     """One position in a user's portfolio."""
 
     model_config = ConfigDict(extra="forbid")
 
     ticker: str
-    shares: float = Field(gt=0)
+    shares: float = Field(gt=0, le=MAX_SHARES)
     cost_basis: float | None = Field(default=None, ge=0, description="Total cost, not per share")
 
     @field_validator("ticker")
@@ -94,6 +101,7 @@ class Freshness(BaseModel):
 
     @property
     def status(self) -> FreshnessStatus:
+        """One of ``mock``, ``stale``, ``cached``, or ``live``, in that order of precedence."""
         if self.is_mock:
             return "mock"
         if self.is_stale:
@@ -101,6 +109,7 @@ class Freshness(BaseModel):
         return "cached" if self.source == "cache" else "live"
 
     def age_minutes(self, now: datetime | None = None) -> float:
+        """Minutes since the data was fetched (not since its market timestamp), never negative."""
         now = now or datetime.now(UTC)
         return max(0.0, (now - self.fetched_at).total_seconds() / 60)
 
@@ -144,4 +153,5 @@ class AgentResult(BaseModel):
 
     @property
     def ok(self) -> bool:
+        """True when the agent finished without an error."""
         return self.error is None

@@ -54,14 +54,19 @@ class ModelSpec(_Section):
 
 
 class ProviderModels(_Section):
+    """The ``main`` and ``fast`` model tiers configured for one LLM provider."""
+
     main: ModelSpec
     fast: ModelSpec
 
     def for_tier(self, tier: Tier) -> ModelSpec:
+        """The model spec for ``tier`` (anything other than ``main`` gets the fast model)."""
         return self.main if tier == "main" else self.fast
 
 
 class LLMConfig(_Section):
+    """The ``llm`` section: default generation settings plus the models for each provider."""
+
     temperature: float = Field(default=0.2, ge=0, le=2)
     max_tokens: int = Field(default=2048, gt=0)
     timeout_s: float = Field(default=60, gt=0)
@@ -70,6 +75,8 @@ class LLMConfig(_Section):
 
 
 class AppConfig(_Section):
+    """The ``app`` section: display name, logging, the saved-data path, and the disclaimer."""
+
     name: str = "Finnie"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "text"] = "json"
@@ -81,6 +88,12 @@ class AppConfig(_Section):
 
 
 class RAGConfig(_Section):
+    """The ``rag`` section: embedding model, index paths, chunking, and retrieval settings.
+
+    ``score_threshold`` is a cosine similarity. Validation rejects an overlap that isn't
+    smaller than the chunk size and a ``fetch_k`` below ``top_k``.
+    """
+
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     knowledge_base_dir: Path = Path("data/knowledge_base")
     index_dir: Path = Path("data/vectorstore")
@@ -102,11 +115,15 @@ class RAGConfig(_Section):
 
 
 class AlphaVantageConfig(_Section):
+    """Alpha Vantage rate limits: requests per minute and requests per day."""
+
     requests_per_minute: int = Field(default=5, gt=0)
     daily_budget: int = Field(default=25, ge=0)
 
 
 class BackoffConfig(_Section):
+    """Exponential backoff for retried market data requests (delays in seconds)."""
+
     max_attempts: int = Field(default=3, ge=1)
     initial_s: float = Field(default=1.0, ge=0)
     multiplier: float = Field(default=2.0, ge=1)
@@ -114,6 +131,13 @@ class BackoffConfig(_Section):
 
 
 class MarketDataConfig(_Section):
+    """The ``market_data`` section: cache location, cache TTLs, timeouts, and provider limits.
+
+    Quotes use ``quote_live_ttl_seconds`` while the market is open and
+    ``quote_ttl_minutes`` while it's closed. ``batch_threshold`` is how many uncached
+    tickers make the service fetch them in one batch request.
+    """
+
     cache_path: Path = Path("data/cache/market.sqlite")
     quote_ttl_minutes: int = Field(default=30, gt=0)  # while the market is closed
     quote_live_ttl_seconds: int = Field(default=60, gt=0)  # while it's open
@@ -126,6 +150,12 @@ class MarketDataConfig(_Section):
 
 
 class WorkflowConfig(_Section):
+    """The ``workflow`` section: limits on routing, planning, agent loops, and chat history.
+
+    ``summarize_after`` and ``history_window`` count messages; ``turn_timeout_s`` is the
+    time limit for one user turn.
+    """
+
     max_stages: int = Field(default=3, ge=1)
     max_agents_per_turn: int = Field(default=3, ge=1)
     agent_max_iterations: int = Field(default=4, ge=1)
@@ -136,6 +166,12 @@ class WorkflowConfig(_Section):
 
 
 class MonteCarloConfig(_Section):
+    """Goal simulation defaults: path count, Student-t tails, inflation, and target odds.
+
+    ``inflation`` and ``target_success_probability`` are fractions (0.025 means 2.5%).
+    ``t_degrees_of_freedom`` of ``None`` draws normal rather than Student-t returns.
+    """
+
     simulations: int = Field(default=10_000, ge=100, le=200_000)
     t_degrees_of_freedom: float | None = Field(default=5, gt=2)
     inflation: float = Field(default=0.025, ge=-0.05, le=0.5)
@@ -143,6 +179,13 @@ class MonteCarloConfig(_Section):
 
 
 class AnalyticsConfig(_Section):
+    """The ``analytics`` section: portfolio analysis thresholds and assumptions.
+
+    Rates and ``high_expense_ratio`` are annual fractions (0.042 means 4.2%); the
+    concentration thresholds are portfolio weights. ``risk_free_rate`` is only the
+    fallback for when the live T-bill yield can't be fetched.
+    """
+
     risk_free_rate: float = Field(default=0.042, ge=-0.05, le=0.5)  # fallback only
     trading_days_per_year: int = Field(default=252, gt=0)
     concentration_threshold: float = Field(default=0.20, gt=0, le=1)
@@ -204,6 +247,7 @@ class Settings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Order the settings sources so environment variables and ``.env`` beat ``config.yaml``."""
         # YAML values arrive as init kwargs; give real environment variables priority over them.
         return env_settings, dotenv_settings, init_settings, file_secret_settings
 
@@ -234,6 +278,7 @@ class Settings(BaseSettings):
         return None if fallback == self.llm_provider else fallback
 
     def api_key_for(self, provider: ProviderName) -> SecretStr | None:
+        """The API key for ``provider``, or ``None`` when it isn't set."""
         return {"openai": self.openai_api_key, "anthropic": self.anthropic_api_key}[provider]
 
     def resolve_path(self, path: Path) -> Path:

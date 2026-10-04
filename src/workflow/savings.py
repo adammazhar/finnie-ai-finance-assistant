@@ -51,6 +51,7 @@ class GoalSavings(BaseModel):
 
 
 def goal_key(label: str | None) -> str:
+    """A normalized goal label for storing savings choices; no label uses a default key."""
     cleaned = re.sub(r"\s+", " ", (label or "").strip().lower())
     return cleaned or DEFAULT_GOAL
 
@@ -117,10 +118,12 @@ def parse_savings_reply(text: str, portfolio_value: float) -> GoalSavings | None
 
 
 def is_short_reply(text: str) -> bool:
+    """Whether a reply is short enough to treat as an answer to the savings question."""
     return len(text.split()) <= SHORT_REPLY_WORDS
 
 
 def savings_question(portfolio_value: float) -> str:
+    """The question asking how much of the saved portfolio counts toward the goal."""
     return (
         f"You have a saved portfolio worth ${portfolio_value:,.2f}. Should I count all of it, "
         "part of it, or none toward this goal?\n\n"
@@ -129,6 +132,7 @@ def savings_question(portfolio_value: float) -> str:
 
 
 def savings_reprompt(portfolio_value: float) -> str:
+    """The savings question again, after a reply that couldn't be understood."""
     return (
         f"Sorry, I didn't catch that. Should I count all of your ${portfolio_value:,.2f} "
         'portfolio, part of it, or none toward this goal? Reply "all", "none", or an amount '

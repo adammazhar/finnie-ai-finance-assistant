@@ -21,12 +21,19 @@ from src.core.portfolio import (
     expense_ratio_label,
     fetch_and_analyze,
     herfindahl,
+    holding_error,
     holdings_from_csv,
     merge_holdings,
     risk_metrics,
 )
 from src.core.rates import fallback_risk_free_rate as rf
-from src.core.reference import ExpenseRatio, SecurityInfo, get_catalog, get_risk_profiles
+from src.core.reference import (
+    ExpenseRatio,
+    SecurityInfo,
+    asset_class_label,
+    get_catalog,
+    get_risk_profiles,
+)
 from src.data.errors import DataUnavailableError, SymbolNotFoundError
 from src.data.models import BatchQuotes, CompanyOverview, PriceBar, PriceHistory, Quote
 from tests.fakes.market import START
@@ -697,3 +704,112 @@ def test_expense_ratio_label_groups_funds_and_mentions_stocks():
     weighted = (100 * 0.0003 + 60 * 0.0005) / 160
     assert text.startswith(f"Portfolio expense ratio: {weighted:.2%} (funds only; ")
     assert text.endswith("VTI charges 0.03%, VXUS charges 0.05%).")
+
+
+# ---- persona testing fixes ----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("row", "reason"),
+    [
+        ("AAPL,-3,", "shares must be more than 0"),
+        ("AAPL,0,", "shares must be more than 0"),
+        ("TSLA,1000000000000,", "shares can't be more than 1,000,000,000 (check for extra zeros)"),
+        ("AAPL,2,-50", "total cost can't be negative"),
+        ("NVDA,abc,", "shares and cost must be numbers"),
+    ],
+)
+def test_holdings_from_csv_explains_rejected_rows(row, reason):
+    holdings, errors = holdings_from_csv(f"ticker,shares,cost_basis\n{row}\n")
+    assert holdings == [] and errors[0].endswith(reason)
+
+
+def test_holding_error_for_other_problems():
+    try:
+        Holding(ticker="AAPL!", shares=1)
+    except ValueError as exc:
+        reason = holding_error(exc)
+    assert "Invalid ticker" in reason
+
+
+def test_expense_ratio_label_discloses_funds_with_unknown_fees():
+    unknown = {"NEWF": CATALOG.classify("NEWF", name="New Fund", asset_type="ETF")}
+    prices = PRICES | {"NEWF": 20.0}
+    mixed = analyze_portfolio(
+        [Holding(ticker="VTI", shares=1), Holding(ticker="NEWF", shares=5)],
+        prices,
+        securities=securities("VTI", **unknown),
+        config=CONFIG,
+    )
+    label = expense_ratio_label(mixed)
+    assert label.startswith("Portfolio expense ratio: 0.03% (funds with a known fee only; ")
+    assert "fee not known for NEWF, so the true figure may be higher" in label
+    only_unknown = analyze_portfolio(
+        [Holding(ticker="NEWF", shares=5)], prices, securities=unknown, config=CONFIG
+    )
+    assert expense_ratio_label(only_unknown) == (
+        "Portfolio expense ratio: unknown (Finnie doesn't have the fee for NEWF; check the "
+        "fund's prospectus)."
+    )
+    two = {"NEWG": CATALOG.classify("NEWG", asset_type="ETF")} | unknown
+    both = analyze_portfolio(
+        [Holding(ticker="NEWF", shares=5), Holding(ticker="NEWG", shares=5)],
+        prices | {"NEWG": 10.0},
+        securities=two,
+        config=CONFIG,
+    )
+    assert "the fee for NEWF and NEWG" in expense_ratio_label(both)
+
+
+# ---- multi-asset funds and funds whose mix is unknown (persona testing) ---------------------
+
+
+def test_target_date_funds_count_their_real_stock_bond_mix():
+    vffvx = CATALOG.get("VFFVX")
+    assert vffvx.look_through == {"equity": 0.912, "bond": 0.088}
+    assert vffvx.expense_ratio == 0.0008
+    result = analyze_portfolio(
+        [Holding(ticker="VFFVX", shares=10)],
+        {"VFFVX": 50.0},
+        securities=securities("VFFVX"),
+        config=CONFIG,
+    )
+    assert result.asset_allocation == {"equity": 0.912, "bond": 0.088}
+
+
+def test_unknown_funds_are_mix_unknown_not_stocks():
+    unknown = {"NEWF": CATALOG.classify("NEWF", name="New Target 2050", asset_type="Mutual Fund")}
+    result = analyze_portfolio(
+        [Holding(ticker="VTI", shares=1), Holding(ticker="NEWF", shares=10)],
+        PRICES | {"NEWF": 30.0},
+        securities=securities("VTI", **unknown),
+        profile=get_risk_profiles()["moderate"],
+        config=CONFIG,
+    )
+    assert result.asset_allocation == {"equity": 0.25, "unknown_mix": 0.75}
+    note = next(n for n in result.observations if "stock/bond mix" in n)
+    assert note.startswith("Finnie doesn't know the stock/bond mix of NEWF (75% of the portfolio)")
+    assert not any("isn't in Finnie's reference list" in n for n in result.observations)
+    groups = {g.group: g.current for g in result.profile_gaps}
+    assert groups["unknown_mix"] == 0.75 and groups["equity"] == 0.25
+
+
+def test_stock_reference_note_says_horizon_matters_too():
+    result = analyze_portfolio(
+        [Holding(ticker="AAPL", shares=10)],
+        PRICES,
+        securities=securities("AAPL"),
+        profile=get_risk_profiles()["conservative"],
+        config=CONFIG,
+    )
+    note = next(n for n in result.observations if "reference allocation" in n)
+    assert note.endswith(
+        "That reference is based on risk tolerance only; time horizon matters too."
+    )
+
+
+def test_asset_class_labels():
+    assert asset_class_label("equity") == "Stocks"
+    assert asset_class_label("unknown_mix") == "Mix unknown"
+    assert asset_class_label("other") == "Other"
+    assert asset_class_label("brand_new") == "Brand new"

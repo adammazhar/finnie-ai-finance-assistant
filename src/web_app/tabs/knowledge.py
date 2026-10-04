@@ -122,6 +122,7 @@ def _keep_view() -> None:
 
 
 def render() -> None:
+    """Draw the Knowledge page and the selected view (Search, Browse, or Glossary)."""
     st.subheader("Learn")
     if st.session_state.get("kb_view") not in VIEWS:
         st.session_state["kb_view"] = "Search"

@@ -133,6 +133,11 @@ class LLMInfo:
 
 
 def describe_llm(settings: Settings | None = None) -> LLMInfo:
+    """Summarize the configured provider, models, and fallback without building a client.
+
+    A provider counts as ready when its API key is set and not blank; the key is not
+    checked against the provider.
+    """
     settings = settings or get_settings()
 
     def ready(name: ProviderName | None) -> bool:

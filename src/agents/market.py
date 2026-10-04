@@ -4,6 +4,8 @@ from src.agents.base import BaseAgent
 
 
 class MarketAgent(BaseAgent):
+    """Explains quotes, trends, sectors, and company facts using live market data."""
+
     name = "market"
     description = "Explains prices, trends, sectors, and the overall market with live data."
     rag_categories = ("market_economics", "stocks")

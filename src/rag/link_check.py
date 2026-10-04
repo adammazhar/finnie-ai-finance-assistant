@@ -117,6 +117,12 @@ _PROBE_LOCK = threading.Lock()
 
 @dataclass
 class LinkResult:
+    """Outcome of checking one URL.
+
+    ``used_by`` lists the files that cite it; ``allowlisted`` marks a failure overridden by the
+    allow-list.
+    """
+
     url: str
     ok: bool
     status: int | None = None
@@ -129,6 +135,7 @@ class LinkResult:
 
 
 def domain_allowed(url: str) -> bool:
+    """Whether the URL's host is an allow-listed domain or a subdomain of one."""
     host = (urlparse(url).hostname or "").lower()
     return any(host == d or host.endswith(f".{d}") for d in ALLOWED_DOMAINS)
 
@@ -296,6 +303,11 @@ def check_url(
     timeout: float = 15,
     sleep: Callable[[float], None] = time.sleep,
 ) -> LinkResult:
+    """Check one URL: placeholder, https, and domain rules, then HEAD/GET with retries.
+
+    A page that loads is also probed for a soft 404. Never raises for network errors; a failure
+    comes back as ``ok=False`` with an ``error``.
+    """
     if PLACEHOLDER_URL.search(url):
         return LinkResult(url=url, ok=False, error="looks like a placeholder URL")
     if not url.startswith("https://"):
@@ -384,6 +396,7 @@ def check_links(
 
 
 def write_report(results: Sequence[LinkResult], path: Path, stale: Sequence[str]) -> None:
+    """Write the JSON report: totals, stale allow-list entries, and every result."""
     failed = [r for r in results if not r.ok]
     report = {
         "checked_at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -398,6 +411,11 @@ def write_report(results: Sequence[LinkResult], path: Path, stale: Sequence[str]
 
 
 def main(argv: Sequence[str] | None = None, *, session: requests.Session | None = None) -> int:
+    """Command-line entry point for ``scripts/check_kb_links.py``.
+
+    Checks the links, writes the JSON report unless ``--no-report``, and prints failures. Returns 1
+    if a link failed, a file was unreadable, or an allow-list entry is no longer cited; otherwise 0.
+    """
     parser = argparse.ArgumentParser(description="Check knowledge base and reference links.")
     parser.add_argument("paths", nargs="*", type=Path, help="limit to these files")
     parser.add_argument("--report", type=Path, default=REPORT_FILE)

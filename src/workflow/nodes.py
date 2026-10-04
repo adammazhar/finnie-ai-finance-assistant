@@ -25,6 +25,7 @@ from src.core.guardrails import (
     finalize,
     screen_input,
     strip_disclaimer,
+    with_no_pick_opening,
 )
 from src.core.models import AgentResult, Freshness, Holding, Source, UserProfile
 from src.core.portfolio import holding_values, portfolio_total
@@ -85,11 +86,14 @@ class TurnOutput(BaseModel):
 
 @dataclass
 class Deps:
+    """What the graph nodes need: the shared agent context and the agents by name."""
+
     context: AgentContext
     agents: Mapping[Any, BaseAgent]
 
     @property
     def workflow(self) -> Any:
+        """The workflow settings (turn timeout, limits)."""
         return self.context.settings.workflow
 
 
@@ -214,6 +218,8 @@ def _savings_guidance(state: FinnieState, route: RouteDecision | None, deps: Dep
 
 
 def make_nodes(deps: Deps) -> dict[str, Any]:
+    """The graph's node functions by node name, including one node per agent, bound to ``deps``."""
+
     def ingest(state: FinnieState) -> dict[str, Any]:
         progress.status("Reading your question…")
         question = _latest_question(state)
@@ -392,7 +398,8 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
         llm = deps.context.llm if sum(r.ok for r in results) > 1 else None
         if llm is not None:
             progress.status("Combining the specialists' answers…")
-        synthesis = synthesize(results, llm)
+        level = (state.get("profile") or {}).get("knowledge_level", "beginner")
+        synthesis = synthesize(results, llm, level)
         errors: dict[str, str] = {r.agent: r.error for r in results if r.error}
         data: dict[str, Any] = {r.agent: r.data for r in results}
         screen = state["screen"]["category"]
@@ -416,7 +423,10 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
             progress.status("Checking the answer…")
             guarded = enforce_output(strip_disclaimer(output.answer), deps.context.fast_llm)
             output.guardrail = guarded.action
-            text, output.sources = tidy_citations(guarded.text, output.sources)
+            text = guarded.text
+            if InputScreen.model_validate(state["screen"]).category == "advice_seeking":
+                text = with_no_pick_opening(text)
+            text, output.sources = tidy_citations(text, output.sources)
             output.answer = finalize(text, output.freshness)
             remembered = text  # history keeps the answer without the disclaimer
         return {
@@ -426,9 +436,8 @@ def make_nodes(deps: Deps) -> dict[str, Any]:
 
     def respond_blocked(state: FinnieState) -> dict[str, Any]:
         screen = InputScreen.model_validate(state["screen"])
-        output = TurnOutput(
-            answer=blocked_response(screen), status="blocked", screen=screen.category
-        )
+        status = "needs_input" if screen.category == "unclear" else "blocked"
+        output = TurnOutput(answer=blocked_response(screen), status=status, screen=screen.category)
         return {
             "output": output.model_dump(mode="json"),
             "messages": [AIMessage(content=output.answer)],
@@ -510,6 +519,7 @@ def _draft_output(
 
 
 def after_ingest(state: FinnieState) -> str:
+    """The node after ``ingest``: block, ask about savings, resume a pending goal, or route."""
     if InputScreen.model_validate(state["screen"]).blocked:
         return "respond_blocked"
     if state.get("savings_prompt"):

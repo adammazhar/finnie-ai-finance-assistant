@@ -21,7 +21,7 @@ QUESTIONS: list[tuple[str, list[tuple[str, int]]]] = [
         ],
     ),
     (
-        "When will you need most of this money?",
+        "When will you need most of the money you're investing?",
         [("Within 3 years", 1), ("In 3 to 10 years", 2), ("More than 10 years from now", 3)],
     ),
     (
@@ -44,6 +44,7 @@ QUESTIONS: list[tuple[str, list[tuple[str, int]]]] = [
 
 
 def tolerance_from_scores(scores: Sequence[int]) -> RiskTolerance:
+    """Map the five answer scores to a risk tolerance (totals 5-8, 9-11, 12-15)."""
     if len(scores) != len(QUESTIONS):
         raise ValueError(f"Expected {len(QUESTIONS)} answers, got {len(scores)}")
     total = sum(scores)

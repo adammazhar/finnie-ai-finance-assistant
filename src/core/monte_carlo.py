@@ -32,6 +32,13 @@ MAX_YEARS = 60
 
 
 class GoalInputs(BaseModel):
+    """Inputs for a savings-goal projection.
+
+    Money amounts are dollars; ``target_amount`` is in today's dollars when
+    ``target_in_todays_dollars`` is true, otherwise nominal. Return, volatility, and
+    inflation are annual fractions (0.06 means 6%). ``seed`` makes runs reproducible.
+    """
+
     current_balance: float = Field(ge=0)
     monthly_contribution: float = Field(ge=0)
     years: int = Field(ge=1, le=MAX_YEARS)
@@ -48,15 +55,25 @@ class GoalInputs(BaseModel):
 
     @property
     def months(self) -> int:
+        """The horizon in months."""
         return self.years * 12
 
 
 class YearPercentiles(BaseModel):
+    """Simulated balance percentiles (10th to 90th) at the end of one year."""
+
     year: int
     values: dict[int, float]  # percentile -> balance
 
 
 class SimulationResult(BaseModel):
+    """Outcome of :func:`simulate`: success odds, balance percentiles, and the deterministic path.
+
+    Balances and the shortfall are in the dollars named by ``dollars`` (today's or
+    nominal). ``total_contributions`` is the plain sum of monthly contributions, not
+    inflation-adjusted.
+    """
+
     inputs: GoalInputs
     success_probability: float = Field(ge=0, le=1)
     final_percentiles: dict[int, float]
@@ -79,7 +96,13 @@ def chance_text(probability: float) -> str:
     return f"{round(probability * 100)}%"
 
 
+def years_text(years: int) -> str:
+    """ "1 year", "10 years"."""
+    return f"{years} year" if years == 1 else f"{years} years"
+
+
 def low_odds_note() -> str:
+    """Text explaining which levers improve a low chance of reaching the goal."""
     return (
         "The odds are low under these assumptions. Three things change the outcome most: "
         "more time to save, a higher monthly contribution, or a smaller target. Try adjusting "
@@ -89,7 +112,18 @@ def low_odds_note() -> str:
 
 def monthly_rate(annual_return: float) -> float:
     """Monthly rate that compounds to ``annual_return`` over 12 months."""
-    return (1 + annual_return) ** (1 / 12) - 1
+    return math.expm1(math.log1p(annual_return) / 12)  # stays exact for near-zero rates
+
+
+def _annuity_factor(rate: float, months: int) -> float:
+    """What contributions of 1 at the start of each month grow to: (1+r)((1+r)^n - 1)/r.
+
+    ``expm1``/``log1p`` keep it accurate when ``rate`` is close to zero, where computing
+    ``(1+r)^n - 1`` directly cancels out most of the digits.
+    """
+    if rate == 0:
+        return float(months)
+    return (1 + rate) * math.expm1(months * math.log1p(rate)) / rate
 
 
 def deterministic_future_value(
@@ -98,10 +132,7 @@ def deterministic_future_value(
     """Future value with contributions at the start of each month (annuity due)."""
     rate = monthly_rate(annual_return)
     months = years * 12
-    growth = (1 + rate) ** months
-    if rate == 0:
-        return balance + monthly_contribution * months
-    return balance * growth + monthly_contribution * (1 + rate) * (growth - 1) / rate
+    return balance * (1 + rate) ** months + monthly_contribution * _annuity_factor(rate, months)
 
 
 def required_contribution_deterministic(
@@ -114,8 +145,7 @@ def required_contribution_deterministic(
     remaining = target - balance * growth
     if remaining <= 0:
         return 0.0
-    factor = months if rate == 0 else (1 + rate) * (growth - 1) / rate
-    return remaining / factor
+    return remaining / _annuity_factor(rate, months)
 
 
 def _shocks(inputs: GoalInputs, rng: np.random.Generator) -> np.ndarray:
@@ -159,6 +189,11 @@ def _deflators(inputs: GoalInputs) -> np.ndarray:
 
 
 def simulate(inputs: GoalInputs) -> SimulationResult:
+    """Run the Monte Carlo projection described in the module docstring.
+
+    Success means the final balance is at least the target. When the target is in
+    today's dollars, every balance is deflated by ``inputs.inflation`` first.
+    """
     g, a = _growth_factors(inputs)
     deflators = _deflators(inputs)
     balances = (inputs.current_balance * g + inputs.monthly_contribution * a) / deflators[:, None]
