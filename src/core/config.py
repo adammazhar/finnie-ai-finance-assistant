@@ -207,7 +207,18 @@ class MCPConfig(_Section):
     min_token_length: int = Field(default=32, ge=16)
 
 
-YAML_SECTIONS = frozenset({"app", "llm", "rag", "market_data", "workflow", "analytics", "mcp"})
+class VoiceConfig(_Section):
+    """Voice input in the chat: OpenAI transcription settings (reading aloud needs none)."""
+
+    enabled: bool = True
+    model: str = "whisper-1"
+    language: str = "en"  # ISO-639-1; telling the model speeds it up and helps accuracy
+    timeout_s: float = Field(default=30, gt=0)
+
+
+YAML_SECTIONS = frozenset(
+    {"app", "llm", "rag", "market_data", "workflow", "analytics", "mcp", "voice"}
+)
 
 
 class Settings(BaseSettings):
@@ -237,6 +248,7 @@ class Settings(BaseSettings):
     workflow: WorkflowConfig = Field(default_factory=WorkflowConfig)
     analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)
+    voice: VoiceConfig = Field(default_factory=VoiceConfig)
 
     @classmethod
     def settings_customise_sources(

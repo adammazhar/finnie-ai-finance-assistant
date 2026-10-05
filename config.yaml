@@ -83,3 +83,9 @@ mcp:
   port: 8765
   path: /mcp
   min_token_length: 32     # MCP_API_TOKEN (in .env) must be at least this long
+
+voice:
+  enabled: true            # the microphone in the chat box (needs OPENAI_API_KEY)
+  model: whisper-1         # OpenAI transcription model this key can use (checked 2026-10-04)
+  language: en
+  timeout_s: 30

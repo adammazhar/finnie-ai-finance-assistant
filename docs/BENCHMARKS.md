@@ -17,9 +17,10 @@ The course documents ask for "performance considerations" and "performance bench
 | Single-specialist turn | p50 < 6 s | 5.8 s | reported by `scripts/bench_workflow.py` |
 | Multi-specialist turn | p50 < 15 s | 12.9 s | `scripts/bench_workflow.py` |
 | First visible progress in chat | p95 < 1 s | 17 ms | `scripts/bench_workflow.py` |
-| Test coverage | ≥ 90% | 100% (1,014 tests) | `pytest` and the CI `coverage` job |
+| Test coverage | ≥ 90% | 100% (1,027 tests) | `pytest` and the CI `coverage` job |
 | MCP tool call, server warm | < 1 s | 4–256 ms median | measured by `scripts/bench_mcp.py` |
 | Docker: healthy after `docker compose up` | < 60 s | about 10 s | the CI `docker` job |
+| Voice: transcription (median) | < 3 s | 1.15–1.56 s for 2–16 s questions | measured by `scripts/bench_voice.py` |
 
 ## Retrieval quality (Phase 5)
 
@@ -164,9 +165,34 @@ Gaps found and fixed:
 - With no API key, the app showed an error instead of starting. It now shows a setup page naming the missing key (decision 32).
 - The README now says to create the venv with Python 3.12 explicitly. On a machine where the `py` launcher defaults to 3.14, a bare `py -m venv` would have picked the wrong version.
 
+## Voice transcription
+
+`python scripts/bench_voice.py DIR --runs 5` sends each recording in `DIR` (`name.wav` plus `name.txt` with what is said) through Finnie's voice module five times. It uses the same call the chat makes: OpenAI `whisper-1` with the finance vocabulary prompt. Measured on 2026-10-04.
+
+| Recording | Length | Median | Slowest | Word error rate |
+|---|---|---|---|---|
+| "What is an ETF?" | 2.1 s | 1.15 s | 1.98 s | 0% |
+| "How diversified is my portfolio, and what does its expense ratio mean for me?" | 5.7 s | 1.19 s | 1.97 s | 0% |
+| A 41-word question about a 401(k), a Roth IRA, RMDs, and early-withdrawal penalties | 15.6 s | 1.56 s | 2.33 s | 2% |
+
+- The only error in the long question was "distribution" for "distributions". Numbers come back as digits ("58", "401k"), so the expected text is written the same way, and "401(k)" and "401k" count as one word.
+- **End to end in a browser** (Chromium with a simulated microphone playing the 5-second recording), from "Submit recording" to the transcript sitting in the chat box: **4.3 s**. That includes the upload and Streamlit's rerun.
+- **Caveat:** these recordings are synthetic speech from Windows' built-in voice, which is cleaner than a real microphone in a real room. Expect some more errors with real voices, accents, and background noise, which is why the transcript goes into the box to be checked before it's sent.
+- **Reading aloud** happens in the browser and starts at once; there is no service call to measure.
+
+To make the recordings on Windows (PowerShell), for each question:
+
+```powershell
+Add-Type -AssemblyName System.Speech
+$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$fmt = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(16000, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen, [System.Speech.AudioFormat.AudioChannel]::Mono)
+$s.SetOutputToWaveFile("samples\1_short.wav", $fmt); $s.Speak("What is an ETF?"); $s.Dispose()
+Set-Content samples\1_short.txt "What is an ETF?"
+```
+
 ## Test suite run time
 
-`pytest` runs **1,014 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
+`pytest` runs **1,027 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
 
 | Where | Configuration | Wall time |
 |---|---|---|

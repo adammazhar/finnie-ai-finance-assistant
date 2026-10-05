@@ -1,6 +1,6 @@
 # Submission Checklist
 
-Every grading-rubric line and every deliverable in the problem statement and milestones, with where to find the evidence. Status as of 2026-10-04: 1,014 tests passing, 100% line and branch coverage, CI green on all jobs.
+Every grading-rubric line and every deliverable in the problem statement and milestones, with where to find the evidence. Status as of 2026-10-04: 1,027 tests passing, 100% line and branch coverage, CI green on all jobs.
 
 ## Grading rubric
 
@@ -36,9 +36,13 @@ Every grading-rubric line and every deliverable in the problem statement and mil
 |---|---|---|
 | **Code organization (5)** | Perfect modularity; production-ready | The prescribed layout (`src/agents, core, data, rag, web_app, utils, workflow`), plus `mcp_server/` and `scripts/`. Domain logic is pure, LLM-free code shared by the agents and MCP. ruff and mypy are clean across `src/`. There's structured JSON logging with secret redaction, and configuration lives in `config.yaml` and `.env` (DESIGN §13). |
 | **Documentation (5)** | Architecture diagrams; detailed guides | [README](../README.md) has quick starts, configuration, usage with screenshots, example questions, API, tests, MCP, architecture, and troubleshooting. [DESIGN.md](DESIGN.md) has Mermaid architecture, workflow, and provider diagrams, 41 decisions, and the roadmap. Also [API.md](API.md), [MCP.md](MCP.md), [BENCHMARKS.md](BENCHMARKS.md), and [DEMO.md](DEMO.md). **Every public module, class, function, and method has a docstring: 100%, enforced in CI** by `interrogate src` (settings in `pyproject.toml`). Private helpers, magic methods, and nested functions are exempt. |
-| **Testing (5)** | 90%+ coverage including edge cases | **1,014 tests, 100% line and branch coverage** (gate 90%). The network is blocked in tests, and every external service has a fake. Edge cases include malformed and empty queries, prompt injection, every provider down, timeouts, empty portfolios, a missing API key, and 401s. Unit and integration tests cover the compiled graph end to end, a real MCP subprocess and HTTP server, and the full app with AppTest. CI runs six jobs ([README](../README.md#tests-and-evaluations)). |
+| **Testing (5)** | 90%+ coverage including edge cases | **1,027 tests, 100% line and branch coverage** (gate 90%). The network is blocked in tests, and every external service has a fake. Edge cases include malformed and empty queries, prompt injection, every provider down, timeouts, empty portfolios, a missing API key, and 401s. Unit and integration tests cover the compiled graph end to end, a real MCP subprocess and HTTP server, and the full app with AppTest. CI runs six jobs ([README](../README.md#tests-and-evaluations)). |
 
 ### Bonus: innovation and future outlook (up to 10)
+
+Mapped to the bonus line's three parts in [Beyond the problem statement](#beyond-the-problem-statement) below. In short:
+
+- **Voice interface** (the rubric's own example): speak a question, review the transcript, and have answers read aloud.
 
 - Monte Carlo goal planning: 10,000 fat-tailed paths, inflation, and an 80%-odds contribution solver. The problem statement lists this as a future direction.
 - LLM provider fallback, with OpenAI and Anthropic in both directions.
@@ -49,6 +53,21 @@ Every grading-rubric line and every deliverable in the problem statement and mil
 - An offline Docker image, tested in CI and published to GitHub Container Registry.
 - Prompt-injection-aware input and output guardrails.
 - **Technical roadmap:** [DESIGN §17](DESIGN.md#17-roadmap).
+
+## Beyond the problem statement
+
+The bonus line asks for (1) advanced features, (2) exceptional creativity in solving user problems, and (3) a clear vision for future enhancements with a technical roadmap. Each row below names the evidence a grader can check.
+
+| Bonus line asks for | What Finnie does | Evidence |
+|---|---|---|
+| **Advanced features** (the rubric's examples: "voice interface, sophisticated portfolio analytics, or novel AI techniques") | **Voice interface**: speak a question into the chat box (OpenAI `whisper-1`) and review the transcript before sending; every answer can be read aloud by the browser. | `src/core/voice.py`, `src/web_app/tabs/chat.py`; `tests/unit/core/test_voice.py` and the voice tests in `test_app_chat.py`; checked in a real browser with a simulated microphone; [BENCHMARKS: voice](BENCHMARKS.md#voice-transcription) (1.2–1.6 s median, 0–2% word error rate) |
+| | **Sophisticated portfolio analytics**: HHI diversification, fee drag, Sharpe, beta, max drawdown, correlation, a back-test against SPY, a look-through stock/bond mix for target-date and balanced funds, and **Monte Carlo goal planning** (10,000 fat-tailed paths, inflation, an 80%-odds contribution solver). | `src/core/portfolio.py`, `src/core/monte_carlo.py`; property-based tests (Hypothesis) |
+| | **Novel AI techniques**: six LangGraph specialists in staged parallel plans with bounded hand-offs; an LLM router with a keyword fallback (97.0% / 78.8%); retrieval tuned on an evaluation set (hit@4 91–93%, 100% off-topic rejection); an MCP server over stdio and token-protected HTTP; LLM provider fallback. | DESIGN §2–4 and §9; `scripts/eval_routing.py`, `scripts/eval_retrieval.py`; `tests/unit/mcp_server/` |
+| **Creative problem solving** ("exceptional creativity in solving user problems") | **Testing with AI personas**: three AI agents (a beginner, a near-retiree, a skeptical investor) used the app only through a browser. Their findings drove real fixes: role-play guardrails, IRS-sourced 401(k) vs IRA exceptions and RMD ages, "mix unknown" funds, and Goals defaults. | [SUBMISSION.md: simulated user testing](#simulated-user-testing-ai-personas) |
+| | **Deterministic safety nets around the model**: input screening (including fiction and hypothetical framing), an output check for directives, guarantees, and comparative picks, and a fixed "Finnie can't pick" opening when the model leaves it out. | `src/core/guardrails.py`; adversarial tests in `tests/unit/core/test_guardrails.py` |
+| | **Honest data**: market-hours-aware caching with freshness labels; stale then labelled mock data when providers fail; tax facts and fund mixes from IRS and Vanguard documents with dates. | `src/core/market_hours.py`, `src/data/service.py`, `data/reference/` |
+| | **Small things beginners need**: search by name ("Apple", "S&P 500"); a risk quiz; saved data without a login; plain-language help on every metric; questions asked back when something is unclear. | Markets, Profile, and Portfolio tabs; `src/data/symbols.py` |
+| **Technical roadmap** ("clear vision for future enhancements") | Three horizons with the technical approach for each: login, cloud deployment, remote MCP with OAuth 2.1, and Postgres; then better answers (a citation-support check, hybrid retrieval, fund look-through); then the problem statement's future directions (multi-modal input, international markets, mobile). | [DESIGN §17](DESIGN.md#17-roadmap) |
 
 ## Problem statement deliverables (section 3)
 

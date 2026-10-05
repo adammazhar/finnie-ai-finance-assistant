@@ -107,6 +107,7 @@ for item in hits.chunks:
 | `src/core/monte_carlo.py` | `inputs_for_profile(...)`, `simulate(inputs)` (success probability, percentiles, fan chart data), `required_monthly_contribution(inputs, p)`, and `deterministic_future_value(...)` |
 | `src/core/indicators.py` | `build_market_overview(market)` (indexes, sectors, mood), `technical_snapshot(history)`, `sma`, `rsi`, `realized_volatility`, and `latest_cross` (moving-average crossovers) |
 | `src/core/tax.py` | `get_tax_reference()` (2026 IRS figures with source URLs), `compare_accounts(reference, keys)`, `exceptions_for(reference, "plans" \| "iras")` (early-withdrawal exceptions by account type), `rmd_age_for(reference, birth_year=...)` and `rmd_age_for_current_age(...)`, and the capital gains illustration |
+| `src/core/voice.py` | `transcribe(audio_bytes, settings)` returns the text of a spoken question (OpenAI `whisper-1`; raises `VoiceError` with a message safe to show); `speakable_text(answer)` returns an answer as plain sentences for reading aloud |
 | `src/data/symbols.py` | `get_symbol_directory().search("Apple")` returns `SymbolMatch(ticker, name, kind, source)`, best first, from the indexes, Finnie's fund catalog, and the SEC company list; `yahoo_search(query)` is the online fallback |
 | `src/rag/retriever.py` | `get_retriever().retrieve(query, categories=None, k=None)`: relevance threshold, MMR, category filter with widening, and sources on every chunk |
 | `src/core/llm.py` | `get_llm("main" \| "fast")`: the configured provider with automatic fallback to the other one |

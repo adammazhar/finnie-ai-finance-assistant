@@ -16,6 +16,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 
 from src.agents.context import AgentContext, build_agent_context
 from src.core.indicators import MarketOverview, build_market_overview
+from src.core.voice import voice_available
 from src.data.symbols import SymbolDirectory, SymbolMatch, get_symbol_directory, yahoo_search
 from src.rag.knowledge_base import Article, Glossary, load_articles, load_glossary
 from src.web_app.storage import AppStore
@@ -61,6 +62,11 @@ def context() -> AgentContext:
 def assistant() -> FinnieAssistant:
     """The multi-agent workflow, with its memory in the same SQLite file."""
     return build_assistant(context())
+
+
+def voice_ready() -> bool:
+    """Whether the chat box offers a microphone (voice enabled and an OpenAI key set)."""
+    return voice_available(context().settings)
 
 
 @st.cache_resource(show_spinner=False)

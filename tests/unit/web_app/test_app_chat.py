@@ -275,3 +275,106 @@ def test_conversations_are_listed_and_can_be_reopened(ui):
     ok(app.sidebar.button(key=f"conversation_{first}").click().run())
     assert app.session_state["finnie_thread_id"] == first
     assert app.chat_message[0].markdown[0].value.startswith("What is an ETF")
+
+
+# ---- voice: read aloud and speech to text --------------------------------------------------
+
+
+def read_aloud_frames(app):
+    return [e.proto.srcdoc for e in app.get("iframe") if 'id="speak"' in e.proto.srcdoc]
+
+
+def test_each_answer_can_be_read_aloud_without_the_disclaimer(ui):
+    reply = answer_with("finance_qa", "An **ETF** holds many stocks [1].")
+    app, _, _ = ui(routes=[route("finance_qa")], agents={"finance_qa": reply})
+    ask(app, "What is an ETF?")
+    [frame] = read_aloud_frames(app)
+    assert '"An ETF holds many stocks."' in frame  # the text to speak, as a JS string
+    assert "educational information only" not in frame and "[1]" not in frame
+    assert "speechSynthesis" in frame and "🔊 Read aloud" in frame
+
+
+def test_an_answer_with_nothing_to_say_gets_no_read_aloud_button(monkeypatch):
+    from src.core.guardrails import SHORT_DISCLAIMER
+    from src.web_app.tabs import chat
+
+    frames = []
+    monkeypatch.setattr(chat.st, "iframe", lambda *a, **k: frames.append(a))
+    chat._read_aloud(SHORT_DISCLAIMER, 0)
+    assert frames == []
+
+
+def test_the_mic_is_offered_only_with_an_openai_key(ui, monkeypatch):
+    app, _, _ = ui()
+    assert app.chat_input(key="chat_input").placeholder == "Message Finnie…"  # no key in tests
+    from src.web_app import services
+
+    monkeypatch.setattr(services, "voice_ready", lambda: True)
+    app.run()
+    assert app.chat_input(key="chat_input").placeholder == "Message Finnie… (or use the mic)"
+
+
+def _submit_script(text):
+    """What the chat page does with a submission from the chat box (text and/or audio)."""
+    from types import SimpleNamespace
+
+    import streamlit as st
+
+    from src.web_app.tabs import chat
+
+    audio = SimpleNamespace(getvalue=lambda: b"wav", name="recording.wav")
+    plain = SimpleNamespace(text="typed only")  # a submission without audio
+    st.session_state["plain"] = chat._submission(plain)
+    st.session_state["string"] = chat._submission("a string")
+    st.session_state["nothing"] = chat._submission(None)
+    if not st.session_state.get("ran"):
+        st.session_state["ran"] = True
+        chat._submission(SimpleNamespace(text=text, audio=audio))  # reruns the script
+
+
+def submit(monkeypatch, text="", transcript="What is an ETF?", error=None):
+    """Run ``_submit_script`` with transcription replaced (undone after the test)."""
+    from types import SimpleNamespace
+
+    from streamlit.testing.v1 import AppTest
+
+    from src.core.voice import VoiceError
+    from src.web_app import services
+
+    def fake_transcribe(audio, settings, filename):
+        if error:
+            raise VoiceError(error)
+        return transcript
+
+    monkeypatch.setattr("src.web_app.tabs.chat.transcribe", fake_transcribe)
+    monkeypatch.setattr(services, "context", lambda: SimpleNamespace(settings=None))
+    return AppTest.from_function(_submit_script, kwargs={"text": text}, default_timeout=60).run()
+
+
+def test_a_recording_goes_into_the_box_to_check_not_straight_to_the_answer(monkeypatch):
+    from src.web_app.tabs.chat import CHECK_TRANSCRIPT, NOTICE, PREFILL
+
+    app = submit(monkeypatch, text="Quick one:")
+    assert app.session_state[PREFILL] == "Quick one: What is an ETF?"
+    assert app.session_state[NOTICE] == ("toast", CHECK_TRANSCRIPT)
+    assert app.session_state["plain"] == "typed only"
+    assert app.session_state["string"] == "a string" and app.session_state["nothing"] is None
+
+
+def test_a_failed_transcription_keeps_the_typed_text_and_explains(monkeypatch):
+    from src.web_app.tabs.chat import NOTICE, PREFILL
+
+    app = submit(monkeypatch, text="My draft", error="Couldn't transcribe the recording just now.")
+    assert app.session_state[PREFILL] == "My draft"
+    assert app.session_state[NOTICE] == ("warning", "Couldn't transcribe the recording just now.")
+
+
+def test_the_transcript_is_put_in_the_chat_box_with_a_note(ui):
+    from src.web_app.tabs.chat import CHECK_TRANSCRIPT, NOTICE, PREFILL
+
+    app, _, _ = ui(session={PREFILL: "What is an ETF?", NOTICE: ("toast", CHECK_TRANSCRIPT)})
+    assert app.chat_input(key="chat_input").value == "What is an ETF?"
+    assert [t.value for t in app.toast] == [CHECK_TRANSCRIPT]
+    assert not app.chat_message  # nothing was sent
+    warned, _, _ = ui(session={NOTICE: ("warning", "Couldn't transcribe.")})
+    assert "Couldn't transcribe." in texts(warned.warning)

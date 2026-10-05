@@ -1,11 +1,14 @@
 """Chat page: progress while specialists work, the streamed answer, sources, and charts.
 
 ``st.chat_input`` is called at the top level of the page, so Streamlit pins it to the
-bottom of the window with the conversation scrolling above it.
+bottom of the window with the conversation scrolling above it. With voice available, the
+box has a microphone: a recording is transcribed back into the box for the user to check
+before sending. Each answer has a button that reads it aloud with the browser's speech.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -13,7 +16,8 @@ import streamlit as st
 
 from src.core.models import Holding, Source
 from src.core.monte_carlo import SimulationResult
-from src.web_app import charts, services, state
+from src.core.voice import VoiceError, speakable_text, transcribe
+from src.web_app import charts, services, state, theme
 from src.web_app.formatting import agent_badges, domain, freshness_caption, md, stream_words
 from src.workflow.nodes import TurnOutput
 from src.workflow.progress import Progress
@@ -45,6 +49,9 @@ LOGGED_FEEDBACK = "chat_feedback_logged"
 ANCHOR = "finnie-answer-"
 SCROLL_AFTER_RERUN = "finnie_scroll_after_rerun"
 DRAWN = "finnie_question_drawn"
+PREFILL = "finnie_chat_prefill"  # text to put in the chat box on the next run
+NOTICE = "finnie_chat_notice"  # (kind, message) to show once after that run
+CHECK_TRANSCRIPT = "Transcribed. Check the text in the box, then press Enter to send."
 
 
 def _run_turn(prompt: str) -> TurnOutput:
@@ -154,7 +161,54 @@ def _extras(output: TurnOutput, index: int) -> None:
             for number, source in enumerate(output.sources, 1):
                 _source(number, source, key)
     if output.status == "answered":
+        _read_aloud(output.answer, index)
         _feedback(index)
+
+
+def _read_aloud(answer: str, index: int) -> None:
+    """A button that reads the answer aloud with the browser's own speech synthesis.
+
+    It runs inside its own small frame: the click there is what lets the browser speak, and
+    no Streamlit rerun is needed. The disclaimer, citation markers, and markdown are left
+    out (the sources list isn't part of the answer text).
+    """
+    text = speakable_text(answer)
+    if not text:
+        return
+    c = theme.PALETTES[theme.theme_type()]
+    words = json.dumps(text).replace("</", "<\\/")  # safe inside <script>
+    st.iframe(
+        f"""<style>
+html, body {{ margin: 0; background: {c["page"]}; }}
+button {{ font: 500 14px/1.2 "Source Sans Pro", "Segoe UI", sans-serif; color: {c["text"]};
+  background: {c["page"]}; border: 1px solid {c["line"]}; border-radius: 8px;
+  padding: 6px 12px; cursor: pointer; }}
+button:hover, button:focus-visible {{ background: {c["hover"]}; }}
+button:disabled {{ cursor: default; color: {c["muted"]}; }}
+</style>
+<button id="speak" type="button" data-answer="{index}">🔊 Read aloud</button>
+<script>
+const text = {words};
+const button = document.getElementById("speak");
+const synth = window.speechSynthesis;
+const idle = () => {{ button.textContent = "🔊 Read aloud"; }};
+if (!synth) {{
+  button.disabled = true;
+  button.title = "This browser can't read text aloud.";
+}}
+button.addEventListener("click", () => {{
+  if (synth.speaking) {{ synth.cancel(); idle(); return; }}
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.onend = idle;
+  utterance.onerror = idle;
+  synth.cancel();
+  synth.speak(utterance);
+  button.textContent = "⏹ Stop reading";
+}});
+</script>""",
+        height=40,
+    )
 
 
 def _anchor(index: int) -> None:
@@ -237,13 +291,50 @@ def _answer(prompt: str, scroll: bool) -> None:
     st.rerun()  # redraw once so the sidebar lists this conversation with its title
 
 
+def _submission(value: Any) -> str | None:
+    """The question to answer from what the chat box sent, or ``None``.
+
+    A voice recording isn't answered directly: it's transcribed into the chat box (after
+    anything already typed) so the user can check and edit it, then send it with Enter.
+    """
+    if value is None or isinstance(value, str):
+        return value or None
+    text = (value.text or "").strip()
+    audio = getattr(value, "audio", None)
+    if audio is None:
+        return text or None
+    try:
+        heard = transcribe(
+            audio.getvalue(), services.context().settings, filename=audio.name or "question.wav"
+        )
+        st.session_state[PREFILL] = f"{text} {heard}".strip()
+        st.session_state[NOTICE] = ("toast", CHECK_TRANSCRIPT)
+    except VoiceError as exc:
+        st.session_state[PREFILL] = text
+        st.session_state[NOTICE] = ("warning", str(exc))
+    st.rerun()
+
+
 def render() -> None:
     """Draw the Chat page and answer a typed or queued question.
 
     A question queued from another page is first drawn on its own and the page rerun,
     so the previous page doesn't linger while the answer is written.
     """
-    typed = st.chat_input("Message Finnie…", key="chat_input")
+    prefill = st.session_state.pop(PREFILL, None)
+    if prefill is not None:
+        st.session_state["chat_input"] = prefill
+    voice = services.voice_ready()
+    submitted = st.chat_input(
+        "Message Finnie… (or use the mic)" if voice else "Message Finnie…",
+        key="chat_input",
+        accept_audio=voice,  # recorded at 16 kHz, the default (enough for speech)
+    )
+    notice = st.session_state.pop(NOTICE, None)
+    if notice:
+        kind, message = notice
+        st.toast(message, icon=":material/mic:") if kind == "toast" else st.warning(message)
+    typed = _submission(submitted)
     waiting = None if typed else state.peek_prompt()
     if waiting and not st.session_state.pop(DRAWN, False):
         # A button sent this question from another page. Draw the chat with the question

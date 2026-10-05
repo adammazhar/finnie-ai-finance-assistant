@@ -25,7 +25,7 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | Market Intelligence (5) | Thoughtful interpretation | §3.3: indices, sectors, locally computed indicators, and a plain-English "market mood" read |
 | Code Organization (5) | Perfect modularity | §13: prescribed layout; domain logic separated from agents, UI, and MCP |
 | Documentation (5) | Diagrams + detailed guides | This doc (architecture and workflow diagrams, decisions log), README (Docker and Python quick starts, configuration, usage with screenshots, tests, MCP, architecture, troubleshooting), `docs/MCP.md`, `docs/BENCHMARKS.md` |
-| Testing (5) | **90%+ coverage incl. edge cases** | §11: 1,014 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
+| Testing (5) | **90%+ coverage incl. edge cases** | §11: 1,027 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
 | Bonus (≤10) | Beyond requirements | Monte Carlo goal planning, LLM provider fallback, routing evals, one-command Docker with an offline image (AWS designed), MCP over stdio and token-protected HTTP, saved data per browser, prompt-injection-aware guardrails |
 
 The problem statement also requires a demo video, performance benchmarks, sample data, and environment files. The benchmarks are in `docs/BENCHMARKS.md`, sample portfolios in `data/sample_portfolios/`, and the environment template in `.env.example`. The demo video is recorded separately.
@@ -845,7 +845,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 
 **Tooling hygiene:** `ruff` (lint and format), `mypy` over all of `src/`, and `interrogate`, which requires a docstring on every public module, class, function, and method (100%).
 
-**Result at the end of Phase 10:** 1,014 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
+**Result with the voice feature:** 1,027 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on every push and PR, on Python 3.12. CI never needs real API keys.
 
@@ -1064,6 +1064,7 @@ Each phase ends with `pytest` green, the coverage gate satisfied for the code wr
 | 39 | *(after persona testing)* **Funds whose stock/bond mix isn't known are "mix unknown", not stocks.** 17 Vanguard target-date and balanced funds were added with the mix from their fact sheets (June 30, 2026). The reference mix stays based on risk tolerance; the Portfolio tab and observations now say that time horizon matters too. |
 | 40 | *(after persona testing)* **Goals start from per-type defaults and the profile, and are saved per browser** (a `goals` table next to profiles and portfolios). A stricter beginner prompt (define every term, about 150 words, at most two small headings) also applies when several specialists' answers are merged. |
 | 41 | *(after persona testing)* **Markets search by name.** The SEC's company list (10,434 tickers, stored locally, downloaded once with a User-Agent carrying a contact email as the SEC requires) plus Finnie's fund and index list; Streamlit's search box filters as you type (the largest 4,000 companies are offered there), and a second field searches the full list, then Yahoo Finance. Index levels are shown as points, not dollars. A per-citation support check was deferred to the roadmap (§17). |
+| 42 | *(bonus: voice)* **Voice in and out of the chat.** In: the chat box's microphone (`st.chat_input(accept_audio=True)`). A recording isn't sent as a question; it's transcribed with OpenAI `whisper-1` (the transcription model this key can use; the newer `gpt-4o-*-transcribe` models returned 403) and put back in the box to check and edit. The recording isn't stored, and neither it nor the transcript is logged. Out: a 🔊 button per answer uses the browser's speech synthesis inside its own small frame (the click there counts as the user's permission to speak), skipping the disclaimer, citations, and markdown. No API key, and no Streamlit rerun. A local faster-whisper fallback is on the roadmap, since this key supports a transcription model. |
 
 ---
 
@@ -1095,7 +1096,7 @@ What comes next, in order. Each item names the technical approach and what alrea
 
 | Item | Approach |
 |---|---|
-| Voice interface | Browser speech-to-text into the chat input, and text-to-speech for answers. The workflow stays unchanged because it's text in and text out. |
+| Voice interface | **Done** (decision 42): speech to text with OpenAI `whisper-1` into the chat box for review, and the browser's speech synthesis for reading answers. Next: a local faster-whisper model (CPU, baked into the Docker image) for users without an OpenAI key or who prefer audio to stay on their machine, and a choice of voice and speed. |
 | Multi-modal input | Upload a brokerage statement (PDF) or a chart screenshot. A vision-capable model extracts holdings into the existing `Holding` model, with the user confirming. |
 | International markets and crypto education | More providers behind the existing `PriceProvider` protocol; new knowledge base categories with sourced articles; market calendars per exchange (the NYSE calendar is already data-driven). |
 | Mobile | The Streamlit UI already works at phone width (checked at 390 px). A native app would call a FastAPI layer over `FinnieAssistant.stream`. |

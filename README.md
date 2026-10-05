@@ -16,6 +16,7 @@ Finnie is a multi-agent assistant that teaches beginners about investing. Six sp
 - [API documentation](#api-documentation)
 - [Tests and evaluations](#tests-and-evaluations)
 - [MCP server (Claude Desktop and Claude Code)](#mcp-server-claude-desktop-and-claude-code)
+- [Beyond the problem statement](#beyond-the-problem-statement)
 - [Architecture](#architecture)
 - [Project structure](#project-structure)
 - [Troubleshooting](#troubleshooting)
@@ -112,7 +113,7 @@ Secrets and the provider choice go in **`.env`**. Every other setting is in **`c
 
 | `.env` variable | Needed? | What it does |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes, for the default provider | Models `gpt-4o` (answers) and `gpt-4o-mini` (routing, checks, titles) |
+| `OPENAI_API_KEY` | Yes, for the default provider | Models `gpt-4o` (answers) and `gpt-4o-mini` (routing, checks, titles), and `whisper-1` for voice input |
 | `ANTHROPIC_API_KEY` | Optional | Automatic fallback when OpenAI fails, or the primary provider with `LLM_PROVIDER=anthropic` |
 | `LLM_PROVIDER` | Optional (`openai`) | `openai` or `anthropic` |
 | `LLM_FALLBACK_PROVIDER` | Optional (`anthropic`) | The provider to fall back to; `none` disables the fallback |
@@ -146,6 +147,8 @@ On a first visit, Finnie asks for your knowledge level and risk tolerance. A 5-q
 - **The answer:** it streams in with the specialists who wrote it, numbered citations, and the sources behind them, plus charts when they help.
 - **Multi-part questions:** a question that spans topics (for example, "how diversified is my portfolio, and what does its expense ratio mean?") goes to several specialists, and their answers are merged into one.
 - **Goal questions:** if you have a saved portfolio, Finnie first asks how much of it counts toward the goal.
+- **Voice:** press the microphone in the chat box and ask out loud. The transcript appears in the box so you can check or edit it, then press Enter to send. It needs `OPENAI_API_KEY`; the recording is sent to OpenAI for transcription and isn't stored by Finnie.
+- **Read aloud:** each answer has a 🔊 **Read aloud** button. Your browser's built-in voice reads the answer, leaving out the disclaimer and sources. It needs no key.
 
 | | |
 |---|---|
@@ -214,7 +217,7 @@ print(out.agents, [s.url for s in out.sources])
 ## Tests and evaluations
 
 ```bash
-pytest                                   # 1,014 tests in parallel, 100% coverage; network blocked, so no API calls
+pytest                                   # 1,027 tests in parallel, 100% coverage; network blocked, so no API calls
 ruff check . && ruff format --check .    # lint and formatting
 mypy                                     # type checks
 python scripts/validate_kb.py            # knowledge base rules (schema, ids, sources)
@@ -228,6 +231,7 @@ python scripts/eval_retrieval.py         # retrieval quality: hit@4 93.3%
 python scripts/eval_routing.py           # routing accuracy: 97.0% (LLM), 78.8% (keyword fallback)
 python scripts/bench_workflow.py         # end-to-end latency with live models and data
 python scripts/bench_mcp.py              # MCP tool latency over HTTP
+python scripts/bench_voice.py DIR        # transcription speed and accuracy (DIR: name.wav + name.txt pairs)
 ```
 
 GitHub Actions runs these jobs on every push:
@@ -260,6 +264,23 @@ The client (Claude) does the reasoning; Finnie supplies the data. Full setup is 
   ```
 
   With Docker: `docker compose --profile mcp up` runs the HTTP server next to the app.
+
+## Beyond the problem statement
+
+The rubric's bonus line rewards advanced features, creative problem solving, and a technical roadmap. Here is what Finnie adds for each, and where to check it:
+
+| Bonus line asks for | What Finnie does | Evidence |
+|---|---|---|
+| **Advanced features** (the rubric's examples: "voice interface, sophisticated portfolio analytics, or novel AI techniques") | **Voice interface**: speak a question into the chat box (OpenAI `whisper-1`) and review the transcript before sending; every answer can be read aloud by the browser. | `src/core/voice.py`, `src/web_app/tabs/chat.py`; `tests/unit/core/test_voice.py` and the voice tests in `test_app_chat.py`; checked in a real browser with a simulated microphone; [BENCHMARKS: voice](docs/BENCHMARKS.md#voice-transcription) (1.2–1.6 s median, 0–2% word error rate) |
+| | **Sophisticated portfolio analytics**: HHI diversification, fee drag, Sharpe, beta, max drawdown, correlation, a back-test against SPY, a look-through stock/bond mix for target-date and balanced funds, and **Monte Carlo goal planning** (10,000 fat-tailed paths, inflation, an 80%-odds contribution solver). | `src/core/portfolio.py`, `src/core/monte_carlo.py`; property-based tests (Hypothesis) |
+| | **Novel AI techniques**: six LangGraph specialists in staged parallel plans with bounded hand-offs; an LLM router with a keyword fallback (97.0% / 78.8%); retrieval tuned on an evaluation set (hit@4 91–93%, 100% off-topic rejection); an MCP server over stdio and token-protected HTTP; LLM provider fallback. | DESIGN §2–4 and §9; `scripts/eval_routing.py`, `scripts/eval_retrieval.py`; `tests/unit/mcp_server/` |
+| **Creative problem solving** ("exceptional creativity in solving user problems") | **Testing with AI personas**: three AI agents (a beginner, a near-retiree, a skeptical investor) used the app only through a browser. Their findings drove real fixes: role-play guardrails, IRS-sourced 401(k) vs IRA exceptions and RMD ages, "mix unknown" funds, and Goals defaults. | [SUBMISSION.md: simulated user testing](docs/SUBMISSION.md#simulated-user-testing-ai-personas) |
+| | **Deterministic safety nets around the model**: input screening (including fiction and hypothetical framing), an output check for directives, guarantees, and comparative picks, and a fixed "Finnie can't pick" opening when the model leaves it out. | `src/core/guardrails.py`; adversarial tests in `tests/unit/core/test_guardrails.py` |
+| | **Honest data**: market-hours-aware caching with freshness labels; stale then labelled mock data when providers fail; tax facts and fund mixes from IRS and Vanguard documents with dates. | `src/core/market_hours.py`, `src/data/service.py`, `data/reference/` |
+| | **Small things beginners need**: search by name ("Apple", "S&P 500"); a risk quiz; saved data without a login; plain-language help on every metric; questions asked back when something is unclear. | Markets, Profile, and Portfolio tabs; `src/data/symbols.py` |
+| **Technical roadmap** ("clear vision for future enhancements") | Three horizons with the technical approach for each: login, cloud deployment, remote MCP with OAuth 2.1, and Postgres; then better answers (a citation-support check, hybrid retrieval, fund look-through); then the problem statement's future directions (multi-modal input, international markets, mobile). | [DESIGN §17](docs/DESIGN.md#17-roadmap) |
+
+The same mapping, with more detail, is in [docs/SUBMISSION.md](docs/SUBMISSION.md#beyond-the-problem-statement).
 
 ## Architecture
 
