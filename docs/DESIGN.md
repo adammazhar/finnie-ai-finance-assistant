@@ -25,7 +25,7 @@ The design is organized around the grading rubric (`docs/ik/Grading Rubric_AI Fi
 | Market Intelligence (5) | Thoughtful interpretation | §3.3: indices, sectors, locally computed indicators, and a plain-English "market mood" read |
 | Code Organization (5) | Perfect modularity | §13: prescribed layout; domain logic separated from agents, UI, and MCP |
 | Documentation (5) | Diagrams + detailed guides | This doc (architecture and workflow diagrams, decisions log), README (Docker and Python quick starts, configuration, usage with screenshots, tests, MCP, architecture, troubleshooting), `docs/MCP.md`, `docs/BENCHMARKS.md` |
-| Testing (5) | **90%+ coverage incl. edge cases** | §11: 1,027 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
+| Testing (5) | **90%+ coverage incl. edge cases** | §11: 1,028 tests at 100% line and branch coverage (gate 90%), network blocked in tests, fakes for every external service, plus a CI job that builds and tests the Docker image |
 | Bonus (≤10) | Beyond requirements | Monte Carlo goal planning, LLM provider fallback, routing evals, one-command Docker with an offline image (AWS designed), MCP over stdio and token-protected HTTP, saved data per browser, prompt-injection-aware guardrails |
 
 The problem statement also requires a demo video, performance benchmarks, sample data, and environment files. The benchmarks are in `docs/BENCHMARKS.md`, sample portfolios in `data/sample_portfolios/`, and the environment template in `.env.example`. The demo video is recorded separately.
@@ -845,7 +845,7 @@ A guardrail test suite includes about 40 adversarial prompts (advice requests, j
 
 **Tooling hygiene:** `ruff` (lint and format), `mypy` over all of `src/`, and `interrogate`, which requires a docstring on every public module, class, function, and method (100%).
 
-**Result with the voice feature:** 1,027 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
+**Result with the voice feature:** 1,028 tests, 100% line and branch coverage, run in parallel in about 2 minutes (`docs/BENCHMARKS.md`).
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on every push and PR, on Python 3.12. CI never needs real API keys.
 

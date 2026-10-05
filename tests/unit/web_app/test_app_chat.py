@@ -96,6 +96,14 @@ def test_quiz_sets_risk_tolerance(ui):
     assert any("**conservative** risk tolerance" in s for s in texts(app.success))
 
 
+def test_quiz_stays_open_while_it_is_answered(ui):
+    app, _, _ = ui(onboarded=False)
+    assert not app.expander[0].proto.expanded
+    radio = app.radio(key="quiz_0")
+    radio.set_value(radio.options[1]).run()
+    assert app.expander[0].proto.expanded  # answering doesn't collapse it
+
+
 # ---- chat ---------------------------------------------------------------------------------
 
 

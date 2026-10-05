@@ -1,6 +1,6 @@
 # Submission Checklist
 
-Every grading-rubric line and every deliverable in the problem statement and milestones, with where to find the evidence. Status as of 2026-10-04: 1,027 tests passing, 100% line and branch coverage, CI green on all jobs.
+Every grading-rubric line and every deliverable in the problem statement and milestones, with where to find the evidence. Status as of 2026-10-04: 1,028 tests passing, 100% line and branch coverage, CI green on all jobs.
 
 ## Grading rubric
 
@@ -36,7 +36,7 @@ Every grading-rubric line and every deliverable in the problem statement and mil
 |---|---|---|
 | **Code organization (5)** | Perfect modularity; production-ready | The prescribed layout (`src/agents, core, data, rag, web_app, utils, workflow`), plus `mcp_server/` and `scripts/`. Domain logic is pure, LLM-free code shared by the agents and MCP. ruff and mypy are clean across `src/`. There's structured JSON logging with secret redaction, and configuration lives in `config.yaml` and `.env` (DESIGN §13). |
 | **Documentation (5)** | Architecture diagrams; detailed guides | [README](../README.md) has quick starts, configuration, usage with screenshots, example questions, API, tests, MCP, architecture, and troubleshooting. [DESIGN.md](DESIGN.md) has Mermaid architecture, workflow, and provider diagrams, 41 decisions, and the roadmap. Also [API.md](API.md), [MCP.md](MCP.md), [BENCHMARKS.md](BENCHMARKS.md), and [DEMO.md](DEMO.md). **Every public module, class, function, and method has a docstring: 100%, enforced in CI** by `interrogate src` (settings in `pyproject.toml`). Private helpers, magic methods, and nested functions are exempt. |
-| **Testing (5)** | 90%+ coverage including edge cases | **1,027 tests, 100% line and branch coverage** (gate 90%). The network is blocked in tests, and every external service has a fake. Edge cases include malformed and empty queries, prompt injection, every provider down, timeouts, empty portfolios, a missing API key, and 401s. Unit and integration tests cover the compiled graph end to end, a real MCP subprocess and HTTP server, and the full app with AppTest. CI runs six jobs ([README](../README.md#tests-and-evaluations)). |
+| **Testing (5)** | 90%+ coverage including edge cases | **1,028 tests, 100% line and branch coverage** (gate 90%). The network is blocked in tests, and every external service has a fake. Edge cases include malformed and empty queries, prompt injection, every provider down, timeouts, empty portfolios, a missing API key, and 401s. Unit and integration tests cover the compiled graph end to end, a real MCP subprocess and HTTP server, and the full app with AppTest. CI runs six jobs ([README](../README.md#tests-and-evaluations)). |
 
 ### Bonus: innovation and future outlook (up to 10)
 

@@ -32,7 +32,7 @@ This script covers all of them, plus guardrails, the MCP server, and saved data.
 
 ## Closing line
 
-"Finnie: six LangGraph agents, a sourced knowledge base, live market data, and goal simulations, built to teach beginners and never to give advice. The code, the 1,027 tests, the benchmarks, and Docker setup are in the repository."
+"Finnie: six LangGraph agents, a sourced knowledge base, live market data, and goal simulations, built to teach beginners and never to give advice. The code, the 1,028 tests, the benchmarks, and Docker setup are in the repository."
 
 ## Notes
 

@@ -84,7 +84,12 @@ def _score_quiz() -> None:
 
 
 def _quiz() -> None:
-    with st.expander("Not sure? Take a 5-question quiz", expanded=False):
+    # Each answer reruns the page; once the quiz is started, keep it open rather than
+    # collapsing it after every answer.
+    started = QUIZ_RESULT in st.session_state or any(
+        st.session_state.get(f"quiz_{i}") is not None for i in range(len(QUESTIONS))
+    )
+    with st.expander("Not sure? Take a 5-question quiz", expanded=started):
         for i, (question, options) in enumerate(QUESTIONS):
             st.radio(question, [label for label, _ in options], index=None, key=f"quiz_{i}")
         st.button("See my result", on_click=_score_quiz, key="quiz_score")

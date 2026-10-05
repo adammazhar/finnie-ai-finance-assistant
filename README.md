@@ -217,7 +217,7 @@ print(out.agents, [s.url for s in out.sources])
 ## Tests and evaluations
 
 ```bash
-pytest                                   # 1,027 tests in parallel, 100% coverage; network blocked, so no API calls
+pytest                                   # 1,028 tests in parallel, 100% coverage; network blocked, so no API calls
 ruff check . && ruff format --check .    # lint and formatting
 mypy                                     # type checks
 python scripts/validate_kb.py            # knowledge base rules (schema, ids, sources)

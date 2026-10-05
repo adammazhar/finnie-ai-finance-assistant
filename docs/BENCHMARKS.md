@@ -17,7 +17,7 @@ The course documents ask for "performance considerations" and "performance bench
 | Single-specialist turn | p50 < 6 s | 5.8 s | reported by `scripts/bench_workflow.py` |
 | Multi-specialist turn | p50 < 15 s | 12.9 s | `scripts/bench_workflow.py` |
 | First visible progress in chat | p95 < 1 s | 17 ms | `scripts/bench_workflow.py` |
-| Test coverage | ≥ 90% | 100% (1,027 tests) | `pytest` and the CI `coverage` job |
+| Test coverage | ≥ 90% | 100% (1,028 tests) | `pytest` and the CI `coverage` job |
 | MCP tool call, server warm | < 1 s | 4–256 ms median | measured by `scripts/bench_mcp.py` |
 | Docker: healthy after `docker compose up` | < 60 s | about 10 s | the CI `docker` job |
 | Voice: transcription (median) | < 3 s | 1.15–1.56 s for 2–16 s questions | measured by `scripts/bench_voice.py` |
@@ -192,7 +192,7 @@ Set-Content samples\1_short.txt "What is an ETF?"
 
 ## Test suite run time
 
-`pytest` runs **1,027 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
+`pytest` runs **1,028 tests** in parallel with pytest-xdist (`-n auto --dist loadgroup`), with branch coverage at 100%. CI runs the unit and UI suites as separate jobs and gates coverage on their combined data.
 
 | Where | Configuration | Wall time |
 |---|---|---|
