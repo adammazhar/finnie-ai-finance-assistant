@@ -29,3 +29,6 @@ data/vectorstore/
 
 # Course reference materials (not ours to publish)
 docs/ik/
+
+# Demo video experiment (videos, audio, build files; never committed)
+videos/
