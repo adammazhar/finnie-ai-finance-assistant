@@ -6,8 +6,15 @@ Finnie is a multi-agent assistant that teaches beginners about investing. Six sp
 
 ![Finnie answering a question about a saved portfolio](docs/images/chat.png)
 
+## Demo video
+
+▶ **[Watch the demo on YouTube](https://youtu.be/R6OB4C5JQJA)** (about 9 minutes, unlisted). It walks through the architecture, onboarding, multi-agent chat with voice input and read-aloud, portfolio entry and analysis, markets, goal planning, the knowledge base, the MCP server, and Claude Desktop.
+
+The same video is in the submission ZIP at `demo/Finnie_Demo_Adam_Mazhar.mp4` (1920×1080), with subtitles in `demo/Finnie_Demo_Adam_Mazhar.srt`; the MP4 also carries them as a subtitle track you can turn on.
+
 ## Contents
 
+- [Demo video](#demo-video)
 - [Quick start with Docker](#quick-start-with-docker)
 - [Quick start with Python](#quick-start-with-python)
 - [Configuration](#configuration)
@@ -284,20 +291,7 @@ The same mapping, with more detail, is in [docs/SUBMISSION.md](docs/SUBMISSION.m
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    UI["Streamlit UI<br/>Chat · Portfolio · Markets · Goals · Knowledge"] --> WF
-    CD["Claude Desktop / Claude Code"] -- "MCP: stdio or HTTP + token" --> MCP["MCP server"]
-    subgraph Finnie
-        WF["LangGraph workflow<br/>route · plan · run specialists · merge · guard"] --> AG["6 specialist agents"]
-        AG --> TOOLS["Domain tools<br/>portfolio · Monte Carlo · tax · indicators"]
-        AG --> RAG["RAG retriever<br/>FAISS + MiniLM, 1,108 chunks"]
-        MCP --> TOOLS
-        MCP --> RAG
-        TOOLS --> MD["Market data<br/>SQLite cache · yfinance · Alpha Vantage · Tavily"]
-    end
-    AG --> LLM["LLM factory<br/>OpenAI, Anthropic fallback"]
-```
+![Architecture: the Streamlit app and the MCP server on one LangGraph workflow with six specialists, shared domain tools, RAG, and market data](docs/images/arch_architecture.png)
 
 **How a question flows through the workflow (`src/workflow/`):**
 1. **Screening:** an input check rejects prohibited or oversized requests.
@@ -305,6 +299,8 @@ flowchart LR
 3. **Planning:** the plan runs the specialists in stages, in parallel within a stage (LangGraph `Send`). Agents that need another agent's results run in a later stage; for example, goal planning can use the portfolio analysis.
 4. **Merging:** the answers are merged into one, with unified citations.
 5. **Output guard:** a check rewrites anything that reads like personal advice, then adds data-freshness notes and the disclaimer.
+
+![One real question from the demo traced through the router, two specialists in parallel, the synthesizer, and the output guardrail, with step timings](docs/images/arch_agent_flow.png)
 
 **Memory:** conversation memory is kept per conversation in a SQLite checkpointer, and older turns are summarized.
 
@@ -328,7 +324,19 @@ flowchart LR
   - a turn deadline
   - a plain-language reply when every agent fails
 
-Details, diagrams, and the reasons behind each choice are in [docs/DESIGN.md](docs/DESIGN.md).
+**Tech stack:**
+
+![Tech stack: LangGraph, OpenAI and Anthropic models, FAISS with a local embedding model, yfinance, Alpha Vantage, Tavily, Streamlit, Plotly, the MCP SDK, and the quality tooling](docs/images/arch_stack.png)
+
+**Grounding:** cited knowledge and a market data provider chain.
+
+![RAG pipeline and the market data provider chain](docs/images/arch_rag_market.png)
+
+**MCP server:** the same tools for Claude Desktop (stdio) and other clients (HTTP with a token).
+
+![The MCP server: six tools, two resources, one prompt, and its HTTP security](docs/images/arch_mcp.png)
+
+Details, Mermaid versions of these diagrams, and the reasons behind each choice are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Project structure
 
